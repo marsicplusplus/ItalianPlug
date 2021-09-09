@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.1 )
 
-project( MRProject )
+project( ItalianPlug )
 
 set( GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_BUILD_EXAMPLES OFF CACHE BOOL "GLFW lib only" FORCE)
@@ -23,8 +23,22 @@ set( SRC
      src/main.cpp
      )
 
-add_executable( MRProject WIN32 ${SRC} )
-target_link_libraries( MRProject glfw )
+ add_executable( ItalianPlug WIN32 ${SRC} )
+ target_link_libraries( ItalianPlug glfw )
+
+if( MSVC ) 
+	add_custom_command ( 
+		TARGET ItalianPlug
+		PRE_BUILD
+		COMMAND ${CMAKE_SOURCE_DIR}/get_sources.bat
+	)
+else()
+	add_custom_command ( 
+		TARGET ItalianPlug
+		PRE_BUILD
+		COMMAND ${CMAKE_SOURCE_DIR}/get_sources.sh
+	)
+endif()
 
 if( MSVC )
     if(${CMAKE_VERSION} VERSION_LESS "3.6.0")
