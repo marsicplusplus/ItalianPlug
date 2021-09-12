@@ -35,12 +35,17 @@ set( SRC
 	 src/utils.cpp
 	 src/input_handler.cpp
 	 src/camera.cpp
+	 src/mesh_map.cpp
 	)
 
 add_executable( ItalianPlug WIN32 ${SRC} )
 target_link_libraries( ItalianPlug glfw )
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
+if( !MSVC )
+	ADD_CUSTOM_TARGET( shaders ALL  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders )
+endif()
+
 if( MSVC ) 
 	add_custom_command ( 
 		TARGET ItalianPlug

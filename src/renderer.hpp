@@ -6,10 +6,10 @@
 #include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "imfilebrowser.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_impl_glfw.h"
 #include <string>
 #include <memory>
+#include "camera.hpp"
+#include "mesh_map.hpp"
 
 class Renderer {
 	public:
@@ -18,7 +18,7 @@ class Renderer {
 		std::string title;
 
 	public:
-		Renderer(int w, int h, std::string title) : wWidth(w), wHeight(h), title(title), mesh(nullptr) {}
+		Renderer(int w, int h, std::string title) : wWidth(w), wHeight(h), title(title), mesh(nullptr), camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 45.0f, -90, 0, 0) {}
 		~Renderer();
 		bool initSystems();
 		void start();
@@ -27,7 +27,8 @@ class Renderer {
 	private:
 		GLFWwindow *window;
 		ImGui::FileBrowser fileDialog;
-		std::unique_ptr<Mesh> mesh;
+		MeshPtr mesh;
+		Camera camera;
 
 		void renderGUI();
 

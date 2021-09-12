@@ -13,6 +13,8 @@ class Mesh {
 		Mesh(std::string path);
 		Mesh(std::string path, std::string vShader, std::string fShader);
 
+		~Mesh();
+
 		void draw(glm::mat4 projView);
 		void update(float dt);
 

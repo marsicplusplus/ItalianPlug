@@ -82,3 +82,5 @@ namespace Loader {
 		return true;
 	}
 };
+
+OptionsMap* OptionsMap::instance = nullptr;

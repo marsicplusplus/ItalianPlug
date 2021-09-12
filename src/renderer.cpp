@@ -5,6 +5,8 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "shader.hpp"
 #include "input_handler.hpp"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_glfw.h"
 #include "camera.hpp"
 #include <memory>
 
@@ -14,8 +16,13 @@
 }
 
 Renderer::~Renderer() {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwDestroyWindow(window);
 	glfwTerminate();
+	MeshMap::Instance()->destroy();
+	OptionsMap::Instance()->destroy();
 }
 
 bool Renderer::initSystems(){
@@ -61,16 +68,13 @@ bool Renderer::initSystems(){
 
 void Renderer::start() {
 	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
-
 	
 	float LOW_LIMIT = 1.0f/60.0f;          // Keep At/Below 60fps
 	float HIGH_LIMIT = 1.0f/10.0f;            // Keep At/Above 10fps
 
 	float lastTime = glfwGetTime();
 
-	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), 45.0f, -90, 0, 0);
 	glm::mat4 proj = glm::perspective(camera.getFOV(), (float)wWidth/(float)wHeight, 0.1f, 100.0f);
-
 
 	while(!glfwWindowShouldClose(window)){
 		glfwPollEvents();
@@ -89,12 +93,13 @@ void Renderer::start() {
 			deltaTime = HIGH_LIMIT;
 		lastTime = currentTime;
 
-		camera.update(deltaTime);
-		glm::mat4 projView = proj*camera.getViewMatrix();
-
 		// feed inputs to dear imgui, start new frame
 		if(mesh != nullptr){
-			mesh->update(deltaTime);
+			if(!fileDialog.IsOpened()){
+				camera.update(deltaTime);
+				mesh->update(deltaTime);
+			}
+			glm::mat4 projView = proj*camera.getViewMatrix();
 			mesh->draw(projView);
 		}
 		renderGUI();
@@ -113,7 +118,9 @@ void Renderer::renderGUI(){
 	if(ImGui::Button("File")){
 		fileDialog.Open();
 	}
-	ImGui::SameLine();
+	if(ImGui::Button("Toggle Edges")){
+		OptionsMap::Instance()->setOption(DRAW_EDGES, !OptionsMap::Instance()->getOption(DRAW_EDGES));
+	}
 	if(ImGui::Button("Exit")){
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -121,7 +128,8 @@ void Renderer::renderGUI(){
 
 	fileDialog.Display();
 	if(fileDialog.HasSelected()) {
-		mesh = std::make_unique<Mesh>(fileDialog.GetSelected().string());
+		mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
+		camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 		fileDialog.ClearSelected();
 	}
 	// Render dear imgui into screen
@@ -141,10 +149,7 @@ void Renderer::windowSizeCallback(GLFWwindow* window, int width, int height) {
 	obj->resizeWindow(width, height);
 }
 
-void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (key == GLFW_KEY_ESCAPE)
-		glfwSetWindowShouldClose(window, 1);
-}
+void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
 
 void Renderer::mouseCallback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_RIGHT){

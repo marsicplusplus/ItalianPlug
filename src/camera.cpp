@@ -34,6 +34,12 @@ glm::vec3 Camera::getPosition() const {
 	return position;
 }
 
+void Camera::setPosition(glm::vec3 position) {
+	position = position;
+	InputHandler::Instance()->scrollState(0.0);
+	updateVectors();
+}
+
 void Camera::update(float dt) {
 	float scroll = InputHandler::Instance()->getScrollState();
 	if(scroll != 0){
