@@ -12,6 +12,8 @@ include_directories(
 	external/glfw/include 
 	external/glm
 	external/glad/include
+	external/imgui
+	external/imgui/backends
 	)
 
 if( MSVC )
@@ -20,12 +22,25 @@ endif()
 
 set( SRC
 	 external/glad/src/glad.c
-     src/main.cpp
-     )
+	 external/imgui/imgui_draw.cpp
+	 external/imgui/imgui_tables.cpp
+	 external/imgui/imgui_widgets.cpp
+	 external/imgui/imgui.cpp
+	 external/imgui/backends/imgui_impl_glfw.cpp
+	 external/imgui/backends/imgui_impl_opengl3.cpp
+	 src/main.cpp
+	 src/renderer.cpp
+	 src/mesh.cpp
+	 src/shader.cpp
+	 src/utils.cpp
+	 src/input_handler.cpp
+	 src/camera.cpp
+	)
 
- add_executable( ItalianPlug WIN32 ${SRC} )
- target_link_libraries( ItalianPlug glfw )
-
+add_executable( ItalianPlug WIN32 ${SRC} )
+target_link_libraries( ItalianPlug glfw )
+target_compile_options( ItalianPlug PRIVATE -g)
+set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( MSVC ) 
 	add_custom_command ( 
 		TARGET ItalianPlug
