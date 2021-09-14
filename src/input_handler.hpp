@@ -10,8 +10,12 @@ struct MouseState {
 	int dy;
 	int y;
 	double yOff;
-	bool leftDown;
-	bool rightDown;
+	bool moved;
+};
+
+enum MappedButtons {
+	MOUSE_RIGHT,
+	MOUSE_LEFT,
 };
 
 class InputHandler{
@@ -23,29 +27,28 @@ class InputHandler{
 			return instance;
 		}
 
-		inline void init() {
-			mouseState.dx = 0;
-			mouseState.dy = 0;
-			mouseState.x = 0;
-			mouseState.y = 0;
-			mouseState.yOff = 0;
-			mouseState.rightDown = false;
-			mouseState.leftDown = false;
+		static void destroy() {
+			delete InputHandler::Instance();
 		}
 
 		inline void setMouseState(int x, int y){
+			if(x != mouseState.x || y != mouseState.y)
+				mouseState.moved = true;
+			else
+				mouseState.moved = false;
 			mouseState.dx = x - mouseState.x;
 			mouseState.dy = y - mouseState.y;
 			mouseState.x = x;
 			mouseState.y = y;
 		}
 
-		inline void setLeftDown(bool v){
-			mouseState.leftDown = v;
+		inline void setKeyValue(MappedButtons mb, bool isDown){
+			buttons[mb] = isDown;
 		}
 
-		inline void setRightDown(bool v){
-			mouseState.rightDown = v;
+		inline bool isKeyDown(MappedButtons mb){
+			if(buttons.find(mb) == buttons.end()) return false;
+			else return buttons[mb];
 		}
 
 		inline MouseState getMouseState() const {
@@ -59,12 +62,19 @@ class InputHandler{
 			return mouseState.yOff;
 		}
 	private:
-		MouseState mouseState;
 
-		InputHandler() {};
-		~InputHandler() {};
+		InputHandler() {
+			mouseState.dx = 0;
+			mouseState.dy = 0;
+			mouseState.x = 0;
+			mouseState.y = 0;
+			mouseState.yOff = 0;
+			mouseState.moved = false;
+		};
 
 		static InputHandler* instance;
+		std::unordered_map<MappedButtons, bool> buttons;
+		MouseState mouseState;
 
 };
 typedef InputHandler _InputHandler;

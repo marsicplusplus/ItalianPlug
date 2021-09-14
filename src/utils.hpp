@@ -1,7 +1,9 @@
 #ifndef __UTILS_HPP__
 #define __UTILS_HPP__
 
+#include "glad/glad.h"
 #include "glm/vec3.hpp"
+#include <any>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -15,12 +17,20 @@ struct Vertex {
 };
 
 namespace Loader {
-	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
+	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces);
 	bool loadPLY(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
 };
 
 enum Options{
-	DRAW_EDGES,
+	DRAW_MODE,
+};
+
+enum DrawMode {
+	WIREFRAME = 0,			//GL_LINE
+	POINT_CLOUD, 			//GL_POINTS
+	SHADED_MESH, 			//GL_FILL
+	SHADED_MESH_WIREFRAME, 	//GL_FILL and GL_LINE
+	DRAW_MODES
 };
 
 class OptionsMap{
@@ -36,19 +46,19 @@ class OptionsMap{
 			delete instance;
 		}
 
-		inline void setOption(Options opt, bool v){
+		inline void setOption(Options opt, int v){
 			opts[opt] = v;
 		}
 
-		inline bool getOption(Options opt){
+		inline int getOption(Options opt){
 			return opts[opt];
 		}
 
 	private:
-		std::unordered_map<Options, bool> opts;
+		std::unordered_map<Options, int> opts;
 
 		OptionsMap(){
-			opts[DRAW_EDGES] = true;
+			opts[DRAW_MODE] = POINT_CLOUD;
 		};
 
 		~OptionsMap(){};

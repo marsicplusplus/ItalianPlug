@@ -4,6 +4,7 @@
 #include "utils.hpp"
 #include <vector>
 #include "glm/mat4x4.hpp"
+#include "glm/vec2.hpp"
 #include "shader.hpp"
 
 class Mesh {
@@ -17,6 +18,9 @@ class Mesh {
 
 		void draw(glm::mat4 projView);
 		void update(float dt);
+		void mouseMoved(int dx, int dy);
+
+		Shader &currentShader;
 
 	private:
 		unsigned int VAO;
@@ -25,9 +29,12 @@ class Mesh {
 
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
+		unsigned int nFaces;
 
+		Shader meshShader;
+		Shader edgeShader;
 		glm::mat4 model;
-		Shader shader;
+		glm::vec2 rotation;
 
 		void init();
 };

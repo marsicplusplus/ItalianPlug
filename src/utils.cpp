@@ -2,7 +2,7 @@
 #include "glm/geometric.hpp"
 
 namespace Loader {
-	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) {
+	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces) {
 		std::vector<Vertex> tmp;
 		std::ifstream offFile;
 
@@ -38,6 +38,7 @@ namespace Loader {
 		std::istringstream iss(line);
 		int nVertices, nIdx, nEdges;
 		iss >> nVertices >> nIdx >> nEdges;
+		nFaces = nIdx;
 
 		std::getline(offFile, line);
 		skipComments(offFile, line);
@@ -55,9 +56,9 @@ namespace Loader {
 
 		for(int i = 0; i < nIdx; i++) {
 			std::istringstream iss(line);
-			int n;
-			iss >> n;
-			for(int j = 0; j < n; j++){
+			int vertexPerFace;
+			iss >> vertexPerFace;
+			for(int j = 0; j < vertexPerFace; j++){
 				unsigned int a;
 				iss >> a;
 				vertices.push_back(tmp[a]);

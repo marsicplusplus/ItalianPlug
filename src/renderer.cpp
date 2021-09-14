@@ -61,14 +61,13 @@ bool Renderer::initSystems(){
 	fileDialog.SetTitle("Choose a Mesh");
 	fileDialog.SetTypeFilters({ ".off", ".ply" });
 
-	// Init Input Handler
-	InputHandler::Instance()->init();
+	OptionsMap::Instance()->setOption(DRAW_MODE, POINT_CLOUD);
+
 	return true;
 }
 
 void Renderer::start() {
-	glClearColor(0.4f, 0.4f, 0.4f, 1.0f);
-	
+	glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
 	float LOW_LIMIT = 1.0f/60.0f;          // Keep At/Below 60fps
 	float HIGH_LIMIT = 1.0f/10.0f;            // Keep At/Above 10fps
 
@@ -93,14 +92,20 @@ void Renderer::start() {
 			deltaTime = HIGH_LIMIT;
 		lastTime = currentTime;
 
-		// feed inputs to dear imgui, start new frame
 		if(mesh != nullptr){
 			if(!fileDialog.IsOpened()){
 				camera.update(deltaTime);
+				MouseState ms = InputHandler::Instance()->getMouseState();
+				if(ms.moved) mesh->mouseMoved(ms.dx, ms.dy);
 				mesh->update(deltaTime);
 			}
 			glm::mat4 projView = proj*camera.getViewMatrix();
 			mesh->draw(projView);
+			if(OptionsMap::Instance()->getOption(DRAW_MODE) == SHADED_MESH_WIREFRAME){
+				OptionsMap::Instance()->setOption(DRAW_MODE, WIREFRAME);
+				mesh->draw(projView);
+				OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH_WIREFRAME);
+			}
 		}
 		renderGUI();
 
@@ -111,62 +116,57 @@ void Renderer::start() {
 void Renderer::renderGUI(){
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+	{
+		ImGui::NewFrame();
 
-	// render your GUI
-	ImGui::Begin("Change Mesh");
-	if(ImGui::Button("File")){
-		fileDialog.Open();
-	}
-	if(ImGui::Button("Toggle Edges")){
-		OptionsMap::Instance()->setOption(DRAW_EDGES, !OptionsMap::Instance()->getOption(DRAW_EDGES));
-	}
-	if(ImGui::Button("Exit")){
-		glfwSetWindowShouldClose(window, true);
-	}
-	ImGui::End();
+		// render your GUI
+		ImGui::Begin("Change Mesh");
+		if(ImGui::Button("File")){
+			fileDialog.Open();
+		}
+		if(ImGui::Button("Next Drawing Mode")){
+			int mode = (OptionsMap::Instance()->getOption(DRAW_MODE));
+			OptionsMap::Instance()->setOption(DRAW_MODE, (mode + 1) % DRAW_MODES);
+		}
+		if(ImGui::Button("Exit")){
+			glfwSetWindowShouldClose(window, true);
+		}
+		ImGui::End();
 
-	fileDialog.Display();
-	if(fileDialog.HasSelected()) {
-		mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
-		camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
-		fileDialog.ClearSelected();
+		fileDialog.Display();
+		if(fileDialog.HasSelected()) {
+			mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
+			camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+			fileDialog.ClearSelected();
+		}
 	}
 	// Render dear imgui into screen
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+/**************** GLFW Callbacks ****************/
+
 void Renderer::resizeWindow(int w, int h){
 	wWidth = w;
 	wHeight = h;
 }
-
-/**************** GLFW Callbacks ****************/
 
 void Renderer::windowSizeCallback(GLFWwindow* window, int width, int height) {
 	Renderer* obj = (Renderer*)glfwGetWindowUserPointer(window);
 	obj->resizeWindow(width, height);
 }
 
-void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {}
+void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+
+}
 
 void Renderer::mouseCallback(GLFWwindow* window, int button, int action, int mods) {
 	if (button == GLFW_MOUSE_BUTTON_RIGHT){
-		if (action == GLFW_PRESS){
-			InputHandler::Instance()->setRightDown(true);
-		}
-		else if (action == GLFW_RELEASE){
-			InputHandler::Instance()->setRightDown(false);
-		}
+		InputHandler::Instance()->setKeyValue(MOUSE_RIGHT, (action == GLFW_PRESS) ? true : false);
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT){
-		if (action == GLFW_PRESS){
-			InputHandler::Instance()->setLeftDown(true);
-		}
-		else if (action == GLFW_RELEASE){
-			InputHandler::Instance()->setLeftDown(false);
-		}
+		InputHandler::Instance()->setKeyValue(MOUSE_LEFT, (action == GLFW_PRESS) ? true : false);
 	}
 }
 
