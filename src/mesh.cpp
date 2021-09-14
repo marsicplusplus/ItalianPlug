@@ -19,7 +19,7 @@ Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, st
 Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
 Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : currentShader{meshShader} {
-	Loader::loadOFF(path, vertices, indices, nFaces);
+	Loader::loadModel(path, vertices, indices, nFaces);
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -102,7 +102,7 @@ void Mesh::draw(glm::mat4 projView) {
 			break;
 	};
 	glPolygonMode(GL_FRONT_AND_BACK, drawMode);
-	glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
 }

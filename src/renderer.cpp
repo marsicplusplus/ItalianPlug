@@ -61,7 +61,8 @@ bool Renderer::initSystems(){
 	fileDialog.SetTitle("Choose a Mesh");
 	fileDialog.SetTypeFilters({ ".off", ".ply" });
 
-	OptionsMap::Instance()->setOption(DRAW_MODE, POINT_CLOUD);
+	OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH);
+	glPointSize(3.0f);
 
 	return true;
 }
