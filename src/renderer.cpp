@@ -2,6 +2,7 @@
 #include <iostream>
 #include "mesh.hpp"
 #include "glm/glm.hpp"
+#include "GLFW/glfw3.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "shader.hpp"
 #include "input_handler.hpp"
@@ -25,6 +26,53 @@ Renderer::~Renderer() {
 	OptionsMap::Instance()->destroy();
 }
 
+void GLAPIENTRY glDebugOutput(GLenum source,
+	GLenum type,
+	unsigned int id,
+	GLenum severity,
+	GLsizei length,
+	const char* message,
+	const void* userParam)
+{
+	// ignore non-significant error/warning codes
+	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+
+	std::cerr << "---------------" << std::endl;
+	std::cerr << "Debug message (" << id << "): " << message << std::endl;
+
+	switch (source)
+	{
+	case GL_DEBUG_SOURCE_API:             std::cerr << "Source: API"; break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cerr << "Source: Window System"; break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cerr << "Source: Shader Compiler"; break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cerr << "Source: Third Party"; break;
+	case GL_DEBUG_SOURCE_APPLICATION:     std::cerr << "Source: Application"; break;
+	case GL_DEBUG_SOURCE_OTHER:           std::cerr << "Source: Other"; break;
+	} std::cerr << std::endl;
+
+	switch (type)
+	{
+	case GL_DEBUG_TYPE_ERROR:               std::cerr << "Type: Error"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cerr << "Type: Deprecated Behaviour"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cerr << "Type: Undefined Behaviour"; break;
+	case GL_DEBUG_TYPE_PORTABILITY:         std::cerr << "Type: Portability"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         std::cerr << "Type: Performance"; break;
+	case GL_DEBUG_TYPE_MARKER:              std::cerr << "Type: Marker"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cerr << "Type: Push Group"; break;
+	case GL_DEBUG_TYPE_POP_GROUP:           std::cerr << "Type: Pop Group"; break;
+	case GL_DEBUG_TYPE_OTHER:               std::cerr << "Type: Other"; break;
+	} std::cerr << std::endl;
+
+	switch (severity)
+	{
+	case GL_DEBUG_SEVERITY_HIGH:         std::cerr << "Severity: high"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       std::cerr << "Severity: medium"; break;
+	case GL_DEBUG_SEVERITY_LOW:          std::cerr << "Severity: low"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cerr << "Severity: notification"; break;
+	} std::cerr << std::endl;
+	std::cerr << std::endl;
+}
+
 bool Renderer::initSystems(){
 	CHECK_ERROR(glfwInit(), "ERROR::Renderer::initSystems > Cannot initialize glfw\n", false)
 
@@ -32,6 +80,7 @@ bool Renderer::initSystems(){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
 	CHECK_ERROR(window = glfwCreateWindow(wWidth, wHeight, title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window\n", false)
 
@@ -64,8 +113,19 @@ bool Renderer::initSystems(){
 	OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH);
 	glPointSize(3.0f);
 
+	// Setup Debugging
+	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+	{
+		glEnable(GL_DEBUG_OUTPUT);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback(glDebugOutput, nullptr);
+		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	}
+
 	return true;
 }
+
 
 void Renderer::start() {
 	glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
@@ -159,7 +219,15 @@ void Renderer::windowSizeCallback(GLFWwindow* window, int width, int height) {
 }
 
 void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-
+	auto inputHandler = InputHandler::Instance();
+	if (key == GLFW_KEY_W)
+		inputHandler->setKeyValue(KEYBOARD_W, (action == GLFW_PRESS) ? true : false);
+	if (key == GLFW_KEY_A)
+		inputHandler->setKeyValue(KEYBOARD_A, (action == GLFW_PRESS) ? true : false);
+	if (key == GLFW_KEY_S)
+		inputHandler->setKeyValue(KEYBOARD_S, (action == GLFW_PRESS) ? true : false);
+	if (key == GLFW_KEY_D)
+		inputHandler->setKeyValue(KEYBOARD_D, (action == GLFW_PRESS) ? true : false);
 }
 
 void Renderer::mouseCallback(GLFWwindow* window, int button, int action, int mods) {

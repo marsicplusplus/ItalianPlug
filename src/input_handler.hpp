@@ -2,7 +2,7 @@
 #define __INPUT_HANDLER_HPP__
 
 #include <algorithm>
-#include <map>
+#include <unordered_map>
 
 struct MouseState {
 	int dx;
@@ -16,6 +16,10 @@ struct MouseState {
 enum MappedButtons {
 	MOUSE_RIGHT,
 	MOUSE_LEFT,
+	KEYBOARD_W,
+	KEYBOARD_A,
+	KEYBOARD_S,
+	KEYBOARD_D,
 };
 
 class InputHandler{

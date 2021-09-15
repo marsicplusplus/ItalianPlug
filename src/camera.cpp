@@ -41,10 +41,20 @@ void Camera::setPosition(glm::vec3 position) {
 }
 
 void Camera::update(float dt) {
-	float scroll = InputHandler::Instance()->getScrollState();
+	auto inputHandler = InputHandler::Instance();
+	float scroll = inputHandler->getScrollState();
 	if(scroll != 0){
-		position += glm::vec3(.0f, .0f, (scroll > 0) ? -10.0f : 10.0f) * dt;
+		position += glm::vec3(.0f, .0f, (scroll > 0) ? -5.0f : 5.0f) * dt;
 		InputHandler::Instance()->scrollState(0.0);
 		updateVectors();
 	}
+
+	if(inputHandler->isKeyDown(KEYBOARD_W))
+		position += speed * up;
+	if (inputHandler->isKeyDown(KEYBOARD_S))
+		position -= speed * up;
+	if (inputHandler->isKeyDown(KEYBOARD_A))
+		position -= glm::normalize(glm::cross(front, up)) * speed;
+	if (inputHandler->isKeyDown(KEYBOARD_D))
+		position += glm::normalize(glm::cross(front, up)) * speed;
 }
