@@ -2,7 +2,6 @@
 #include <iostream>
 #include "mesh.hpp"
 #include "glm/glm.hpp"
-#include "GLFW/glfw3.h"
 #include "glm/gtc/matrix_transform.hpp"
 #include "shader.hpp"
 #include "input_handler.hpp"
