@@ -29,13 +29,17 @@ class Renderer {
 		ImGui::FileBrowser fileDialog;
 		MeshPtr mesh;
 		Camera camera;
+		glm::vec3 materialDiffuse;
+
 
 		void renderGUI();
+		void setupImGuiStyle();
 
 		static void windowSizeCallback(GLFWwindow* window, int width, int height);
 		static void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 		static void mouseCallback(GLFWwindow* window, int button, int action, int mods);
 		static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
 };
 
 #endif
