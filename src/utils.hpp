@@ -17,8 +17,8 @@ struct Vertex {
 };
 
 namespace Loader {
-	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces);
-	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces);
+	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
+	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
 };
 
 enum Options{

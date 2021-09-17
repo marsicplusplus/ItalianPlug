@@ -5,7 +5,7 @@
 #include "assimp/postprocess.h"
 
 namespace Loader {
-	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces) {
+	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) {
 		std::vector<Vertex> tmp;
 		std::ifstream offFile;
 
@@ -41,7 +41,6 @@ namespace Loader {
 		std::istringstream iss(line);
 		int nVertices, nIdx, nEdges;
 		iss >> nVertices >> nIdx >> nEdges;
-		nFaces = nIdx;
 
 		std::getline(offFile, line);
 		skipComments(offFile, line);
@@ -85,7 +84,7 @@ namespace Loader {
 		}
 		return true;
 	}
-	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, unsigned int &nFaces){
+	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices){
 		Assimp::Importer importer;
 		const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenNormals);
 		if(!scene){

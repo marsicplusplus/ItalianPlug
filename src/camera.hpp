@@ -27,7 +27,7 @@ class Camera {
 		float yaw;
 		float roll;
 		float pitch;
-		const float speed = 0.02f;
+		const float speed = 2.0f;
 
 		void updateVectors();
 };

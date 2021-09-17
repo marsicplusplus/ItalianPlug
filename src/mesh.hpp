@@ -16,11 +16,13 @@ class Mesh {
 
 		~Mesh();
 
+		inline int countVertices() const {return vertices.size();}
+		inline int countFaces() const {return indices.size() / 3;}
+		inline std::string getPath() const {return path;}
+
 		void draw(glm::mat4 projView, glm::vec3 materialDiffuse);
 		void update(float dt);
-		void mouseMoved(int dx, int dy);
-
-		Shader &currentShader;
+		void resetTransformations();
 
 	private:
 		unsigned int VAO;
@@ -29,7 +31,7 @@ class Mesh {
 
 		std::vector<Vertex> vertices;
 		std::vector<unsigned int> indices;
-		unsigned int nFaces;
+		std::string path;
 
 		Shader meshShader;
 		Shader edgeShader;
@@ -37,6 +39,7 @@ class Mesh {
 		glm::vec2 rotation;
 
 		void init();
+		glm::vec3 calcBarycenter();
 };
 
 #endif

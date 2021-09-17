@@ -156,7 +156,6 @@ void Renderer::start() {
 			if(!fileDialog.IsOpened()){
 				camera.update(deltaTime);
 				MouseState ms = InputHandler::Instance()->getMouseState();
-				if(ms.moved) mesh->mouseMoved(ms.dx, ms.dy);
 				mesh->update(deltaTime);
 			}
 			glm::mat4 projView = proj*camera.getViewMatrix();
@@ -176,43 +175,45 @@ void Renderer::start() {
 void Renderer::renderGUI(){
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+	ImGui::SetNextWindowPos(ImVec2(.0f, .0f));
+	ImGui::SetNextWindowSize(ImVec2(wWidth / 6, wHeight));
 	{
-		ImGui::NewFrame();
-		ImGui::Begin("Mesh Info", nullptr,
-			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize);
-
-		ImGui::ColorEdit3("My Color", &materialDiffuse[0]);
-
-		if (ImGui::CollapsingHeader("Load Mesh", ImGuiTreeNodeFlags_DefaultOpen)) {
-			ImGui::Spacing();
-			if (ImGui::Button("File")) {
+		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+		// render your GUI
+    	if (ImGui::CollapsingHeader("File")){
+			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
+			if(ImGui::Button("Load Mesh")){
 				fileDialog.Open();
 			}
-
-			if (ImGui::Button("Exit")) {
+			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
+			if(ImGui::Button("Exit")){
 				glfwSetWindowShouldClose(window, true);
 			}
+			fileDialog.Display();
+			if(fileDialog.HasSelected()) {
+				mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
+				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+				fileDialog.ClearSelected();
+			}
 		}
-
-		ImGui::Spacing();
-		ImGui::Spacing();
-
-		if (ImGui::CollapsingHeader("Display")) {
-			ImGui::Spacing();
-			if (ImGui::Button("Next Drawing Mode")) {
+    	if (ImGui::CollapsingHeader("Mesh")){
+			ImGui::Text((mesh) ? mesh->getPath().c_str() : "Load a mesh!");
+			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
+			ImGui::Text("# of faces: %d", (mesh) ? mesh->countFaces() : 0);
+			ImGui::Separator();
+			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
+			if(ImGui::Button("Drawing Mode")){
 				int mode = (OptionsMap::Instance()->getOption(DRAW_MODE));
 				OptionsMap::Instance()->setOption(DRAW_MODE, (mode + 1) % DRAW_MODES);
 			}
+			if(ImGui::Button("Reset View")){
+				mesh->resetTransformations();
+				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+			}
+			ImGui::ColorEdit3("Mesh Color", &materialDiffuse[0]);
 		}
-
 		ImGui::End();
-
-		fileDialog.Display();
-		if(fileDialog.HasSelected()) {
-			mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
-			camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
-			fileDialog.ClearSelected();
-		}
 	}
 	// Render dear imgui into screen
 	ImGui::Render();

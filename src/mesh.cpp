@@ -6,7 +6,7 @@
 
 Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) : Mesh(vertices, indices, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader) : vertices(std::move(vertices)), indices(std::move(indices)), currentShader{meshShader} {
+Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader) : vertices(std::move(vertices)), indices(std::move(indices)), path{"None"} {
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -18,8 +18,8 @@ Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, st
 
 Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : currentShader{meshShader} {
-	Loader::loadModel(path, vertices, indices, nFaces);
+Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : path{path} {
+	Loader::loadModel(path, vertices, indices);
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -38,6 +38,14 @@ Mesh::~Mesh(){
 void Mesh::init() {
 	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
+
+	glm::vec3 b = calcBarycenter();
+	while(b.x > 0.005f && b.y > 0.005f && b.z > 0.005f){
+		for(auto &v : vertices){
+			v.pos -= b;
+		}
+		b = calcBarycenter();
+	}
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -58,9 +66,6 @@ void Mesh::init() {
 	glEnableVertexAttribArray(1);	
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3*sizeof(float)));
 
-}
-
-void Mesh::mouseMoved(int dx, int dy){
 }
 
 void Mesh::update(float dt){
@@ -105,4 +110,24 @@ void Mesh::draw(glm::mat4 projView, glm::vec3 materialDiffuse) {
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
+}
+
+void Mesh::resetTransformations(){
+	rotation = glm::vec2(0.0f);
+}
+
+glm::vec3 Mesh::calcBarycenter() {
+	glm::vec3 result = glm::vec3(0.0f);
+	float m = 0;
+	for(int i = 0; i < indices.size(); i += 3){
+		glm::vec3& v1 = vertices[indices[i]].pos;
+		glm::vec3& v2 = vertices[indices[i]].pos;
+		glm::vec3& v3 = vertices[indices[i]].pos;
+		glm::vec3 t1 = v2-v1;
+		glm::vec3 t2 = v3-v1;
+		float area = glm::cross(t1, t2).length();
+		m += area;
+		result += area * (v1 + v2 + v3)/3.0f;
+	}
+	return result / m;
 }

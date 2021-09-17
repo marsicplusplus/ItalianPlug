@@ -34,8 +34,8 @@ glm::vec3 Camera::getPosition() const {
 	return position;
 }
 
-void Camera::setPosition(glm::vec3 position) {
-	position = position;
+void Camera::setPosition(glm::vec3 pos) {
+	position = pos;
 	InputHandler::Instance()->scrollState(0.0);
 	updateVectors();
 }
@@ -50,11 +50,11 @@ void Camera::update(float dt) {
 	}
 
 	if(inputHandler->isKeyDown(KEYBOARD_W))
-		position += speed * up;
+		position += speed * up * dt;
 	if (inputHandler->isKeyDown(KEYBOARD_S))
-		position -= speed * up;
+		position -= speed * up * dt;
 	if (inputHandler->isKeyDown(KEYBOARD_A))
-		position -= glm::normalize(glm::cross(front, up)) * speed;
+		position -= glm::normalize(glm::cross(front, up)) * speed * dt;
 	if (inputHandler->isKeyDown(KEYBOARD_D))
-		position += glm::normalize(glm::cross(front, up)) * speed;
+		position += glm::normalize(glm::cross(front, up)) * speed * dt;
 }
