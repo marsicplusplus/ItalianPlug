@@ -6,7 +6,7 @@
 
 Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) : Mesh(vertices, indices, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader) : vertices(std::move(vertices)), indices(std::move(indices)), currentShader{meshShader} {
+Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader) : vertices(std::move(vertices)), indices(std::move(indices)), currentShader{meshShader}, path{"None"} {
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -18,8 +18,8 @@ Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, st
 
 Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : currentShader{meshShader} {
-	Loader::loadModel(path, vertices, indices, nFaces);
+Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : currentShader{meshShader}, path{path} {
+	Loader::loadModel(path, vertices, indices);
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -105,4 +105,8 @@ void Mesh::draw(glm::mat4 projView) {
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
+}
+
+void Mesh::resetTransformations(){
+	rotation = glm::vec2(0.0f);
 }
