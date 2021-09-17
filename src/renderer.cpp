@@ -156,7 +156,6 @@ void Renderer::start() {
 			if(!fileDialog.IsOpened()){
 				camera.update(deltaTime);
 				MouseState ms = InputHandler::Instance()->getMouseState();
-				if(ms.moved) mesh->mouseMoved(ms.dx, ms.dy);
 				mesh->update(deltaTime);
 			}
 			glm::mat4 projView = proj*camera.getViewMatrix();

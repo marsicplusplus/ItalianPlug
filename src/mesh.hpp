@@ -22,10 +22,7 @@ class Mesh {
 
 		void draw(glm::mat4 projView);
 		void update(float dt);
-		void mouseMoved(int dx, int dy);
 		void resetTransformations();
-
-		Shader &currentShader;
 
 	private:
 		unsigned int VAO;
@@ -42,6 +39,7 @@ class Mesh {
 		glm::vec2 rotation;
 
 		void init();
+		glm::vec3 calcBarycenter();
 };
 
 #endif
