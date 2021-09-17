@@ -105,6 +105,7 @@ bool Renderer::initSystems(){
 	// Setup Dear ImGui style
 	setupImGuiStyle();
 
+	materialDiffuse = glm::vec3(0.8f, 0.4f, 0.4f);
 	// (optional) set browser properties
 	fileDialog.SetTitle("Choose a Mesh");
 	fileDialog.SetTypeFilters({ ".off", ".ply" });
@@ -211,6 +212,7 @@ void Renderer::renderGUI(){
 				mesh->resetTransformations();
 				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 			}
+			ImGui::Text("Colour Picker");
 			ImGui::ColorEdit3("Mesh Color", &materialDiffuse[0]);
 		}
 		ImGui::End();
