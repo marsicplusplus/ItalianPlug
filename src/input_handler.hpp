@@ -20,6 +20,7 @@ enum MappedButtons {
 	KEYBOARD_A,
 	KEYBOARD_S,
 	KEYBOARD_D,
+	KEYBOARD_T,
 };
 
 class InputHandler{

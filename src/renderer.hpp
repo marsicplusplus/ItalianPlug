@@ -23,6 +23,7 @@ class Renderer {
 		bool initSystems();
 		void start();
 		void resizeWindow(int w, int h);
+		void setMesh(std::string path);
 
 	private:
 		GLFWwindow *window;

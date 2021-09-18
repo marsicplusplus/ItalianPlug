@@ -31,8 +31,7 @@ void GLAPIENTRY glDebugOutput(GLenum source,
 	GLenum severity,
 	GLsizei length,
 	const char* message,
-	const void* userParam)
-{
+	const void* userParam) {
 	// ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
@@ -113,18 +112,20 @@ bool Renderer::initSystems(){
 	glPointSize(3.0f);
 
 	// Setup Debugging
-	int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-	if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-	{
-		glEnable(GL_DEBUG_OUTPUT);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		glDebugMessageCallback(glDebugOutput, nullptr);
-		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-	}
+	//int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+	//if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+		//glEnable(GL_DEBUG_OUTPUT);
+		//glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		//glDebugMessageCallback(glDebugOutput, nullptr);
+		//glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	//}
 
 	return true;
 }
 
+void Renderer::setMesh(std::string path){
+	mesh = MeshMap::Instance()->getMesh(path);
+}
 
 void Renderer::start() {
 	glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
@@ -134,13 +135,11 @@ void Renderer::start() {
 	float lastTime = glfwGetTime();
 
 	glm::mat4 proj = glm::perspective(camera.getFOV(), (float)wWidth/(float)wHeight, 0.1f, 100.0f);
-
 	while(!glfwWindowShouldClose(window)){
 		glfwPollEvents();
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
 		InputHandler::Instance()->setMouseState(xpos, ypos);
-
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, wWidth, wHeight);
 
@@ -159,15 +158,14 @@ void Renderer::start() {
 				mesh->update(deltaTime);
 			}
 			glm::mat4 projView = proj*camera.getViewMatrix();
-			mesh->draw(projView);
+			mesh->draw(projView, camera.getPosition());
 			if(OptionsMap::Instance()->getOption(DRAW_MODE) == SHADED_MESH_WIREFRAME){
 				OptionsMap::Instance()->setOption(DRAW_MODE, WIREFRAME);
-				mesh->draw(projView);
+				mesh->draw(projView, camera.getPosition());
 				OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH_WIREFRAME);
 			}
 		}
 		renderGUI();
-
 		glfwSwapBuffers(window);
 	}
 }
@@ -177,16 +175,14 @@ void Renderer::renderGUI(){
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos(ImVec2(.0f, .0f));
-	ImGui::SetNextWindowSize(ImVec2(wWidth / 6, wHeight));
+	ImGui::SetNextWindowSize(ImVec2(wWidth / 5, wHeight));
 	{
 		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		// render your GUI
     	if (ImGui::CollapsingHeader("File")){
-			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
 			if(ImGui::Button("Load Mesh")){
 				fileDialog.Open();
 			}
-			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
 			if(ImGui::Button("Exit")){
 				glfwSetWindowShouldClose(window, true);
 			}
@@ -202,10 +198,20 @@ void Renderer::renderGUI(){
 			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
 			ImGui::Text("# of faces: %d", (mesh) ? mesh->countFaces() : 0);
 			ImGui::Separator();
-			ImGui::PushItemWidth(wWidth / 6 - 5.0f);
-			if(ImGui::Button("Drawing Mode")){
-				int mode = (OptionsMap::Instance()->getOption(DRAW_MODE));
-				OptionsMap::Instance()->setOption(DRAW_MODE, (mode + 1) % DRAW_MODES);
+			const char* items[] = {"Wireframe", "Point Cloud", "Shaded Mesh", "Shaded Mesh + Wireframe"};
+			static int currentIdx = OptionsMap::Instance()->getOption(DRAW_MODE);
+			const char* preview = items[currentIdx];
+			if (ImGui::BeginCombo("## empty", preview, 0)) {
+				for (int n = 0; n < IM_ARRAYSIZE(items); n++) {
+					const bool isSelected = (currentIdx == n);
+					if (ImGui::Selectable(items[n], isSelected)){
+						currentIdx = n;
+						OptionsMap::Instance()->setOption(DRAW_MODE, n);
+					}
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
 			}
 			if(ImGui::Button("Reset View")){
 				mesh->resetTransformations();
@@ -241,6 +247,8 @@ void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int a
 		inputHandler->setKeyValue(KEYBOARD_S, (action == GLFW_PRESS) ? true : false);
 	if (key == GLFW_KEY_D)
 		inputHandler->setKeyValue(KEYBOARD_D, (action == GLFW_PRESS) ? true : false);
+	if (key == GLFW_KEY_T)
+		inputHandler->setKeyValue(KEYBOARD_T, (action == GLFW_PRESS) ? true : false);
 }
 
 void Renderer::mouseCallback(GLFWwindow* window, int button, int action, int mods) {

@@ -30,6 +30,14 @@ class MeshMap {
 				return mesh->second;
 		}
 
+		inline void unloadMesh(std::string path) {
+			std::size_t h = std::hash<std::string>{}(path);
+			auto mesh = map.find(h);
+			if(mesh != map.end()) {
+				map.erase(mesh);
+			}
+		}
+
 		inline void destroy(){
 			map.clear();
 			delete instance;
