@@ -20,7 +20,7 @@ class Mesh {
 		inline int countFaces() const {return indices.size() / 3;}
 		inline std::string getPath() const {return path;}
 
-		void draw(glm::mat4 projView, glm::vec3 materialDiffuse);
+		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
 		void resetTransformations();
 

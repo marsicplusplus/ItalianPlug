@@ -81,7 +81,7 @@ void Mesh::update(float dt){
 	model = glm::rotate(model, rotation.y * dt, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
-void Mesh::draw(glm::mat4 projView, glm::vec3 materialDiffuse) {
+void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, const glm::vec3 &cameraPos) {
 	glBindVertexArray(VAO);
 	unsigned int drawMode = GL_FILL;
 	switch(OptionsMap::Instance()->getOption(DRAW_MODE)){
@@ -102,7 +102,10 @@ void Mesh::draw(glm::mat4 projView, glm::vec3 materialDiffuse) {
 			meshShader.use();
 			meshShader.setUniform("projView", projView);
 			meshShader.setUniform("model", model); 
+			meshShader.setUniform("viewPos", cameraPos); 
 			meshShader.setUniform("material.diffuse", materialDiffuse);
+			meshShader.setUniform("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+			meshShader.setUniform("material.shininess", 32.0f);
 			drawMode = GL_FILL;
 			break;
 	};

@@ -86,7 +86,7 @@ namespace Loader {
 	}
 	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices){
 		Assimp::Importer importer;
-		const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenNormals);
+		const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality);
 		if(!scene){
 			// TODO: LOG ERROR
 			return false;

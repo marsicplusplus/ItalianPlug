@@ -12,5 +12,5 @@ out vec3 fragPos;
 void main(void){
 	gl_Position = projView * model * vec4(aPos, 1.0);
 	fragPos = vec3(model * vec4(aPos, 1.0));
-	norm = normalize(projView * model * vec4(aNorm, 0.0)).xyz;
+	norm = mat3(transpose(inverse(model))) * aNorm;
 }
