@@ -219,7 +219,7 @@ void Renderer::renderGUI(){
 				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 			}
 			ImGui::Text("Colour Picker");
-			ImGui::ColorEdit3("Mesh Color", &materialDiffuse[0]);
+			ImGui::ColorEdit3("", &materialDiffuse[0]);
 		}
 		ImGui::End();
 	}
