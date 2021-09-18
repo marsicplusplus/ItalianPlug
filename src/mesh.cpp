@@ -69,7 +69,6 @@ void Mesh::init() {
 }
 
 void Mesh::update(float dt){
-	model = glm::mat4(1.0f);
 	MouseState ms = InputHandler::Instance()->getMouseState();
 	if(InputHandler::Instance()->isKeyDown(MOUSE_RIGHT)){
 		if(ms.moved){
@@ -77,8 +76,16 @@ void Mesh::update(float dt){
 			rotation.y += 2.0f * ms.dx;
 		}
 	}
-	model = glm::rotate(model, rotation.x * dt, glm::vec3(1.0f, 0.0f, 0.0f));
-	model = glm::rotate(model, rotation.y * dt, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	glm::vec4 xAxisViewSpace = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	glm::vec4 xAxisViewSpaceToModelSpace = xAxisViewSpace * model;
+
+	glm::vec4 yAxisViewSpace = glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+	glm::vec4 yAxisViewSpaceToModelSpace = yAxisViewSpace * model;
+
+	model = glm::rotate(model, rotation.x * dt, glm::vec3(xAxisViewSpaceToModelSpace.x, xAxisViewSpaceToModelSpace.y, xAxisViewSpaceToModelSpace.z));
+	model = glm::rotate(model, rotation.y * dt, glm::vec3(yAxisViewSpaceToModelSpace.x, yAxisViewSpaceToModelSpace.y, yAxisViewSpaceToModelSpace.z));
+	rotation = {0.0f, 0.0f};
 }
 
 void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, const glm::vec3 &cameraPos) {
