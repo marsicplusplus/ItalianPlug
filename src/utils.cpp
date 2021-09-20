@@ -142,7 +142,7 @@ namespace Stats {
 		const aiMesh* paiMesh = scene->mMeshes[0];
 		const auto primitiveTypes = paiMesh->mPrimitiveTypes;
 		std::string faceType = "";
-		if (primitiveTypes & aiPrimitiveType_TRIANGLE & aiPrimitiveType_POLYGON) {
+		if (primitiveTypes & aiPrimitiveType_TRIANGLE && primitiveTypes & aiPrimitiveType_POLYGON) {
 			faceType = "Both";
 		}
 		else if (primitiveTypes & aiPrimitiveType_TRIANGLE) {
@@ -170,11 +170,24 @@ namespace Stats {
 		std::ofstream myfile;
 		myfile.open("example.csv");
 
-		std::string offExt(".OFF");
-		std::string plyExt(".PLY");
+		myfile <<
+			"Class Type" << "," <<
+			"Number of Vertices" << "," <<
+			"Number of Faces" << "," <<
+			"Types of Faces" << "," <<
+			"Min Bounding Box: X" << "," <<
+			"Min Bounding Box: Y" << "," <<
+			"Min Bounding Box: Z" << "," <<
+			"Max Bounding Box: X" << "," <<
+			"Max Bounding Box: Y" << "," <<
+			"Max Bounding Box: Z" << std::endl;
+
+		std::string offExt(".off");
+		std::string plyExt(".ply");
 		for (auto& p : std::filesystem::recursive_directory_iterator(databasePath))
 		{
-			if (p.path().extension() == offExt || p.path().extension() == plyExt) {
+			std::string extension = p.path().extension().string();
+			if (extension == offExt || extension == plyExt) {
 				ModelStatistics modelStats = getModelStatistics(p.path().string());
 				myfile <<
 					modelStats.classType << "," <<
