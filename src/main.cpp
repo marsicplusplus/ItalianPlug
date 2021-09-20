@@ -7,6 +7,7 @@ int main(int argc, char* args[]) {
 	bool dirStats = false;
 	bool hasMesh = false;
 	std::string meshPath;
+	std::string dirPath;
 	for(int i = 1; i < argc; i++){
 		if(strncmp(args[i], "--help", strlen("--help")) == 0){
 			help = true;	
@@ -17,6 +18,16 @@ int main(int argc, char* args[]) {
 				meshPath = args[i+1];
 			} else {
 				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh!\n" << std::flush;
+				help = true;
+			}
+		}
+		if (strncmp(args[i], "--dir-stats", strlen("--dir-stats")) == 0) {
+			if (i + 1 <= argc) {
+				dirStats = true;
+				dirPath = args[i + 1];
+			}
+			else {
+				std::cerr << "ERROR: it seems like you forgot to pass me the path of the database!\n" << std::flush;
 				help = true;
 			}
 		}
@@ -32,7 +43,9 @@ int main(int argc, char* args[]) {
 		return 0;
 	}
 	if(dirStats){
+		Stats::getDatabaseStatistics(dirPath);
 	} else if (meshStats) {
+		Stats::getModelStatistics(meshPath);
 	} else {
 		Renderer rend(1024, 720, "RendererGL");
 		rend.initSystems();

@@ -16,10 +16,24 @@ struct Vertex {
 	glm::vec3 normal;
 };
 
+struct ModelStatistics {
+	std::string classType;
+	unsigned int numVertices;
+	unsigned int numFaces;
+	std::string faceType;
+	glm::vec3 minBoundingBox;
+	glm::vec3 maxBoundingBox;
+};
+
 namespace Loader {
 	bool parseOFF(std::string fileName);
 	bool parsePLY(std::string fileName);
 	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
+};
+
+namespace Stats {
+	ModelStatistics getModelStatistics(std::string modelFilePath);
+	void getDatabaseStatistics(std::string databasePath);
 };
 
 enum Options{
