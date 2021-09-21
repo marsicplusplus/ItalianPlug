@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "spdlog/spdlog.h"
 
 Shader::Shader(){
 	programID = glCreateProgram();
@@ -15,7 +16,7 @@ int Shader::loadShader(const char* filePath, int type){
 	
 	shaderFile.open(filePath);
 	if(!shaderStream){
-		std::cerr << "OPENSDL::SHADER::Shader::Cannot load shader file: " << filePath << std::endl;
+		spdlog::error("OPENSDL::SHADER::Shader::Cannot load shader file: {}", filePath);
 		exit(1);
 	}
 	shaderStream << shaderFile.rdbuf();
@@ -75,7 +76,7 @@ int Shader::checkCompileErrors(unsigned int shader, std::string type) {
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 		if(!success) {
 			glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-			std::cerr << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			spdlog::error("ERROR::SHADER_COMPILATION_ERROR of type: {} \n {} \n  -- --------------------------------------------------- -- \n", type, infoLog);
 			return -1;
 		}
 	}
@@ -83,7 +84,7 @@ int Shader::checkCompileErrors(unsigned int shader, std::string type) {
 		glGetProgramiv(shader, GL_LINK_STATUS, &success);
 		if(!success) {
 			glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-			std::cerr << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+			spdlog::error("ERROR::SHADER_COMPILATION_ERROR of type: {} \n {} \n  -- --------------------------------------------------- -- \n", type, infoLog);
 			return -1;
 		}
 	}

@@ -8,10 +8,11 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
 #include "camera.hpp"
+#include "spdlog/spdlog.h"
 #include <memory>
 
 #define CHECK_ERROR(COND, MESSAGE, RET) if(!(COND)){\
-	std::cerr << (MESSAGE);\
+	spdlog::error((MESSAGE));\
 	return (RET);\
 }
 
@@ -35,44 +36,42 @@ void GLAPIENTRY glDebugOutput(GLenum source,
 	// ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-	std::cerr << "---------------" << std::endl;
-	std::cerr << "Debug message (" << id << "): " << message << std::endl;
+	spdlog::error("Debug message ({}): {}", id, message);
+	
+	std::stringstream ss;
+	switch (source) {
+	case GL_DEBUG_SOURCE_API:             ss << "Source: API"; break;
+	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   ss << "Source: Window System"; break;
+	case GL_DEBUG_SOURCE_SHADER_COMPILER: ss << "Source: Shader Compiler"; break;
+	case GL_DEBUG_SOURCE_THIRD_PARTY:     ss << "Source: Third Party"; break;
+	case GL_DEBUG_SOURCE_APPLICATION:     ss << "Source: Application"; break;
+	case GL_DEBUG_SOURCE_OTHER:           ss << "Source: Other"; break;
+	} ss << std::endl;
 
-	switch (source)
-	{
-	case GL_DEBUG_SOURCE_API:             std::cerr << "Source: API"; break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cerr << "Source: Window System"; break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cerr << "Source: Shader Compiler"; break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cerr << "Source: Third Party"; break;
-	case GL_DEBUG_SOURCE_APPLICATION:     std::cerr << "Source: Application"; break;
-	case GL_DEBUG_SOURCE_OTHER:           std::cerr << "Source: Other"; break;
-	} std::cerr << std::endl;
+	switch (type) {
+	case GL_DEBUG_TYPE_ERROR:               ss << "Type: Error"; break;
+	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: ss << "Type: Deprecated Behaviour"; break;
+	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  ss << "Type: Undefined Behaviour"; break;
+	case GL_DEBUG_TYPE_PORTABILITY:         ss << "Type: Portability"; break;
+	case GL_DEBUG_TYPE_PERFORMANCE:         ss << "Type: Performance"; break;
+	case GL_DEBUG_TYPE_MARKER:              ss << "Type: Marker"; break;
+	case GL_DEBUG_TYPE_PUSH_GROUP:          ss << "Type: Push Group"; break;
+	case GL_DEBUG_TYPE_POP_GROUP:           ss << "Type: Pop Group"; break;
+	case GL_DEBUG_TYPE_OTHER:               ss << "Type: Other"; break;
+	} ss << std::endl;
 
-	switch (type)
-	{
-	case GL_DEBUG_TYPE_ERROR:               std::cerr << "Type: Error"; break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cerr << "Type: Deprecated Behaviour"; break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cerr << "Type: Undefined Behaviour"; break;
-	case GL_DEBUG_TYPE_PORTABILITY:         std::cerr << "Type: Portability"; break;
-	case GL_DEBUG_TYPE_PERFORMANCE:         std::cerr << "Type: Performance"; break;
-	case GL_DEBUG_TYPE_MARKER:              std::cerr << "Type: Marker"; break;
-	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cerr << "Type: Push Group"; break;
-	case GL_DEBUG_TYPE_POP_GROUP:           std::cerr << "Type: Pop Group"; break;
-	case GL_DEBUG_TYPE_OTHER:               std::cerr << "Type: Other"; break;
-	} std::cerr << std::endl;
-
-	switch (severity)
-	{
-	case GL_DEBUG_SEVERITY_HIGH:         std::cerr << "Severity: high"; break;
-	case GL_DEBUG_SEVERITY_MEDIUM:       std::cerr << "Severity: medium"; break;
-	case GL_DEBUG_SEVERITY_LOW:          std::cerr << "Severity: low"; break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cerr << "Severity: notification"; break;
-	} std::cerr << std::endl;
-	std::cerr << std::endl;
+	switch (severity) {
+	case GL_DEBUG_SEVERITY_HIGH:         ss << "Severity: high"; break;
+	case GL_DEBUG_SEVERITY_MEDIUM:       ss << "Severity: medium"; break;
+	case GL_DEBUG_SEVERITY_LOW:          ss << "Severity: low"; break;
+	case GL_DEBUG_SEVERITY_NOTIFICATION: ss << "Severity: notification"; break;
+	} ss << std::endl;
+	ss << std::endl;
+	spdlog::error(ss.str());
 }
 
 bool Renderer::initSystems(){
-	CHECK_ERROR(glfwInit(), "ERROR::Renderer::initSystems > Cannot initialize glfw\n", false)
+	CHECK_ERROR(glfwInit(), "ERROR::Renderer::initSystems > Cannot initialize glfw", false)
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -80,7 +79,7 @@ bool Renderer::initSystems(){
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-	CHECK_ERROR(window = glfwCreateWindow(wWidth, wHeight, title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window\n", false)
+	CHECK_ERROR(window = glfwCreateWindow(wWidth, wHeight, title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window", false)
 
 	glfwMakeContextCurrent(window);
 	glfwSetWindowUserPointer(window, this);

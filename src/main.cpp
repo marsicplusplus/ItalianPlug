@@ -1,7 +1,10 @@
 #include "renderer.hpp"
 #include "utils.hpp"
+#include "spdlog/spdlog.h"
 
 int main(int argc, char* args[]) {
+	spdlog::set_level(spdlog::level::info); // Set global log level to debug
+	spdlog::info("Starting {} with {} arguments", args[0], argc);
 	bool help = false;
 	bool meshStats = false;
 	bool dirStats = false;
@@ -12,12 +15,13 @@ int main(int argc, char* args[]) {
 			help = true;	
 		}
 		if(strncmp(args[i], "--preload-mesh", strlen("--preload-mesh")) == 0){
-			if(i + 1 <= argc){
+			if(i + 1 < argc){
 				hasMesh = true;
 				meshPath = args[i+1];
 			} else {
-				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh!\n" << std::flush;
+				spdlog::error("ERROR: it seems like you forgot to pass me the path of the mesh!");
 				help = true;
+				break;
 			}
 		}
 	}

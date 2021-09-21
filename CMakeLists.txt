@@ -12,6 +12,7 @@ SET (ASSIMP_BUILD_TESTS OFF)
 add_subdirectory( external/glfw )
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory( external/assimp )
+add_subdirectory( external/spdlog )
 
 include_directories( 
 	external/glfw/include 
@@ -19,6 +20,7 @@ include_directories(
 	external/glad/include
 	external/imgui
 	external/imgui/backends
+	external/spdlog/include
 	)
 
 if( MSVC )

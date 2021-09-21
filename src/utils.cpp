@@ -3,6 +3,7 @@
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
+#include "spdlog/spdlog.h"
 
 namespace Loader {
 	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) {
@@ -11,7 +12,7 @@ namespace Loader {
 
 		offFile.open(fileName);
 		if(!offFile){
-			std::cerr << "loadOFF::Cannot load OFF file at: " << fileName << std::endl;
+			spdlog::error("loadOFF::Cannot load OFF file at: {}", fileName);
 			return false;
 		}
 		auto skipComments = [](std::ifstream& file, std::string &line) {
@@ -92,9 +93,9 @@ namespace Loader {
 			return false;
 		}
 		const aiMesh *paiMesh = scene->mMeshes[0];
-		std::cout << fileName << std::endl;
-		std::cout << "Num Vertices: " << paiMesh->mNumVertices << std::endl;
-		std::cout << "Num Faces: " << paiMesh->mNumFaces << std::endl;
+		spdlog::info("Loaded {}", fileName);
+		spdlog::info("Num Vertices: {}", paiMesh->mNumVertices);
+		spdlog::info("Num Faces: {}", paiMesh->mNumFaces);
 		for (int i = 0 ; i < paiMesh->mNumVertices ; i++) {
 			const aiVector3D* pPos = &(paiMesh->mVertices[i]);
 			const aiVector3D* pNormal = &(paiMesh->mNormals[i]);
