@@ -1,6 +1,9 @@
 #include "utils.hpp"
 #include "glm/geometric.hpp"
 #include <filesystem>
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
 
 namespace Stats {
 	std::string getParentFolderName(std::string filePath) {
@@ -13,36 +16,36 @@ namespace Stats {
 	}
 
 	ModelStatistics getModelStatistics(std::string modelFilePath) {
-		//Assimp::Importer importer;
+		Assimp::Importer importer;
 
-		//const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_GenBoundingBoxes);
-		//if (!scene) {
-			//// TODO: LOG ERROR
-			//return ModelStatistics{};
-		//}
+		const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_GenBoundingBoxes);
+		if (!scene) {
+			// TODO: LOG ERROR
+			return ModelStatistics{};
+		}
 
-		//const aiMesh* paiMesh = scene->mMeshes[0];
-		//const auto primitiveTypes = paiMesh->mPrimitiveTypes;
-		//std::string faceType = "";
-		//if (primitiveTypes & aiPrimitiveType_TRIANGLE && primitiveTypes & aiPrimitiveType_POLYGON) {
-			//faceType = "Both";
-		//}
-		//else if (primitiveTypes & aiPrimitiveType_TRIANGLE) {
-			//faceType = "Only Triangles";
-		//}
-		//else if (primitiveTypes & aiPrimitiveType_POLYGON) {
-			//faceType = "Only Polygons";
-		//}
-		//std::cout << modelFilePath << std::endl;
-		//const auto classType = getParentFolderName(modelFilePath);
-		//ModelStatistics modelStats = ModelStatistics{
-			//classType,
-			//paiMesh->mNumVertices,
-			//paiMesh->mNumFaces,
-			//faceType,
-			//glm::vec3(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z),
-			//glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
-		//};
+		const aiMesh* paiMesh = scene->mMeshes[0];
+		const auto primitiveTypes = paiMesh->mPrimitiveTypes;
+		std::string faceType = "";
+		if (primitiveTypes & aiPrimitiveType_TRIANGLE && primitiveTypes & aiPrimitiveType_POLYGON) {
+			faceType = "Both";
+		}
+		else if (primitiveTypes & aiPrimitiveType_TRIANGLE) {
+			faceType = "Only Triangles";
+		}
+		else if (primitiveTypes & aiPrimitiveType_POLYGON) {
+			faceType = "Only Polygons";
+		}
+		std::cout << modelFilePath << std::endl;
+		const auto classType = getParentFolderName(modelFilePath);
+		ModelStatistics modelStats = ModelStatistics{
+			classType,
+			paiMesh->mNumVertices,
+			paiMesh->mNumFaces,
+			faceType,
+			glm::vec3(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z),
+			glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
+		};
 
 		return ModelStatistics{};
 	}

@@ -6,9 +6,11 @@ set( GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_BUILD_EXAMPLES OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_BUILD_TESTS OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_INSTALL OFF CACHE BOOL "GLFW lib only" FORCE)
+SET (ASSIMP_BUILD_TESTS OFF)
 
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libIGL as static library" ON)
 add_subdirectory( external/glfw )
+add_subdirectory( external/assimp )
 
 include_directories( 
 	external/glfw/include 
@@ -43,7 +45,7 @@ set( SRC
 	)
 
 add_executable( ItalianPlug WIN32 ${SRC} )
-target_link_libraries( ItalianPlug glfw)
+target_link_libraries( ItalianPlug glfw assimp)
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( !MSVC )

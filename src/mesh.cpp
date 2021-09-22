@@ -32,7 +32,7 @@ Mesh::~Mesh(){
 }
 
 void Mesh::writeMesh(std::string nPath){
-	igl::writeOFF(path, V, F);
+	igl::writeOFF(nPath, V, F);
 }
 
 void Mesh::writeMesh(){
