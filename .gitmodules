@@ -15,4 +15,4 @@
 	url = https://github.com/libigl/libigl
 [submodule "external/eigen"]
 	path = external/eigen
-	url = https://github.com/libigl/eigen
+	url = https://github.com/libigl/eigen/

@@ -9,7 +9,6 @@ set( GLFW_INSTALL OFF CACHE BOOL "GLFW lib only" FORCE)
 
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libIGL as static library" ON)
 add_subdirectory( external/glfw )
-#add_subdirectory( external/libigl )
 
 include_directories( 
 	external/glfw/include 
@@ -18,7 +17,6 @@ include_directories(
 	external/imgui
 	external/imgui/backends
 	external/libigl/include
-	#/usr/include/eigen3
 	external/eigen
 	)
 
