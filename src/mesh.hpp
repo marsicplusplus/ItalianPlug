@@ -10,20 +10,20 @@
 
 class Mesh {
 	public:
-		Mesh(std::string path);
-		Mesh(std::string path, std::string vShader, std::string fShader);
+		Mesh(std::filesystem::path path);
+		Mesh(std::filesystem::path path, std::string vShader, std::string fShader);
 
 		~Mesh();
 
 		inline int countVertices() const {return V.rows();}
 		inline int countFaces() const {return F.rows();}
-		inline std::string getPath() const {return path;}
+		inline std::filesystem::path getPath() const {return meshPath;}
 
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
 		void resetTransformations();
-		void writeMesh(std::string nPath);
 		void writeMesh();
+		void writeMesh(std::filesystem::path filePath);
 		void upsample(int n = 1);
 
 	private:
@@ -34,7 +34,7 @@ class Mesh {
 		Eigen::MatrixXf V;
 		Eigen::MatrixXi F;
 		Eigen::MatrixXf N;
-		std::string path;
+		std::filesystem::path meshPath;
 
 		Shader meshShader;
 		Shader edgeShader;

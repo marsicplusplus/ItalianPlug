@@ -4,6 +4,81 @@
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
+#include "igl/writeOFF.h"
+#include "igl/writePLY.h"
+#include "igl/readOFF.h"
+#include "igl/readPLY.h"
+
+
+namespace Importer {
+	bool importModel(const std::filesystem::path& filePath, Eigen::MatrixXf& V, Eigen::MatrixXi& F) {
+
+		// First try to import the model using libigl if that fails then we try with assimp
+		bool modelImportedWithLibigl = false;
+		if (filePath.extension() == ".ply") {
+			modelImportedWithLibigl = igl::readPLY(filePath.string(), V, F);
+		} else if (filePath.extension() == ".off") {
+			modelImportedWithLibigl = igl::readOFF(filePath.string(), V, F);
+		} else {
+			// TODO: LOG ERROR
+			return false;
+		}
+
+		// Ensure that the model has only triangles
+		if (modelImportedWithLibigl && F.cols() == 3) {
+			return true;
+		}
+
+		// Loading an off or ply file failed with libigl (most likely because there was a combination of triangles and polygons)
+		// If we load a file that only has polygons then we should reload it with assimp
+		// Load using assimp with the aiProcess_Triangulate option to convert all polygons to triangles
+		Assimp::Importer importer;
+
+		const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality | aiProcess_SortByPType);
+		if (!scene) {
+			// TODO: LOG ERROR
+			return false;
+		}
+
+		const aiMesh* paiMesh = scene->mMeshes[0];
+
+		// Resize the Vertices and Faces Matrices using the info from assimp
+		V.conservativeResize(paiMesh->mNumVertices, 3);
+		F.conservativeResize(paiMesh->mNumFaces, 3);
+
+		// Populare the Vertices matrix
+		for (int vertexIndex = 0; vertexIndex < paiMesh->mNumVertices; vertexIndex++) {
+			const aiVector3D* pPos = &(paiMesh->mVertices[vertexIndex]);
+			V.row(vertexIndex) = Eigen::Vector3f((float)pPos->x, (float)pPos->y, (float)pPos->z);
+		}
+
+		// Populare the Faces matrix
+		for (int faceIndex = 0; faceIndex < paiMesh->mNumFaces; faceIndex++) {
+			const aiFace& Face = paiMesh->mFaces[faceIndex];
+			assert(Face.mNumIndices == 3);
+			F.row(faceIndex) = Eigen::Vector3i(
+				Face.mIndices[0],
+				Face.mIndices[1],
+				Face.mIndices[2]
+			);
+		}
+
+		return true;
+	}
+}
+
+namespace Exporter {
+	bool exportModel(const std::filesystem::path& filePath, const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
+		bool modelExported = false;
+		if (filePath.extension() == ".ply") {
+			modelExported = igl::writePLY(filePath.string(), V, F);
+		} else if (filePath.extension() == ".off") {
+			modelExported = igl::writeOFF(filePath.string(), V, F);
+		}
+
+		return modelExported;
+	}
+}
 
 namespace Stats {
 	std::string getParentFolderName(std::string filePath) {

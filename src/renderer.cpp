@@ -186,7 +186,7 @@ void Renderer::renderGUI(){
 			}
 			if(ImGui::Button("Save Mesh")){
 				if(mesh){
-					mesh->writeMesh("/home/lorenzo/Desktop/banana.off");
+					mesh->writeMesh();
 				}
 			}
 			if(ImGui::Button("Exit")){
@@ -200,7 +200,7 @@ void Renderer::renderGUI(){
 			}
 		}
     	if (ImGui::CollapsingHeader("Mesh")){
-			ImGui::Text((mesh) ? mesh->getPath().c_str() : "Load a mesh!");
+			ImGui::Text((mesh) ? mesh->getPath().string().c_str() : "Load a mesh!");
 			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
 			ImGui::Text("# of faces: %d", (mesh) ? mesh->countFaces() : 0);
 			ImGui::Separator();

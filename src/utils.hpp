@@ -10,6 +10,11 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
+
+#ifndef IGL_NO_EIGEN
+#  include <Eigen/Core>
+#endif
 
 struct Vertex {
 	glm::vec3 pos;
@@ -25,12 +30,21 @@ struct ModelStatistics {
 	glm::vec3 maxBoundingBox;
 };
 
-namespace Loader {
-	bool parseOFF(std::string fileName);
-	bool parsePLY(std::string fileName);
-	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
+namespace Importer {
+	bool importModel(
+		const std::filesystem::path& filePath, 
+		Eigen::MatrixXf& V,
+		Eigen::MatrixXi& F
+	);
 };
 
+namespace Exporter {
+	bool exportModel(
+		const std::filesystem::path& filePath, 
+		const Eigen::MatrixXf& V, 
+		const Eigen::MatrixXi& F
+	);
+}
 namespace Stats {
 	ModelStatistics getModelStatistics(std::string modelFilePath);
 	void getDatabaseStatistics(std::string databasePath);

@@ -2,18 +2,20 @@
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
 #include "GLFW/glfw3.h"
-#include "igl/readOFF.h"
-#include "igl/writeOFF.h"
 #include "igl/per_vertex_normals.h"
 #include "igl/upsample.h"
 #include "igl/centroid.h"
 #include "input_handler.hpp"
 #include <glm/gtx/string_cast.hpp>
 
-Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
+Mesh::Mesh(std::filesystem::path path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : path{path} {
-	igl::readOFF(path, V, F);
+Mesh::Mesh(std::filesystem::path path, std::string vShader, std::string fShader) : meshPath{path} {
+
+	if (!Importer::importModel(path, V, F)) {
+		return;
+	}
+	
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
@@ -31,12 +33,12 @@ Mesh::~Mesh(){
 	glDeleteBuffers(1, &EBO);
 }
 
-void Mesh::writeMesh(std::string nPath){
-	igl::writeOFF(nPath, V, F);
+void Mesh::writeMesh(std::filesystem::path filePath) {
+	Exporter::exportModel(filePath, V, F);
 }
 
 void Mesh::writeMesh(){
-	igl::writeOFF(path, V, F);
+	Exporter::exportModel(meshPath, V, F);
 }
 
 void Mesh::upsample(int n){
