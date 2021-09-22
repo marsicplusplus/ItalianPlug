@@ -10,3 +10,9 @@
 [submodule "external/assimp"]
 	path = external/assimp
 	url = https://github.com/assimp/assimp
+[submodule "external/libigl"]
+	path = external/libigl
+	url = https://github.com/libigl/libigl
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://github.com/libigl/eigen

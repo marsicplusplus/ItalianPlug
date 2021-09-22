@@ -1,8 +1,8 @@
 #include "utils.hpp"
 #include "glm/geometric.hpp"
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
+//#include "assimp/Importer.hpp"
+//#include "assimp/scene.h"
+//#include "assimp/postprocess.h"
 #include <filesystem>
 
 namespace Loader {
@@ -87,34 +87,34 @@ namespace Loader {
 	}
 
 	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices){
-		Assimp::Importer importer;
+		//Assimp::Importer importer;
 
-		const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality | aiProcess_SortByPType);
-		if(!scene){
-			// TODO: LOG ERROR
-			return false;
-		}
+		//const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality | aiProcess_SortByPType);
+		//if(!scene){
+			//// TODO: LOG ERROR
+			//return false;
+		//}
 
-		const aiMesh *paiMesh = scene->mMeshes[0];
-		std::cout << fileName << std::endl;
-		std::cout << "Num Vertices: " << paiMesh->mNumVertices << std::endl;
-		std::cout << "Num Faces: " << paiMesh->mNumFaces << std::endl;
-		for (int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-			const aiVector3D* pPos = &(paiMesh->mVertices[i]);
-			const aiVector3D* pNormal = &(paiMesh->mNormals[i]);
-			Vertex v{
-				glm::vec3(pPos->x, pPos->y, pPos->z),
-				glm::vec3(pNormal->x, pNormal->y, pNormal->z)
-			};
-			vertices.push_back(v);
-		}
-		for (int i = 0 ; i < paiMesh->mNumFaces ; i++) {
-			const aiFace& Face = paiMesh->mFaces[i];
-			assert(Face.mNumIndices == 3);
-			indices.push_back(Face.mIndices[0]);
-			indices.push_back(Face.mIndices[1]);
-			indices.push_back(Face.mIndices[2]);
-		}
+		//const aiMesh *paiMesh = scene->mMeshes[0];
+		//std::cout << fileName << std::endl;
+		//std::cout << "Num Vertices: " << paiMesh->mNumVertices << std::endl;
+		//std::cout << "Num Faces: " << paiMesh->mNumFaces << std::endl;
+		//for (int i = 0 ; i < paiMesh->mNumVertices ; i++) {
+			//const aiVector3D* pPos = &(paiMesh->mVertices[i]);
+			//const aiVector3D* pNormal = &(paiMesh->mNormals[i]);
+			//Vertex v{
+				//glm::vec3(pPos->x, pPos->y, pPos->z),
+				//glm::vec3(pNormal->x, pNormal->y, pNormal->z)
+			//};
+			//vertices.push_back(v);
+		//}
+		//for (int i = 0 ; i < paiMesh->mNumFaces ; i++) {
+			//const aiFace& Face = paiMesh->mFaces[i];
+			//assert(Face.mNumIndices == 3);
+			//indices.push_back(Face.mIndices[0]);
+			//indices.push_back(Face.mIndices[1]);
+			//indices.push_back(Face.mIndices[2]);
+		//}
 		return true;
 	}
 };
@@ -131,38 +131,38 @@ namespace Stats {
 	}
 
 	ModelStatistics getModelStatistics(std::string modelFilePath) {
-		Assimp::Importer importer;
+		//Assimp::Importer importer;
 
-		const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_GenBoundingBoxes);
-		if (!scene) {
-			// TODO: LOG ERROR
-			return ModelStatistics{};
-		}
+		//const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_GenBoundingBoxes);
+		//if (!scene) {
+			//// TODO: LOG ERROR
+			//return ModelStatistics{};
+		//}
 
-		const aiMesh* paiMesh = scene->mMeshes[0];
-		const auto primitiveTypes = paiMesh->mPrimitiveTypes;
-		std::string faceType = "";
-		if (primitiveTypes & aiPrimitiveType_TRIANGLE && primitiveTypes & aiPrimitiveType_POLYGON) {
-			faceType = "Both";
-		}
-		else if (primitiveTypes & aiPrimitiveType_TRIANGLE) {
-			faceType = "Only Triangles";
-		}
-		else if (primitiveTypes & aiPrimitiveType_POLYGON) {
-			faceType = "Only Polygons";
-		}
-		std::cout << modelFilePath << std::endl;
-		const auto classType = getParentFolderName(modelFilePath);
-		ModelStatistics modelStats = ModelStatistics{
-			classType,
-			paiMesh->mNumVertices,
-			paiMesh->mNumFaces,
-			faceType,
-			glm::vec3(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z),
-			glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
-		};
+		//const aiMesh* paiMesh = scene->mMeshes[0];
+		//const auto primitiveTypes = paiMesh->mPrimitiveTypes;
+		//std::string faceType = "";
+		//if (primitiveTypes & aiPrimitiveType_TRIANGLE && primitiveTypes & aiPrimitiveType_POLYGON) {
+			//faceType = "Both";
+		//}
+		//else if (primitiveTypes & aiPrimitiveType_TRIANGLE) {
+			//faceType = "Only Triangles";
+		//}
+		//else if (primitiveTypes & aiPrimitiveType_POLYGON) {
+			//faceType = "Only Polygons";
+		//}
+		//std::cout << modelFilePath << std::endl;
+		//const auto classType = getParentFolderName(modelFilePath);
+		//ModelStatistics modelStats = ModelStatistics{
+			//classType,
+			//paiMesh->mNumVertices,
+			//paiMesh->mNumFaces,
+			//faceType,
+			//glm::vec3(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z),
+			//glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
+		//};
 
-		return modelStats;
+		return ModelStatistics{};
 	}
 
 	void getDatabaseStatistics(std::string databasePath) {

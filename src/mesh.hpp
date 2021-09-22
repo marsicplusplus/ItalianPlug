@@ -6,18 +6,18 @@
 #include "glm/mat4x4.hpp"
 #include "glm/vec2.hpp"
 #include "shader.hpp"
+#include "igl/readOFF.h"
+#include "Eigen/Dense"
 
 class Mesh {
 	public:
-		Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
-		Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader);
 		Mesh(std::string path);
 		Mesh(std::string path, std::string vShader, std::string fShader);
 
 		~Mesh();
 
-		inline int countVertices() const {return vertices.size();}
-		inline int countFaces() const {return indices.size() / 3;}
+		inline int countVertices() const {return V.rows();}
+		inline int countFaces() const {return F.rows();}
 		inline std::string getPath() const {return path;}
 
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
@@ -29,8 +29,8 @@ class Mesh {
 		unsigned int VBO;
 		unsigned int EBO;
 
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
+		Eigen::MatrixXf V;
+		Eigen::MatrixXi F;
 		std::string path;
 
 		Shader meshShader;
