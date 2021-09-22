@@ -4,6 +4,9 @@
 #include "GLFW/glfw3.h"
 #include "igl/per_vertex_normals.h"
 #include "igl/upsample.h"
+#include "igl/loop.h"
+#include "igl/decimate.h"
+#include "igl/qslim.h"
 #include "igl/centroid.h"
 #include "input_handler.hpp"
 #include <glm/gtx/string_cast.hpp>
@@ -43,6 +46,39 @@ void Mesh::writeMesh(){
 
 void Mesh::upsample(int n){
 	igl::upsample(V, F, n);
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::loopSubdivide(int n) {
+	igl::loop(V, F, V, F, n);
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::decimate(int n) {
+	Eigen::MatrixXd U;
+	Eigen::MatrixXi G;
+	Eigen::VectorXi J; 
+	if (igl::decimate(V.cast<double>(), F, n, U, G, J)) {
+		V = U.cast<float>();
+		F = G;
+	}
+
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::qslim(int n) {
+	Eigen::MatrixXd U;
+	Eigen::MatrixXi G;
+	Eigen::VectorXi J;
+	Eigen::VectorXi I;
+	if (igl::qslim(V.cast<double>(), F, n, U, G, J, I)) {
+		V = U.cast<float>();
+		F = G;
+	}
+
 	igl::per_vertex_normals(V, F, N);
 	dataToOpenGL();
 }

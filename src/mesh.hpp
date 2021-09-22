@@ -24,7 +24,14 @@ class Mesh {
 		void resetTransformations();
 		void writeMesh();
 		void writeMesh(std::filesystem::path filePath);
+
+		// Subdivision
 		void upsample(int n = 1);
+		void loopSubdivide(int n = 1);
+
+		// Decimation
+		void decimate(int n = 3000);
+		void qslim(int n = 3000);
 
 	private:
 		unsigned int VAO;

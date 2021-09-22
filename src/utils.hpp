@@ -11,10 +11,7 @@
 #include <sstream>
 #include <iostream>
 #include <filesystem>
-
-#ifndef IGL_NO_EIGEN
-#  include <Eigen/Core>
-#endif
+#include <Eigen/Core>
 
 struct Vertex {
 	glm::vec3 pos;
