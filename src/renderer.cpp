@@ -184,6 +184,11 @@ void Renderer::renderGUI(){
 			if(ImGui::Button("Load Mesh")){
 				fileDialog.Open();
 			}
+			if(ImGui::Button("Save Mesh")){
+				if(mesh){
+					mesh->writeMesh("/home/lorenzo/Desktop/banana.off");
+				}
+			}
 			if(ImGui::Button("Exit")){
 				glfwSetWindowShouldClose(window, true);
 			}
@@ -220,6 +225,11 @@ void Renderer::renderGUI(){
 			}
 			ImGui::Text("Colour Picker");
 			ImGui::ColorEdit3("", &materialDiffuse[0]);
+			if(ImGui::Button("Subdivide")){
+				if(mesh){
+					mesh->upsample();
+				}
+			}
 		}
 		ImGui::End();
 	}

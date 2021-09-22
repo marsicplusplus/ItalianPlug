@@ -2,14 +2,17 @@
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
 #include "GLFW/glfw3.h"
+#include "igl/readOFF.h"
+#include "igl/writeOFF.h"
 #include "igl/per_vertex_normals.h"
+#include "igl/upsample.h"
+#include "igl/centroid.h"
 #include "input_handler.hpp"
 #include <glm/gtx/string_cast.hpp>
 
 Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
 Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : path{path} {
-	//Loader::loadModel(path, vertices, indices);
 	igl::readOFF(path, V, F);
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
@@ -28,8 +31,21 @@ Mesh::~Mesh(){
 	glDeleteBuffers(1, &EBO);
 }
 
+void Mesh::writeMesh(std::string nPath){
+	igl::writeOFF(path, V, F);
+}
+
+void Mesh::writeMesh(){
+	igl::writeOFF(path, V, F);
+}
+
+void Mesh::upsample(int n){
+	igl::upsample(V, F, n);
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
 void Mesh::init() {
-	Eigen::MatrixXf N;
 	igl::per_vertex_normals(V, F, N);
 
 	glGenVertexArrays(1, &VAO);
@@ -39,12 +55,22 @@ void Mesh::init() {
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+	Eigen::Vector3f c;
+	igl::centroid(V, F, c);
+	while(c.x() > 0.005f && c.y() > 0.005f && c.z() > 0.005f){
+		for(int i = 0; i < V.rows(); i++){
+			V.row(i) -= c;
+		}
+		igl::centroid(V, F, c);
+	}
+	dataToOpenGL();
+}
+
+void Mesh::dataToOpenGL(){
 	std::vector<Vertex> vertices(V.rows());
 	for(int i = 0; i < V.rows(); i++){
-		vertices[i] = {
-				{V.coeff(i,0),V.coeff(i,1),V.coeff(i,2)},
-				{N.coeff(i,0),N.coeff(i,1),N.coeff(i,2)}
-				};
+		vertices[i] = {{V.coeff(i,0),V.coeff(i,1),V.coeff(i,2)},
+						{N.coeff(i,0),N.coeff(i,1),N.coeff(i,2)}};
 	}
 	std::vector<unsigned int> indices(3*F.rows());
 	int i=0, j = 0;
@@ -66,7 +92,6 @@ void Mesh::init() {
 	// vertex normal
 	glEnableVertexAttribArray(1);	
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3*sizeof(float)));
-
 }
 
 void Mesh::update(float dt){

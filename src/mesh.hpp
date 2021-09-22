@@ -6,7 +6,6 @@
 #include "glm/mat4x4.hpp"
 #include "glm/vec2.hpp"
 #include "shader.hpp"
-#include "igl/readOFF.h"
 #include "Eigen/Dense"
 
 class Mesh {
@@ -23,6 +22,9 @@ class Mesh {
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
 		void resetTransformations();
+		void writeMesh(std::string nPath);
+		void writeMesh();
+		void upsample(int n = 1);
 
 	private:
 		unsigned int VAO;
@@ -31,6 +33,7 @@ class Mesh {
 
 		Eigen::MatrixXf V;
 		Eigen::MatrixXi F;
+		Eigen::MatrixXf N;
 		std::string path;
 
 		Shader meshShader;
@@ -39,7 +42,7 @@ class Mesh {
 		glm::vec2 rotation;
 
 		void init();
-		glm::vec3 calcBarycenter();
+		void dataToOpenGL();
 };
 
 #endif
