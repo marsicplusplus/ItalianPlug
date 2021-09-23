@@ -7,6 +7,8 @@ int main(int argc, char* args[]) {
 	bool meshStats = false;
 	bool dirStats = false;
 	bool hasMesh = false;
+	bool normalizeMesh = false;
+	int targetVerts = 0;
 	std::string meshPath;
 	std::string dirPath;
 	for(int i = 1; i < argc; i++){
@@ -32,6 +34,18 @@ int main(int argc, char* args[]) {
 				help = true;
 			}
 		}
+		if(strncmp(args[i], "--normalize-mesh", strlen("--normalize-mesh")) == 0){
+			if (i + 2 <= argc) {
+				normalizeMesh = true;
+				meshPath = args[i + 1];
+				targetVerts = std::strtol(args[i + 2], nullptr, 0);
+			}
+			else {
+				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh to normalize or the target n. of vertices!\n" << std::flush;
+				help = true;
+			}
+		
+		}
 	}
 	if(help) {
 		std::cout << "USAGE:\n";
@@ -47,6 +61,10 @@ int main(int argc, char* args[]) {
 		Stats::getDatabaseStatistics(dirPath);
 	} else if (meshStats) {
 		Stats::getModelStatistics(meshPath);
+	} else if (normalizeMesh) {
+		Mesh mesh(meshPath);
+		mesh.normalize(targetVerts);
+		mesh.writeMesh();
 	} else {
 		Renderer rend(1024, 720, "RendererGL");
 		rend.initSystems();

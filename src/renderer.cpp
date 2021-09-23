@@ -126,6 +126,7 @@ bool Renderer::initSystems(){
 
 void Renderer::setMesh(std::string path){
 	mesh = MeshMap::Instance()->getMesh(path);
+	mesh->prepare();
 }
 
 void Renderer::start() {
@@ -195,6 +196,7 @@ void Renderer::renderGUI(){
 			fileDialog.Display();
 			if(fileDialog.HasSelected()) {
 				mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
+				mesh->prepare();
 				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 				fileDialog.ClearSelected();
 			}
@@ -254,20 +256,20 @@ void Renderer::renderGUI(){
 		if (ImGui::CollapsingHeader("Decimation")) {
 			static int target_percentage = 10;
 			ImGui::PushItemWidth(100);
-			ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
+			ImGui::SliderInt("Faces Percentage", &target_percentage, 1, 99);
 			ImGui::PopItemWidth();
 
 			// Add button for basic decimation
 			if (ImGui::Button("Decimate")) {
 				if (mesh) {
-					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
+					mesh->decimate(mesh->countFaces() - mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 
 			// Add button for Q-Slim decimation
 			if (ImGui::Button("Q-Slim")) {
 				if (mesh) {
-					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+					mesh->qslim(mesh->countFaces() - mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 		}

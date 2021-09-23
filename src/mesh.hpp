@@ -24,6 +24,8 @@ class Mesh {
 		void resetTransformations();
 		void writeMesh();
 		void writeMesh(std::filesystem::path filePath);
+		void normalize(int targetVerts);
+		void prepare();
 
 		// Subdivision
 		void upsample(int n = 1);
@@ -47,6 +49,7 @@ class Mesh {
 		Shader edgeShader;
 		glm::mat4 model;
 		glm::vec2 rotation;
+		bool prepared = false;
 
 		void init();
 		void dataToOpenGL();

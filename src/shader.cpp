@@ -5,10 +5,14 @@
 #include <sstream>
 
 Shader::Shader(){
-	programID = glCreateProgram();
+	loaded = false;
 }
 
 int Shader::loadShader(const char* filePath, int type){
+	if(!loaded){
+		programID = glCreateProgram();
+		loaded = true;
+	}
 	std::string code;
 	std::ifstream shaderFile;
 	std::stringstream shaderStream;
@@ -52,7 +56,8 @@ int Shader::loadShader(const char* filePath, int type){
 }
 
 Shader::~Shader(){
-	glDeleteProgram(programID);
+	if(loaded)
+		glDeleteProgram(programID);
 }
 
 void Shader::compileShaders(){
@@ -65,7 +70,7 @@ void Shader::compileShaders(){
 }
 
 void Shader::use(){
-	glUseProgram(programID);
+	if(loaded) glUseProgram(programID);
 }
 
 int Shader::checkCompileErrors(unsigned int shader, std::string type) {

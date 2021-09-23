@@ -26,6 +26,7 @@ class Shader {
 	private:
 		unsigned int programID;
 		std::vector<int> shadersID;
+		bool loaded;
 };
 
 #endif

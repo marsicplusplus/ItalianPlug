@@ -44,7 +44,7 @@ namespace Exporter {
 }
 namespace Stats {
 	ModelStatistics getModelStatistics(std::string modelFilePath);
-	void getDatabaseStatistics(std::string databasePath);
+	void getDatabaseStatistics(std::string databasePath, std::string fp = "stats.csv");
 };
 
 enum Options{

@@ -17,6 +17,7 @@ set(ASSIMP_BUILD_ASSXML_EXPORTER TRUE)
 
 option(LIBIGL_USE_STATIC_LIBRARY     "Use libIGL as static library" ON)
 
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory( external/glfw )
 add_subdirectory( external/assimp )
 
@@ -56,15 +57,25 @@ add_executable( ItalianPlug WIN32 ${SRC} )
 target_link_libraries( ItalianPlug glfw assimp)
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
-if( !MSVC )
-	ADD_CUSTOM_TARGET( shaders ALL  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders )
+if( UNIX )
+    add_custom_command(
+		TARGET ItalianPlug
+		POST_BUILD COMMAND ${CMAKE_COMMAND} -E
+		create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/Scripts ${CMAKE_BINARY_DIR}/Scripts)
+    add_custom_command(
+		TARGET ItalianPlug
+		POST_BUILD COMMAND ${CMAKE_COMMAND} -E
+		create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${CMAKE_BINARY_DIR}/shaders)
 else()
-    file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/shaders" _dstDir)
-    file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shaders" _srcDir)
-    execute_process(COMMAND cmd.exe /c mklink /J "${_dstDir}" "${_srcDir}")
+	file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/shaders" _dstDir)
+	file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shaders" _srcDir)
+	execute_process(COMMAND cmd.exe /c mklink /J "${_dstDir}" "${_srcDir}")
+	file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/Scripts" _dstDir)
+	file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Scripts" _srcDir)
+	execute_process(COMMAND cmd.exe /c mklink /J "${_dstDir}" "${_srcDir}")
 endif()
 
-if( MSVC ) 
+if( WIN32 ) 
 	add_custom_command ( 
 		TARGET ItalianPlug
 		PRE_BUILD

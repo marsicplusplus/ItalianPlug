@@ -96,6 +96,7 @@ namespace Stats {
 		const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_GenBoundingBoxes);
 		if (!scene) {
 			// TODO: LOG ERROR
+			std::cerr << "Could not read mesh file at " << modelFilePath << std::endl;
 			return ModelStatistics{};
 		}
 
@@ -122,15 +123,16 @@ namespace Stats {
 			glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
 		};
 
-		return ModelStatistics{};
+		return modelStats;
 	}
 
-	void getDatabaseStatistics(std::string databasePath) {
+	void getDatabaseStatistics(std::string databasePath, std::string filePath) {
 
 		std::ofstream myfile;
-		myfile.open("example.csv");
+		myfile.open(filePath);
 
 		myfile <<
+			"Filename" << "," <<
 			"Class Type" << "," <<
 			"Number of Vertices" << "," <<
 			"Number of Faces" << "," <<
@@ -150,6 +152,7 @@ namespace Stats {
 			if (extension == offExt || extension == plyExt) {
 				ModelStatistics modelStats = getModelStatistics(p.path().string());
 				myfile <<
+					p.path().string() << "," << 
 					modelStats.classType << "," <<
 					modelStats.numVertices << "," <<
 					modelStats.numFaces << "," <<

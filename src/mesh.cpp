@@ -11,33 +11,35 @@
 #include "input_handler.hpp"
 #include <glm/gtx/string_cast.hpp>
 
-Mesh::Mesh(std::filesystem::path path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
-
-Mesh::Mesh(std::filesystem::path path, std::string vShader, std::string fShader) : meshPath{path} {
-
+Mesh::Mesh(std::filesystem::path path) : meshPath(path){
 	if (!Importer::importModel(path, V, F)) {
 		return;
 	}
-	
-	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
-	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
-	meshShader.compileShaders();
-	edgeShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
-	edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
-	edgeShader.compileShaders();
 	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
-	init();
 }
 
 Mesh::~Mesh(){
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
+	if(prepared){
+		glDeleteVertexArrays(1, &VAO);
+		glDeleteBuffers(1, &VBO);
+		glDeleteBuffers(1, &EBO);
+	}
 }
 
 void Mesh::writeMesh(std::filesystem::path filePath) {
 	Exporter::exportModel(filePath, V, F);
+}
+
+void Mesh::prepare(){
+	meshShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+	meshShader.loadShader("shaders/basic_fragment.glsl", GL_FRAGMENT_SHADER);
+	meshShader.compileShaders();
+	edgeShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+	edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
+	edgeShader.compileShaders();
+	init();
+	prepared = true;
 }
 
 void Mesh::writeMesh(){
@@ -46,14 +48,32 @@ void Mesh::writeMesh(){
 
 void Mesh::upsample(int n){
 	igl::upsample(V, F, n);
-	igl::per_vertex_normals(V, F, N);
-	dataToOpenGL();
+	if(prepared) {
+		igl::per_vertex_normals(V, F, N);
+		dataToOpenGL();
+	}
+}
+
+void Mesh::normalize(int target){
+	const int thresh = 200;
+	while(V.rows() < target - thresh || V.rows() > target + thresh){
+		while(V.rows() < target - thresh) {
+			// Upsample
+			upsample();
+		} 
+		while(V.rows() > target + thresh) { 
+			// Downsample
+			decimate(F.rows() - F.rows() * 0.01 * 10);
+		}
+	}
 }
 
 void Mesh::loopSubdivide(int n) {
 	igl::loop(V, F, V, F, n);
-	igl::per_vertex_normals(V, F, N);
-	dataToOpenGL();
+	if(prepared) {
+		igl::per_vertex_normals(V, F, N);
+		dataToOpenGL();
+	}
 }
 
 void Mesh::decimate(int n) {
@@ -64,9 +84,10 @@ void Mesh::decimate(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-
-	igl::per_vertex_normals(V, F, N);
-	dataToOpenGL();
+	if(prepared) {
+		igl::per_vertex_normals(V, F, N);
+		dataToOpenGL();
+	}
 }
 
 void Mesh::qslim(int n) {
@@ -78,9 +99,10 @@ void Mesh::qslim(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-
-	igl::per_vertex_normals(V, F, N);
-	dataToOpenGL();
+	if(prepared) {
+		igl::per_vertex_normals(V, F, N);
+		dataToOpenGL();
+	}
 }
 
 void Mesh::init() {
@@ -95,7 +117,7 @@ void Mesh::init() {
 
 	Eigen::Vector3f c;
 	igl::centroid(V, F, c);
-	while(c.x() > 0.005f && c.y() > 0.005f && c.z() > 0.005f){
+	while(c.x() > 0.0005f && c.y() > 0.0005f && c.z() > 0.0005f){
 		for(int i = 0; i < V.rows(); i++){
 			V.row(i) -= c;
 		}
@@ -136,8 +158,8 @@ void Mesh::update(float dt){
 	MouseState ms = InputHandler::Instance()->getMouseState();
 	if(InputHandler::Instance()->isKeyDown(MOUSE_RIGHT)){
 		if(ms.moved){
-			rotation.x += 2.0f * ms.dy;
-			rotation.y += 2.0f * ms.dx;
+			rotation.x += 1.0f * ms.dy;
+			rotation.y += 1.0f * ms.dx;
 		}
 	}
 
