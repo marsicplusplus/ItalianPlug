@@ -33,6 +33,10 @@ class Mesh {
 		void decimate(int n = 3000);
 		void qslim(int n = 3000);
 
+		void scale();
+
+		void centerMesh();
+
 	private:
 		unsigned int VAO;
 		unsigned int VBO;

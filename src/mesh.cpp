@@ -92,16 +92,7 @@ void Mesh::init() {
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-	Eigen::Vector3f c;
-	igl::centroid(V, F, c);
-	while(c.x() > 0.005f && c.y() > 0.005f && c.z() > 0.005f){
-		for(int i = 0; i < V.rows(); i++){
-			V.row(i) -= c;
-		}
-		igl::centroid(V, F, c);
-	}
-	dataToOpenGL();
+	centerMesh();
 }
 
 void Mesh::dataToOpenGL(){
@@ -188,4 +179,30 @@ void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, con
 
 void Mesh::resetTransformations(){
 	rotation = glm::vec2(0.0f);
+}
+
+void Mesh::scale() {
+	Eigen::Vector3f min = V.colwise().minCoeff();
+	Eigen::Vector3f max = V.colwise().maxCoeff();
+
+	Eigen::Vector3f diff = max - min;
+	diff = diff.array().abs();
+	auto scaleFactor = 1.0f / diff.maxCoeff();
+	V = V * scaleFactor;
+
+	igl::per_vertex_normals(V, F, N);
+	centerMesh();
+}
+
+void Mesh::centerMesh() {
+	Eigen::Vector3f c;
+	igl::centroid(V, F, c);
+	while (c.x() > 0.005f || c.y() > 0.005f || c.z() > 0.005f) {
+		for (int i = 0; i < V.rows(); i++) {
+			V.row(i) -= c;
+		}
+		igl::centroid(V, F, c);
+	}
+
+	dataToOpenGL();
 }
