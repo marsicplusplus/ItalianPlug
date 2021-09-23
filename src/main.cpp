@@ -1,3 +1,4 @@
+#define IGL_HEADER_ONLY
 #include "renderer.hpp"
 #include "utils.hpp"
 

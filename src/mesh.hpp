@@ -6,32 +6,42 @@
 #include "glm/mat4x4.hpp"
 #include "glm/vec2.hpp"
 #include "shader.hpp"
+#include "Eigen/Dense"
 
 class Mesh {
 	public:
-		Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices);
-		Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader);
-		Mesh(std::string path);
-		Mesh(std::string path, std::string vShader, std::string fShader);
+		Mesh(std::filesystem::path path);
+		Mesh(std::filesystem::path path, std::string vShader, std::string fShader);
 
 		~Mesh();
 
-		inline int countVertices() const {return vertices.size();}
-		inline int countFaces() const {return indices.size() / 3;}
-		inline std::string getPath() const {return path;}
+		inline int countVertices() const {return V.rows();}
+		inline int countFaces() const {return F.rows();}
+		inline std::filesystem::path getPath() const {return meshPath;}
 
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
 		void resetTransformations();
+		void writeMesh();
+		void writeMesh(std::filesystem::path filePath);
+
+		// Subdivision
+		void upsample(int n = 1);
+		void loopSubdivide(int n = 1);
+
+		// Decimation
+		void decimate(int n = 3000);
+		void qslim(int n = 3000);
 
 	private:
 		unsigned int VAO;
 		unsigned int VBO;
 		unsigned int EBO;
 
-		std::vector<Vertex> vertices;
-		std::vector<unsigned int> indices;
-		std::string path;
+		Eigen::MatrixXf V;
+		Eigen::MatrixXi F;
+		Eigen::MatrixXf N;
+		std::filesystem::path meshPath;
 
 		Shader meshShader;
 		Shader edgeShader;
@@ -39,7 +49,7 @@ class Mesh {
 		glm::vec2 rotation;
 
 		void init();
-		glm::vec3 calcBarycenter();
+		void dataToOpenGL();
 };
 
 #endif

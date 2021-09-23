@@ -1,127 +1,87 @@
 #include "utils.hpp"
 #include "glm/geometric.hpp"
+#include <filesystem>
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
-#include <filesystem>
+#include "igl/writeOFF.h"
+#include "igl/writePLY.h"
+#include "igl/readOFF.h"
+#include "igl/readPLY.h"
 
-namespace Loader {
-	bool loadOFF(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) {
-		std::vector<Vertex> tmp;
-		std::ifstream offFile;
 
-		offFile.open(fileName);
-		if(!offFile){
-			std::cerr << "loadOFF::Cannot load OFF file at: " << fileName << std::endl;
-			return false;
-		}
-		auto skipComments = [](std::ifstream& file, std::string &line) {
-			while(true){
-				bool skip = false;
-				for(auto &c : line) {
-					if(c == ' ') continue;
-					if(c == '#') {
-						skip = true;
-						break;
-					}
-					else 
-						break;
-				}
-				if(!skip) break;
-				std::getline(file, line);
-			}	
-		};
+namespace Importer {
+	bool importModel(const std::filesystem::path& filePath, Eigen::MatrixXf& V, Eigen::MatrixXi& F) {
 
-		std::string line;
-		std::getline(offFile, line);
-		skipComments(offFile, line);
-		if(line == "OFF"){
-			std::getline(offFile, line);
-			skipComments(offFile, line);
-		}
-		std::istringstream iss(line);
-		int nVertices, nIdx, nEdges;
-		iss >> nVertices >> nIdx >> nEdges;
-
-		std::getline(offFile, line);
-		skipComments(offFile, line);
-		for(int i = 0; i < nVertices; i++) {
-			std::istringstream iss(line);
-			float x, y, z;
-			iss >> x >> y >> z;
-			tmp.push_back(Vertex{
-					{x, y, z},
-					{.0f, .0f, .0f}
-					});
-			std::getline(offFile, line);
-			skipComments(offFile, line);
-		}
-
-		for(int i = 0; i < nIdx; i++) {
-			std::istringstream iss(line);
-			int vertexPerFace;
-			iss >> vertexPerFace;
-			for(int j = 0; j < vertexPerFace; j++){
-				unsigned int a;
-				iss >> a;
-				vertices.push_back(tmp[a]);
-				//indices.push_back(vertices.size());
-			}
-			std::getline(offFile, line);
-			skipComments(offFile, line);
-		}
-
-		for(int i = 0; i < nIdx - 3; i++) {
-			Vertex &v1 = vertices[i * 3];
-			Vertex &v2 = vertices[i * 3 + 1];
-			Vertex &v3 = vertices[i * 3 + 2];
-			glm::vec3 v1v2 = v2.pos - v1.pos;
-			glm::vec3 v1v3 = v3.pos - v1.pos;
-			glm::vec3 normal = glm::cross(v1v2, v1v3);
-			normal = glm::normalize(normal);
-			v1.normal = normal;
-			v2.normal = normal;
-			v3.normal = normal;
-		}
-		return true;
-	}
-
-	bool loadModel(std::string fileName, std::vector<Vertex> &vertices, std::vector<unsigned int> &indices){
-		Assimp::Importer importer;
-
-		const aiScene *scene = importer.ReadFile(fileName, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality | aiProcess_SortByPType);
-		if(!scene){
+		// First try to import the model using libigl if that fails then we try with assimp
+		bool modelImportedWithLibigl = false;
+		if (filePath.extension() == ".ply") {
+			modelImportedWithLibigl = igl::readPLY(filePath.string(), V, F);
+		} else if (filePath.extension() == ".off") {
+			modelImportedWithLibigl = igl::readOFF(filePath.string(), V, F);
+		} else {
 			// TODO: LOG ERROR
 			return false;
 		}
 
-		const aiMesh *paiMesh = scene->mMeshes[0];
-		std::cout << fileName << std::endl;
-		std::cout << "Num Vertices: " << paiMesh->mNumVertices << std::endl;
-		std::cout << "Num Faces: " << paiMesh->mNumFaces << std::endl;
-		for (int i = 0 ; i < paiMesh->mNumVertices ; i++) {
-			const aiVector3D* pPos = &(paiMesh->mVertices[i]);
-			const aiVector3D* pNormal = &(paiMesh->mNormals[i]);
-			Vertex v{
-				glm::vec3(pPos->x, pPos->y, pPos->z),
-				glm::vec3(pNormal->x, pNormal->y, pNormal->z)
-			};
-			vertices.push_back(v);
+		// Ensure that the model has only triangles
+		if (modelImportedWithLibigl && F.cols() == 3) {
+			return true;
 		}
-		for (int i = 0 ; i < paiMesh->mNumFaces ; i++) {
-			const aiFace& Face = paiMesh->mFaces[i];
+
+		// Loading an off or ply file failed with libigl (most likely because there was a combination of triangles and polygons)
+		// If we load a file that only has polygons then we should reload it with assimp
+		// Load using assimp with the aiProcess_Triangulate option to convert all polygons to triangles
+		Assimp::Importer importer;
+
+		const aiScene* scene = importer.ReadFile(filePath.string(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_ImproveCacheLocality | aiProcess_SortByPType);
+		if (!scene) {
+			// TODO: LOG ERROR
+			return false;
+		}
+
+		const aiMesh* paiMesh = scene->mMeshes[0];
+
+		// Resize the Vertices and Faces Matrices using the info from assimp
+		V.conservativeResize(paiMesh->mNumVertices, 3);
+		F.conservativeResize(paiMesh->mNumFaces, 3);
+
+		// Populare the Vertices matrix
+		for (int vertexIndex = 0; vertexIndex < paiMesh->mNumVertices; vertexIndex++) {
+			const aiVector3D* pPos = &(paiMesh->mVertices[vertexIndex]);
+			V.row(vertexIndex) = Eigen::Vector3f((float)pPos->x, (float)pPos->y, (float)pPos->z);
+		}
+
+		// Populare the Faces matrix
+		for (int faceIndex = 0; faceIndex < paiMesh->mNumFaces; faceIndex++) {
+			const aiFace& Face = paiMesh->mFaces[faceIndex];
 			assert(Face.mNumIndices == 3);
-			indices.push_back(Face.mIndices[0]);
-			indices.push_back(Face.mIndices[1]);
-			indices.push_back(Face.mIndices[2]);
+			F.row(faceIndex) = Eigen::Vector3i(
+				Face.mIndices[0],
+				Face.mIndices[1],
+				Face.mIndices[2]
+			);
 		}
+
 		return true;
 	}
-};
+}
+
+namespace Exporter {
+	bool exportModel(const std::filesystem::path& filePath, const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
+		bool modelExported = false;
+		if (filePath.extension() == ".ply") {
+			modelExported = igl::writePLY(filePath.string(), V, F);
+		} else if (filePath.extension() == ".off") {
+			modelExported = igl::writeOFF(filePath.string(), V, F);
+		}
+
+		return modelExported;
+	}
+}
 
 namespace Stats {
-	std::string getParentFolderName(std::string filePath)
-	{
+	std::string getParentFolderName(std::string filePath) {
 		size_t found;
 		std::cout << "Splitting: " << filePath << std::endl;
 		found = filePath.find_last_of("/\\");
@@ -162,7 +122,7 @@ namespace Stats {
 			glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
 		};
 
-		return modelStats;
+		return ModelStatistics{};
 	}
 
 	void getDatabaseStatistics(std::string databasePath) {

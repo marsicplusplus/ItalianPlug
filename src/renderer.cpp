@@ -184,6 +184,11 @@ void Renderer::renderGUI(){
 			if(ImGui::Button("Load Mesh")){
 				fileDialog.Open();
 			}
+			if(ImGui::Button("Save Mesh")){
+				if(mesh){
+					mesh->writeMesh();
+				}
+			}
 			if(ImGui::Button("Exit")){
 				glfwSetWindowShouldClose(window, true);
 			}
@@ -195,10 +200,14 @@ void Renderer::renderGUI(){
 			}
 		}
     	if (ImGui::CollapsingHeader("Mesh")){
-			ImGui::Text((mesh) ? mesh->getPath().c_str() : "Load a mesh!");
+
+			// Display some basic mesh info
+			ImGui::Text((mesh) ? mesh->getPath().string().c_str() : "Load a mesh!");
 			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
 			ImGui::Text("# of faces: %d", (mesh) ? mesh->countFaces() : 0);
 			ImGui::Separator();
+
+			// Create a combo box to allow user to select different draw options
 			const char* items[] = {"Wireframe", "Point Cloud", "Shaded Mesh", "Shaded Mesh + Wireframe"};
 			static int currentIdx = OptionsMap::Instance()->getOption(DRAW_MODE);
 			const char* preview = items[currentIdx];
@@ -214,13 +223,55 @@ void Renderer::renderGUI(){
 				}
 				ImGui::EndCombo();
 			}
+
+			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
 				mesh->resetTransformations();
 				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 			}
+
+			// Allow the user to change the color of the mesh
 			ImGui::Text("Colour Picker");
 			ImGui::ColorEdit3("", &materialDiffuse[0]);
 		}
+
+		if (ImGui::CollapsingHeader("Subdivision")) {
+			// Add button for subdivision
+			if (ImGui::Button("In Plane Subdivision")) {
+				if (mesh) {
+					mesh->upsample();
+				}
+			}
+
+			// Add button for loop subdivision (smoothed as it's refined)
+			if (ImGui::Button("Loop Subdivision")) {
+				if (mesh) {
+					mesh->loopSubdivide();
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Decimation")) {
+			static int target_percentage = 10;
+			ImGui::PushItemWidth(100);
+			ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
+			ImGui::PopItemWidth();
+
+			// Add button for basic decimation
+			if (ImGui::Button("Decimate")) {
+				if (mesh) {
+					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
+				}
+			}
+
+			// Add button for Q-Slim decimation
+			if (ImGui::Button("Q-Slim")) {
+				if (mesh) {
+					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+				}
+			}
+		}
+
 		ImGui::End();
 	}
 	// Render dear imgui into screen

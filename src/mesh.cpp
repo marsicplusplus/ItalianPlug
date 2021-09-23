@@ -2,30 +2,31 @@
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
 #include "GLFW/glfw3.h"
+#include "igl/per_vertex_normals.h"
+#include "igl/upsample.h"
+#include "igl/loop.h"
+#include "igl/decimate.h"
+#include "igl/qslim.h"
+#include "igl/centroid.h"
 #include "input_handler.hpp"
+#include <glm/gtx/string_cast.hpp>
 
-Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices) : Mesh(vertices, indices, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
+Mesh::Mesh(std::filesystem::path path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
 
-Mesh::Mesh(std::vector<Vertex> &vertices, std::vector<unsigned int> &indices, std::string vShader, std::string fShader) : vertices(std::move(vertices)), indices(std::move(indices)), path{"None"} {
+Mesh::Mesh(std::filesystem::path path, std::string vShader, std::string fShader) : meshPath{path} {
+
+	if (!Importer::importModel(path, V, F)) {
+		return;
+	}
+	
 	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
 	meshShader.compileShaders();
 	edgeShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
 	edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
 	edgeShader.compileShaders();
-	init();
-}
-
-Mesh::Mesh(std::string path) : Mesh(path, "shaders/basic_vertex.glsl", "shaders/basic_fragment.glsl") {}
-
-Mesh::Mesh(std::string path, std::string vShader, std::string fShader) : path{path} {
-	Loader::loadModel(path, vertices, indices);
-	meshShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
-	meshShader.loadShader(fShader.c_str(), GL_FRAGMENT_SHADER);
-	meshShader.compileShaders();
-	edgeShader.loadShader(vShader.c_str(), GL_VERTEX_SHADER);
-	edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
-	edgeShader.compileShaders();
+	model = glm::mat4(1.0f);
+	rotation = glm::vec2(0.0f);
 	init();
 }
 
@@ -35,17 +36,55 @@ Mesh::~Mesh(){
 	glDeleteBuffers(1, &EBO);
 }
 
-void Mesh::init() {
-	model = glm::mat4(1.0f);
-	rotation = glm::vec2(0.0f);
+void Mesh::writeMesh(std::filesystem::path filePath) {
+	Exporter::exportModel(filePath, V, F);
+}
 
-	glm::vec3 b = calcBarycenter();
-	while(b.x > 0.005f && b.y > 0.005f && b.z > 0.005f){
-		for(auto &v : vertices){
-			v.pos -= b;
-		}
-		b = calcBarycenter();
+void Mesh::writeMesh(){
+	Exporter::exportModel(meshPath, V, F);
+}
+
+void Mesh::upsample(int n){
+	igl::upsample(V, F, n);
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::loopSubdivide(int n) {
+	igl::loop(V, F, V, F, n);
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::decimate(int n) {
+	Eigen::MatrixXd U;
+	Eigen::MatrixXi G;
+	Eigen::VectorXi J; 
+	if (igl::decimate(V.cast<double>(), F, n, U, G, J)) {
+		V = U.cast<float>();
+		F = G;
 	}
+
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::qslim(int n) {
+	Eigen::MatrixXd U;
+	Eigen::MatrixXi G;
+	Eigen::VectorXi J;
+	Eigen::VectorXi I;
+	if (igl::qslim(V.cast<double>(), F, n, U, G, J, I)) {
+		V = U.cast<float>();
+		F = G;
+	}
+
+	igl::per_vertex_normals(V, F, N);
+	dataToOpenGL();
+}
+
+void Mesh::init() {
+	igl::per_vertex_normals(V, F, N);
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -53,6 +92,32 @@ void Mesh::init() {
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+	Eigen::Vector3f c;
+	igl::centroid(V, F, c);
+	while(c.x() > 0.005f && c.y() > 0.005f && c.z() > 0.005f){
+		for(int i = 0; i < V.rows(); i++){
+			V.row(i) -= c;
+		}
+		igl::centroid(V, F, c);
+	}
+	dataToOpenGL();
+}
+
+void Mesh::dataToOpenGL(){
+	std::vector<Vertex> vertices(V.rows());
+	for(int i = 0; i < V.rows(); i++){
+		vertices[i] = {{V.coeff(i,0),V.coeff(i,1),V.coeff(i,2)},
+						{N.coeff(i,0),N.coeff(i,1),N.coeff(i,2)}};
+	}
+	std::vector<unsigned int> indices(3*F.rows());
+	int i=0, j = 0;
+	while(i < 3*F.rows()){
+		indices[i++] = F.coeff(j, 0);
+		indices[i++] = F.coeff(j, 1);
+		indices[i++] = F.coeff(j, 2);
+		j++;
+	}
 
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -65,7 +130,6 @@ void Mesh::init() {
 	// vertex normal
 	glEnableVertexAttribArray(1);	
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3*sizeof(float)));
-
 }
 
 void Mesh::update(float dt){
@@ -117,27 +181,11 @@ void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, con
 			break;
 	};
 	glPolygonMode(GL_FRONT_AND_BACK, drawMode);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, 3*F.rows(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
 }
 
 void Mesh::resetTransformations(){
 	rotation = glm::vec2(0.0f);
-}
-
-glm::vec3 Mesh::calcBarycenter() {
-	glm::vec3 result = glm::vec3(0.0f);
-	float m = 0;
-	for(int i = 0; i < indices.size(); i += 3){
-		glm::vec3& v1 = vertices[indices[i]].pos;
-		glm::vec3& v2 = vertices[indices[i]].pos;
-		glm::vec3& v3 = vertices[indices[i]].pos;
-		glm::vec3 t1 = v2-v1;
-		glm::vec3 t2 = v3-v1;
-		float area = glm::cross(t1, t2).length();
-		m += area;
-		result += area * (v1 + v2 + v3)/3.0f;
-	}
-	return result / m;
 }
