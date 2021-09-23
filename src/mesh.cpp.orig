@@ -114,7 +114,20 @@ void Mesh::init() {
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	centerToView();
+<<<<<<< HEAD
+
+	Eigen::Vector3f c;
+	igl::centroid(V, F, c);
+	while(c.x() > 0.0005f && c.y() > 0.0005f && c.z() > 0.0005f){
+		for(int i = 0; i < V.rows(); i++){
+			V.row(i) -= c;
+		}
+		igl::centroid(V, F, c);
+	}
+	dataToOpenGL();
+=======
+	centerMesh();
+>>>>>>> ScalingUnitCube
 }
 
 void Mesh::dataToOpenGL(){
@@ -132,8 +145,6 @@ void Mesh::dataToOpenGL(){
 		j++;
 	}
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
@@ -215,10 +226,10 @@ void Mesh::scale() {
 	V = V * scaleFactor;
 
 	igl::per_vertex_normals(V, F, N);
-	centerToView();
+	centerMesh();
 }
 
-void Mesh::centerToView() {
+void Mesh::centerMesh() {
 	Eigen::Vector3f c;
 	igl::centroid(V, F, c);
 	while (c.x() > 0.005f || c.y() > 0.005f || c.z() > 0.005f) {

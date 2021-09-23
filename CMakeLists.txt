@@ -51,9 +51,9 @@ set( SRC
 	 src/input_handler.cpp
 	 src/camera.cpp
 	 src/mesh_map.cpp
-	)
+	 src/unit_cube.cpp)
 
-add_executable( ItalianPlug WIN32 ${SRC} )
+add_executable( ItalianPlug WIN32 ${SRC})
 target_link_libraries( ItalianPlug glfw assimp)
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)

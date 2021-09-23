@@ -112,6 +112,7 @@ bool Renderer::initSystems(){
 	OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH);
 	glPointSize(3.0f);
 
+	displayUnitCube = false;
 	// Setup Debugging
 	//int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	//if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -130,6 +131,7 @@ void Renderer::setMesh(std::string path){
 }
 
 void Renderer::start() {
+	UnitCube unitCube;
 	glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
 	float LOW_LIMIT = 1.0f/60.0f;          // Keep At/Below 60fps
 	float HIGH_LIMIT = 1.0f/10.0f;            // Keep At/Above 10fps
@@ -153,13 +155,18 @@ void Renderer::start() {
 			deltaTime = HIGH_LIMIT;
 		lastTime = currentTime;
 
+		glm::mat4 projView = proj * camera.getViewMatrix();
+
+		if (displayUnitCube) {
+			unitCube.draw(projView);
+		}
+
 		if(mesh != nullptr){
 			if(!fileDialog.IsOpened()){
 				camera.update(deltaTime);
 				MouseState ms = InputHandler::Instance()->getMouseState();
 				mesh->update(deltaTime);
 			}
-			glm::mat4 projView = proj*camera.getViewMatrix();
 			mesh->draw(projView, materialDiffuse, camera.getPosition());
 			if(OptionsMap::Instance()->getOption(DRAW_MODE) == SHADED_MESH_WIREFRAME){
 				OptionsMap::Instance()->setOption(DRAW_MODE, WIREFRAME);
@@ -235,6 +242,8 @@ void Renderer::renderGUI(){
 			// Allow the user to change the color of the mesh
 			ImGui::Text("Colour Picker");
 			ImGui::ColorEdit3("", &materialDiffuse[0]);
+
+			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
 		}
 
 		if (ImGui::CollapsingHeader("Subdivision")) {
@@ -256,20 +265,29 @@ void Renderer::renderGUI(){
 		if (ImGui::CollapsingHeader("Decimation")) {
 			static int target_percentage = 10;
 			ImGui::PushItemWidth(100);
-			ImGui::SliderInt("Faces Percentage", &target_percentage, 1, 99);
+			ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
 			ImGui::PopItemWidth();
 
 			// Add button for basic decimation
 			if (ImGui::Button("Decimate")) {
 				if (mesh) {
-					mesh->decimate(mesh->countFaces() - mesh->countFaces() * 0.01 * target_percentage);
+					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 
 			// Add button for Q-Slim decimation
 			if (ImGui::Button("Q-Slim")) {
 				if (mesh) {
-					mesh->qslim(mesh->countFaces() - mesh->countFaces() * 0.01 * target_percentage);
+					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Rescale")) {
+			// Add button for Q-Slim decimation
+			if (ImGui::Button("Scale to Fit")) {
+				if (mesh) {
+					mesh->scale();
 				}
 			}
 		}

@@ -10,6 +10,7 @@
 #include <memory>
 #include "camera.hpp"
 #include "mesh_map.hpp"
+#include "unit_cube.hpp"
 
 class Renderer {
 	public:
@@ -31,6 +32,7 @@ class Renderer {
 		MeshPtr mesh;
 		Camera camera;
 		glm::vec3 materialDiffuse;
+		bool displayUnitCube;
 
 
 		void renderGUI();
