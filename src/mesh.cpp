@@ -66,6 +66,7 @@ void Mesh::normalize(int target){
 			decimate(F.rows() - F.rows() * 0.01 * 10);
 		}
 	}
+	scale();
 }
 
 void Mesh::loopSubdivide(int n) {
@@ -112,9 +113,7 @@ void Mesh::init() {
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	centerToView();
+	dataToOpenGL();
 }
 
 void Mesh::dataToOpenGL(){
@@ -214,7 +213,7 @@ void Mesh::scale() {
 	auto scaleFactor = 1.0f / diff.maxCoeff();
 	V = V * scaleFactor;
 
-	igl::per_vertex_normals(V, F, N);
+	if(prepared) igl::per_vertex_normals(V, F, N);
 	centerToView();
 }
 
@@ -227,6 +226,5 @@ void Mesh::centerToView() {
 		}
 		igl::centroid(V, F, c);
 	}
-
-	dataToOpenGL();
+	if(prepared) dataToOpenGL();
 }

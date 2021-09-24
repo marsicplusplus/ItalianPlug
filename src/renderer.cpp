@@ -204,7 +204,7 @@ void Renderer::renderGUI(){
 			if(fileDialog.HasSelected()) {
 				mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
 				mesh->prepare();
-				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+				camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 				fileDialog.ClearSelected();
 			}
 		}
@@ -236,7 +236,7 @@ void Renderer::renderGUI(){
 			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
 				mesh->resetTransformations();
-				camera.setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+				camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 			}
 
 			// Allow the user to change the color of the mesh

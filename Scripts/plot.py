@@ -10,7 +10,7 @@ data = pd.read_csv(sys.argv[1], quoting=2)
 colsName = list(data)
 print(colsName[colIdx])
 data = data[colsName[colIdx]]
-data.hist(bins=100)
+data.hist(bins=200)
 plt.title("Data")
 plt.ylabel("Frequency")
 plt.xlabel(colsName[colIdx])
