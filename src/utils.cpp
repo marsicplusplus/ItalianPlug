@@ -83,7 +83,6 @@ namespace Exporter {
 namespace Stats {
 	std::string getParentFolderName(std::string filePath) {
 		size_t found;
-		std::cout << "Splitting: " << filePath << std::endl;
 		found = filePath.find_last_of("/\\");
 		auto folderPath = filePath.substr(0, found);
 		found = folderPath.find_last_of("/\\");
