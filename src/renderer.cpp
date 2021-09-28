@@ -283,12 +283,35 @@ void Renderer::renderGUI(){
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Rescale")) {
-			// Add button for Q-Slim decimation
+		if (ImGui::CollapsingHeader("Rescale and Center")) {
+			// Add button for scaling
 			if (ImGui::Button("Scale to Fit")) {
 				if (mesh) {
 					mesh->scale();
 				}
+			}
+
+			// Add button for centering to view
+			if (ImGui::Button("Center To View")) {
+				if (mesh) {
+					mesh->centerToView();
+				}
+			}
+		}
+
+		if (ImGui::CollapsingHeader("Align and Flip")) {
+			// Add button for alignment and flip test
+			if (ImGui::Button("Align and Flip Test")) {
+				if (mesh) {
+					mesh->alignAndFlipTest();
+				}
+			}
+		}
+
+		// Add button for undo
+		if (ImGui::Button("Undo Last Operation")) {
+			if (mesh) {
+				mesh->undoLastOperation();
 			}
 		}
 

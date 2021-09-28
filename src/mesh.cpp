@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "normalization.hpp"
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
 #include "GLFW/glfw3.h"
@@ -47,11 +48,10 @@ void Mesh::writeMesh(){
 }
 
 void Mesh::upsample(int n){
+	saveState();
+
 	igl::upsample(V, F, n);
-	if(prepared) {
-		igl::per_vertex_normals(V, F, N);
-		dataToOpenGL();
-	}
+	recomputeNormalsAndRender();
 }
 
 void Mesh::normalize(int target){
@@ -67,17 +67,19 @@ void Mesh::normalize(int target){
 		}
 	}
 	scale();
+	centerToView();
 }
 
 void Mesh::loopSubdivide(int n) {
+	saveState();
+
 	igl::loop(V, F, V, F, n);
-	if(prepared) {
-		igl::per_vertex_normals(V, F, N);
-		dataToOpenGL();
-	}
+	recomputeNormalsAndRender();
 }
 
 void Mesh::decimate(int n) {
+	saveState();
+
 	Eigen::MatrixXd U;
 	Eigen::MatrixXi G;
 	Eigen::VectorXi J; 
@@ -85,13 +87,12 @@ void Mesh::decimate(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-	if(prepared) {
-		igl::per_vertex_normals(V, F, N);
-		dataToOpenGL();
-	}
+	recomputeNormalsAndRender();
 }
 
 void Mesh::qslim(int n) {
+	saveState();
+
 	Eigen::MatrixXd U;
 	Eigen::MatrixXi G;
 	Eigen::VectorXi J;
@@ -100,10 +101,7 @@ void Mesh::qslim(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-	if(prepared) {
-		igl::per_vertex_normals(V, F, N);
-		dataToOpenGL();
-	}
+	recomputeNormalsAndRender();
 }
 
 void Mesh::init() {
@@ -201,23 +199,20 @@ void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, con
 }
 
 void Mesh::resetTransformations(){
+	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
 }
 
 void Mesh::scale() {
-	Eigen::Vector3f min = V.colwise().minCoeff();
-	Eigen::Vector3f max = V.colwise().maxCoeff();
+	saveState();
 
-	Eigen::Vector3f diff = max - min;
-	diff = diff.array().abs();
-	auto scaleFactor = 1.0f / diff.maxCoeff();
-	V = V * scaleFactor;
-
-	if(prepared) igl::per_vertex_normals(V, F, N);
-	centerToView();
+	Normalization::scale(V);
+	recomputeNormalsAndRender();
 }
 
 void Mesh::centerToView() {
+	saveState();
+
 	Eigen::Vector3f c;
 	igl::centroid(V, F, c);
 	while (c.x() > 0.005f || c.y() > 0.005f || c.z() > 0.005f) {
@@ -226,5 +221,46 @@ void Mesh::centerToView() {
 		}
 		igl::centroid(V, F, c);
 	}
-	if(prepared) dataToOpenGL();
+	recomputeNormalsAndRender();
 }
+
+void Mesh::alignAndFlipTest() {
+
+	saveState();
+
+	Eigen::Vector3f centroid;
+	igl::centroid(V, F, centroid);
+
+	const auto covarianceMatrix = Normalization::calculateCovarianceMatrix(V, centroid);
+	const auto eigenVectors = Normalization::calculateEigenVectors(covarianceMatrix);
+	Normalization::alignPrincipalAxes(V, centroid, eigenVectors[2], eigenVectors[1]);
+	Normalization::flipMirrorTest(V, F);
+
+	recomputeNormalsAndRender();
+}
+
+void Mesh::undoLastOperation() {
+
+	if (backupV.size() != 0 && backupF.size() != 0) {
+		V = backupV;
+		F = backupF;
+
+		recomputeNormalsAndRender();
+
+		backupV = Eigen::MatrixXf{};
+		backupF = Eigen::MatrixXi{};
+	}
+}
+
+void Mesh::saveState() {
+	backupV = V;
+	backupF = F;
+}
+
+void Mesh::recomputeNormalsAndRender() {
+	if (prepared) {
+		igl::per_vertex_normals(V, F, N);
+		dataToOpenGL();
+	}
+}
+

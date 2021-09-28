@@ -33,6 +33,7 @@ include_directories(
 
 if( MSVC )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
 
 set( SRC
@@ -48,6 +49,7 @@ set( SRC
 	 src/mesh.cpp
 	 src/shader.cpp
 	 src/utils.cpp
+	 src/normalization.cpp
 	 src/input_handler.cpp
 	 src/camera.cpp
 	 src/mesh_map.cpp

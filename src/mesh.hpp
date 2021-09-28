@@ -39,6 +39,10 @@ class Mesh {
 
 		void centerToView();
 
+		void alignAndFlipTest();
+
+		void undoLastOperation();
+
 	private:
 		unsigned int VAO;
 		unsigned int VBO;
@@ -47,6 +51,10 @@ class Mesh {
 		Eigen::MatrixXf V;
 		Eigen::MatrixXi F;
 		Eigen::MatrixXf N;
+
+		Eigen::MatrixXf backupV;
+		Eigen::MatrixXi backupF;
+
 		std::filesystem::path meshPath;
 
 		Shader meshShader;
@@ -57,6 +65,8 @@ class Mesh {
 
 		void init();
 		void dataToOpenGL();
+		void saveState();
+		void recomputeNormalsAndRender();
 };
 
 #endif
