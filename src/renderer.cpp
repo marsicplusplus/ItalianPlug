@@ -300,10 +300,16 @@ void Renderer::renderGUI(){
 		}
 
 		if (ImGui::CollapsingHeader("Align and Flip")) {
-			// Add button for alignment and flip test
-			if (ImGui::Button("Align and Flip Test")) {
+			// Add button for alignment
+			if (ImGui::Button("Align")) {
 				if (mesh) {
-					mesh->alignAndFlipTest();
+					mesh->alignEigenVectorsToAxes();
+				}
+			}
+			// Add button for flip test
+			if (ImGui::Button("Flip Test")) {
+				if (mesh) {
+					mesh->flipMirrorTest();
 				}
 			}
 		}

@@ -224,8 +224,7 @@ void Mesh::centerToView() {
 	recomputeNormalsAndRender();
 }
 
-void Mesh::alignAndFlipTest() {
-
+void Mesh::alignEigenVectorsToAxes() {
 	saveState();
 
 	Eigen::Vector3f centroid;
@@ -234,8 +233,12 @@ void Mesh::alignAndFlipTest() {
 	const auto covarianceMatrix = Normalization::calculateCovarianceMatrix(V, centroid);
 	const auto eigenVectors = Normalization::calculateEigenVectors(covarianceMatrix);
 	Normalization::alignPrincipalAxes(V, centroid, eigenVectors[2], eigenVectors[1]);
-	Normalization::flipMirrorTest(V, F);
+	recomputeNormalsAndRender();
+}
 
+void Mesh::flipMirrorTest() {
+	saveState();
+	Normalization::flipMirrorTest(V, F);
 	recomputeNormalsAndRender();
 }
 

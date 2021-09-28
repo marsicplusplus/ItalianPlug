@@ -35,12 +35,12 @@ class Mesh {
 		void decimate(int n = 3000);
 		void qslim(int n = 3000);
 
+		// Normalization
 		void scale();
-
 		void centerToView();
-
 		void alignAndFlipTest();
-
+		void alignEigenVectorsToAxes();
+		void flipMirrorTest();
 		void undoLastOperation();
 
 	private:

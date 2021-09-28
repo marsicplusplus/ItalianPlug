@@ -1,15 +1,5 @@
 #pragma once
 
-#include "glad/glad.h"
-#include "glm/vec3.hpp"
-#include <any>
-#include <unordered_map>
-#include <string>
-#include <vector>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <filesystem>
 #include <Eigen/Core>
 #include "Eigen/Dense"
 
