@@ -11,9 +11,9 @@ namespace Normalization {
 
 	void scale(Eigen::MatrixXf& V);
 
-	Eigen::Matrix3f calculateCovarianceMatrix(Eigen::MatrixXf& V, const Eigen::Vector3f& centroid);
+	Eigen::Matrix3f calculateCovarianceMatrix(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid);
 
-	std::vector<Eigen::Vector3f> calculateEigenVectors(const Eigen::Matrix3f& covarianceMatrix);
+	std::vector<std::pair<Eigen::Vector3f, float>> calculateEigen(const Eigen::Matrix3f& covarianceMatrix);
 
 	void flipMirrorTest(Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 

@@ -18,6 +18,7 @@ Mesh::Mesh(std::filesystem::path path) : meshPath(path){
 	}
 	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
+	descriptors = std::make_shared<Descriptors>(V, F);
 }
 
 Mesh::~Mesh(){
@@ -51,7 +52,7 @@ void Mesh::upsample(int n){
 	saveState();
 
 	igl::upsample(V, F, n);
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::normalize(int target){
@@ -74,7 +75,7 @@ void Mesh::loopSubdivide(int n) {
 	saveState();
 
 	igl::loop(V, F, V, F, n);
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::decimate(int n) {
@@ -87,7 +88,7 @@ void Mesh::decimate(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::qslim(int n) {
@@ -101,7 +102,7 @@ void Mesh::qslim(int n) {
 		V = U.cast<float>();
 		F = G;
 	}
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::init() {
@@ -207,7 +208,7 @@ void Mesh::scale() {
 	saveState();
 
 	Normalization::scale(V);
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::centerToView() {
@@ -221,7 +222,7 @@ void Mesh::centerToView() {
 		}
 		igl::centroid(V, F, c);
 	}
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::alignEigenVectorsToAxes() {
@@ -231,15 +232,15 @@ void Mesh::alignEigenVectorsToAxes() {
 	igl::centroid(V, F, centroid);
 
 	const auto covarianceMatrix = Normalization::calculateCovarianceMatrix(V, centroid);
-	const auto eigenVectors = Normalization::calculateEigenVectors(covarianceMatrix);
-	Normalization::alignPrincipalAxes(V, centroid, eigenVectors[2], eigenVectors[1]);
-	recomputeNormalsAndRender();
+	const auto eigen = Normalization::calculateEigen(covarianceMatrix);
+	Normalization::alignPrincipalAxes(V, centroid, eigen[2].first, eigen[1].first);
+	recomputeAndRender();
 }
 
 void Mesh::flipMirrorTest() {
 	saveState();
 	Normalization::flipMirrorTest(V, F);
-	recomputeNormalsAndRender();
+	recomputeAndRender();
 }
 
 void Mesh::undoLastOperation() {
@@ -248,7 +249,7 @@ void Mesh::undoLastOperation() {
 		V = backupV;
 		F = backupF;
 
-		recomputeNormalsAndRender();
+		recomputeAndRender();
 
 		backupV = Eigen::MatrixXf{};
 		backupF = Eigen::MatrixXi{};
@@ -260,7 +261,8 @@ void Mesh::saveState() {
 	backupF = F;
 }
 
-void Mesh::recomputeNormalsAndRender() {
+void Mesh::recomputeAndRender() {
+	descriptors->computeDescriptors(V, F, Descriptors::descriptor_all);
 	if (prepared) {
 		igl::per_vertex_normals(V, F, N);
 		dataToOpenGL();

@@ -2,6 +2,7 @@
 #define __MESH_HPP__
 
 #include "utils.hpp"
+#include "descriptors.hpp"
 #include <vector>
 #include "glm/mat4x4.hpp"
 #include "glm/vec2.hpp"
@@ -17,7 +18,8 @@ class Mesh {
 
 		inline int countVertices() const {return V.rows();}
 		inline int countFaces() const {return F.rows();}
-		inline std::filesystem::path getPath() const {return meshPath;}
+		inline std::filesystem::path getPath() const { return meshPath; }
+		inline std::shared_ptr<Descriptors> getDescriptors() const {return descriptors;}
 
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
@@ -38,7 +40,6 @@ class Mesh {
 		// Normalization
 		void scale();
 		void centerToView();
-		void alignAndFlipTest();
 		void alignEigenVectorsToAxes();
 		void flipMirrorTest();
 		void undoLastOperation();
@@ -63,10 +64,12 @@ class Mesh {
 		glm::vec2 rotation;
 		bool prepared = false;
 
+		std::shared_ptr<Descriptors> descriptors;
+
 		void init();
 		void dataToOpenGL();
 		void saveState();
-		void recomputeNormalsAndRender();
+		void recomputeAndRender();
 };
 
 #endif

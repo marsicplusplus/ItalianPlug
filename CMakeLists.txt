@@ -50,6 +50,7 @@ set( SRC
 	 src/shader.cpp
 	 src/utils.cpp
 	 src/normalization.cpp
+	 src/descriptors.cpp
 	 src/input_handler.cpp
 	 src/camera.cpp
 	 src/mesh_map.cpp

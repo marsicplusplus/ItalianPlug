@@ -314,6 +314,15 @@ void Renderer::renderGUI(){
 			}
 		}
 
+		if (ImGui::CollapsingHeader("3D Descriptors")) {
+			ImGui::Text("Surface Area: %f", (mesh) ? mesh->getDescriptors()->getArea() : 0);
+			ImGui::Text("Mesh Volume: %f", (mesh) ? mesh->getDescriptors()->getMeshVolume() : 0);
+			ImGui::Text("Bounding Box Volume: %f", (mesh) ? mesh->getDescriptors()->getBoundingBoxVolume() : 0);
+			ImGui::Text("Diameter: %f", (mesh) ? mesh->getDescriptors()->getDiameter() : 0);
+			ImGui::Text("Eccentricity: %f", (mesh) ? mesh->getDescriptors()->getEccentricity() : 0);
+			ImGui::Text("Compactness: %f", (mesh) ? mesh->getDescriptors()->getCompactness() : 0);
+		}
+
 		// Add button for undo
 		if (ImGui::Button("Undo Last Operation")) {
 			if (mesh) {

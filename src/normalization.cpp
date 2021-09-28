@@ -11,7 +11,7 @@ namespace Normalization {
 		V = V * scaleFactor;
 	}
 
-	Eigen::Matrix3f calculateCovarianceMatrix(Eigen::MatrixXf& V, const Eigen::Vector3f& centroid) {
+	Eigen::Matrix3f calculateCovarianceMatrix(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid) {
 		Eigen::Matrix3f covarianceMatrix = Eigen::Matrix3f::Identity();
 
 		// Could be optimized by not looping and explicitly setting 0,1 and 1,0 at the same time for example (symmetric)
@@ -30,14 +30,22 @@ namespace Normalization {
 		return covarianceMatrix;
 	}
 
-	std::vector<Eigen::Vector3f> calculateEigenVectors(const Eigen::Matrix3f& covarianceMatrix) {
+	std::vector<std::pair<Eigen::Vector3f, float>> calculateEigen(const Eigen::Matrix3f& covarianceMatrix) {
 
 		Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigenSolver(covarianceMatrix);
 		Eigen::Vector3f eigenVector1 = eigenSolver.eigenvectors().col(0);
 		Eigen::Vector3f eigenVector2 = eigenSolver.eigenvectors().col(1);
 		Eigen::Vector3f eigenVector3 = eigenSolver.eigenvectors().col(2);
 
-		return std::vector<Eigen::Vector3f>{eigenVector1, eigenVector2, eigenVector3};
+		float lambda1 = eigenSolver.eigenvalues()[0];
+		float lambda2 = eigenSolver.eigenvalues()[1];
+		float lambda3 = eigenSolver.eigenvalues()[2];
+
+		return std::vector<std::pair<Eigen::Vector3f, float>>{
+			std::make_pair(eigenVector1, lambda1),
+			std::make_pair(eigenVector2, lambda2),
+			std::make_pair(eigenVector3, lambda3)
+		};
 	}
 
 	void alignPrincipalAxes(Eigen::MatrixXf& V, const Eigen::Vector3f& centroid, const Eigen::Vector3f& majorEigenVector, const Eigen::Vector3f& minorEigenVector) {
