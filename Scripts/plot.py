@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import sys
 
+plt.rcParams.update({'font.size': 28})
+
 if len(sys.argv) < 3:
     print("Usage:\n{} csv-file column-idx".format(sys.argv[0]))
     exit()

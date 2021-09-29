@@ -283,23 +283,19 @@ void Renderer::renderGUI(){
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Rescale and Center")) {
+		if (ImGui::CollapsingHeader("Normalization operations")) {
 			// Add button for scaling
 			if (ImGui::Button("Scale to Fit")) {
 				if (mesh) {
 					mesh->scale();
 				}
 			}
-
 			// Add button for centering to view
 			if (ImGui::Button("Center To View")) {
 				if (mesh) {
 					mesh->centerToView();
 				}
 			}
-		}
-
-		if (ImGui::CollapsingHeader("Align and Flip")) {
 			// Add button for alignment
 			if (ImGui::Button("Align")) {
 				if (mesh) {

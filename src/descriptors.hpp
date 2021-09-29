@@ -30,7 +30,7 @@ class Descriptors {
 			descriptor_diameter				= 1 << 3,
 			descriptor_compactness			= 1 << 4,
 			descriptor_eccentricity			= 1 << 5,
-			descriptor_all					= ~(~0 << 6)
+			descriptor_all					= 255 
 		};
 
 	private:

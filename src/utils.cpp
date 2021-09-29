@@ -145,8 +145,7 @@ namespace Stats {
 
 		std::string offExt(".off");
 		std::string plyExt(".ply");
-		for (auto& p : std::filesystem::recursive_directory_iterator(databasePath))
-		{
+		for (auto& p : std::filesystem::recursive_directory_iterator(databasePath)){
 			std::string extension = p.path().extension().string();
 			if (extension == offExt || extension == plyExt) {
 				ModelStatistics modelStats = getModelStatistics(p.path().string());

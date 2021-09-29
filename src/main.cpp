@@ -4,8 +4,8 @@
 
 int main(int argc, char* args[]) {
 	bool help = false;
-	bool meshStats = false;
 	bool dirStats = false;
+	bool calcFeats = false;
 	bool hasMesh = false;
 	bool normalizeMesh = false;
 	int targetVerts = 0;
@@ -14,15 +14,6 @@ int main(int argc, char* args[]) {
 	for(int i = 1; i < argc; i++){
 		if(strncmp(args[i], "--help", strlen("--help")) == 0){
 			help = true;	
-		}
-		if(strncmp(args[i], "--preload-mesh", strlen("--preload-mesh")) == 0){
-			if(i + 1 <= argc){
-				hasMesh = true;
-				meshPath = args[i+1];
-			} else {
-				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh!\n" << std::flush;
-				help = true;
-			}
 		}
 		if (strncmp(args[i], "--dir-stats", strlen("--dir-stats")) == 0) {
 			if (i + 1 <= argc) {
@@ -34,6 +25,16 @@ int main(int argc, char* args[]) {
 				help = true;
 			}
 		}
+		if(strncmp(args[i], "--calc-features", strlen("--calc-features")) == 0){
+			if (i + 1 <= argc) {
+				calcFeats = true;
+				dirPath = args[i + 1];
+			}
+			else {
+				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh to normalize or the target n. of vertices!\n" << std::flush;
+				help = true;
+			}
+		}
 		if(strncmp(args[i], "--normalize-mesh", strlen("--normalize-mesh")) == 0){
 			if (i + 2 <= argc) {
 				normalizeMesh = true;
@@ -41,10 +42,9 @@ int main(int argc, char* args[]) {
 				targetVerts = std::strtol(args[i + 2], nullptr, 0);
 			}
 			else {
-				std::cerr << "ERROR: it seems like you forgot to pass me the path of the mesh to normalize or the target n. of vertices!\n" << std::flush;
+				std::cerr << "ERROR: it seems like you forgot to pass me the path of the Database\n" << std::flush;
 				help = true;
 			}
-		
 		}
 	}
 	if(help) {
@@ -52,15 +52,34 @@ int main(int argc, char* args[]) {
 		std::cout << args[0] << " [options]\n";
 		std::cout << "Available options:\n";
 		std::cout << "--help \t\t Show this message\n";
-		std::cout << "--preload-mesh path/to/mesh \t Start the renderer with a preloaded mesh\n";
-		std::cout << "--mesh-stats path/to/mesh \t Analyze and print the stats of a single mesh\n";
-		std::cout << "--dir-stats path/to/meshdir/ \t Recursively analyze and print the stats of every single mesh found in the passed directory\n";
+		std::cout << "--dir-stats path/to/db/ \t Recursively analyze and print the stats of every single mesh found in the passed directory\n";
+		std::cout << "--calc-features path/to/db/ \t Recursively compute features for each shape in the database and store the result as a csv in the root folder;\n"; 
 		return 0;
 	}
 	if(dirStats){
 		Stats::getDatabaseStatistics(dirPath);
-	} else if (meshStats) {
-		Stats::getModelStatistics(meshPath);
+	} else if (calcFeats) {
+		std::ofstream featsFile;
+		std::filesystem::path fp = dirPath;
+		fp /= "feats.csv";
+		featsFile.open(fp);
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity\n";
+		std::string offExt(".off");
+		std::string plyExt(".ply");
+		for (auto& p : std::filesystem::recursive_directory_iterator(dirPath)) {
+			std::string extension = p.path().extension().string();
+			if (extension == offExt || extension == plyExt) {
+				Mesh mesh(p.path().string());
+				featsFile << p.path().string() << "," << 
+							mesh.getDescriptors()->getArea() << "," <<
+							mesh.getDescriptors()->getMeshVolume() << "," <<
+							mesh.getDescriptors()->getBoundingBoxVolume() << "," <<
+							mesh.getDescriptors()->getDiameter() << "," <<
+							mesh.getDescriptors()->getCompactness() << "," <<
+							mesh.getDescriptors()->getEccentricity() << std::endl;
+			}
+		}
+		featsFile.close();
 	} else if (normalizeMesh) {
 		Mesh mesh(meshPath);
 		mesh.normalize(targetVerts);
@@ -68,7 +87,6 @@ int main(int argc, char* args[]) {
 	} else {
 		Renderer rend(1024, 720, "RendererGL");
 		rend.initSystems();
-		if(hasMesh) rend.setMesh(meshPath);
 		rend.start();
 	}
 	return 0;

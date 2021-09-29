@@ -34,12 +34,14 @@ void Mesh::writeMesh(std::filesystem::path filePath) {
 }
 
 void Mesh::prepare(){
-	meshShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
-	meshShader.loadShader("shaders/basic_fragment.glsl", GL_FRAGMENT_SHADER);
-	meshShader.compileShaders();
-	edgeShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
-	edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
-	edgeShader.compileShaders();
+	if(!prepared){
+		meshShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+		meshShader.loadShader("shaders/basic_fragment.glsl", GL_FRAGMENT_SHADER);
+		meshShader.compileShaders();
+		edgeShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+		edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
+		edgeShader.compileShaders();
+	}
 	init();
 	prepared = true;
 }
@@ -67,8 +69,10 @@ void Mesh::normalize(int target){
 			decimate(F.rows() - F.rows() * 0.01 * 10);
 		}
 	}
-	scale();
 	centerToView();
+	alignEigenVectorsToAxes();
+	flipMirrorTest();
+	scale();
 }
 
 void Mesh::loopSubdivide(int n) {
