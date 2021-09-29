@@ -63,29 +63,37 @@ int main(int argc, char* args[]) {
 		std::filesystem::path fp = dirPath;
 		fp /= "feats.csv";
 		featsFile.open(fp);
-		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity\n";
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,2D_Area\n";
 		std::string offExt(".off");
 		std::string plyExt(".ply");
+		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
+		rend.initSystems(/*hidden*/ true);
+		uint8_t fb[W_WIDTH * W_HEIGHT * 4];
 		for (auto& p : std::filesystem::recursive_directory_iterator(dirPath)) {
 			std::string extension = p.path().extension().string();
 			if (extension == offExt || extension == plyExt) {
-				Mesh mesh(p.path().string());
+				std::cout << "Calc features for " << p.path().string() << std::endl;
+				MeshPtr mesh = std::make_shared<Mesh>(p.path().string());
+				mesh->compute3DDescriptors();
+				rend.setMesh(mesh);
+				rend.renderToFB(&fb[0]);
+				mesh->compute2DDescriptors(&fb[0], W_WIDTH, W_HEIGHT);
 				featsFile << p.path().string() << "," << 
-							mesh.getDescriptors()->getArea() << "," <<
-							mesh.getDescriptors()->getMeshVolume() << "," <<
-							mesh.getDescriptors()->getBoundingBoxVolume() << "," <<
-							mesh.getDescriptors()->getDiameter() << "," <<
-							mesh.getDescriptors()->getCompactness() << "," <<
-							mesh.getDescriptors()->getEccentricity() << std::endl;
+							mesh->getDescriptors()->getArea() << "," <<
+							mesh->getDescriptors()->getMeshVolume() << "," <<
+							mesh->getDescriptors()->getBoundingBoxVolume() << "," <<
+							mesh->getDescriptors()->getDiameter() << "," <<
+							mesh->getDescriptors()->getCompactness() << "," <<
+							mesh->getDescriptors()->getEccentricity() << "," <<
+							mesh->getDescriptors()->get2DArea() << std::endl;
 			}
 		}
-		featsFile.close();
 	} else if (normalizeMesh) {
 		Mesh mesh(meshPath);
 		mesh.normalize(targetVerts);
 		mesh.writeMesh();
 	} else {
-		Renderer rend(1024, 720, "RendererGL");
+		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
 		rend.initSystems();
 		rend.start();
 	}

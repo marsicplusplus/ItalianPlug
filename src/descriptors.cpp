@@ -9,21 +9,21 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-Descriptors::Descriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F){
-	computeDescriptors(V, F, descriptor_all);
-}
+Descriptors::Descriptors(){}
 
-Descriptors::~Descriptors(){
+Descriptors::~Descriptors(){}
 
-}
-
-void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags) {
+void Descriptors::compute3DDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags) {
 	if (flags & descriptor_area) computeArea(V, F);
 	if (flags & descriptor_meshVolume) computeMeshVolume(V, F);
 	if (flags & descriptor_boundingBoxVolume) computeBoundingBoxVolume(V, F);
 	if (flags & descriptor_compactness) computeCompactness();
 	if (flags & descriptor_eccentricity) computeEccentricity(V, F);
 	if (flags & descriptor_diameter) computeDiameter(V, F);
+}
+
+void Descriptors::compute2DDescriptors(uint8_t* fb, int wW, int wH, unsigned int flags) {
+	if (flags & descriptor_2Darea) compute2DArea(fb, wW, wH);
 }
 
 void Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
@@ -55,6 +55,20 @@ void Descriptors::computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::Matri
 	}
 
 	m_meshVolume = std::abs(meshVolume) / 6;
+}
+
+
+void Descriptors::compute2DArea(uint8_t* fb, int wW, int wH) {
+	m_2dArea = 0;
+	int k = 0;
+	for(int i = 0; i < wW; i++){
+		for(int j = 0; j < wH; j++){
+			if(fb[k] == 255 && fb[k+1] == 255 && fb[k+2]){
+				m_2dArea++;
+			}
+			k += 3;
+		}
+	}
 }
 
 void Descriptors::computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {

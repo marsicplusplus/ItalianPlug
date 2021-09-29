@@ -18,7 +18,7 @@ Mesh::Mesh(std::filesystem::path path) : meshPath(path){
 	}
 	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
-	descriptors = std::make_shared<Descriptors>(V, F);
+	descriptors = std::make_shared<Descriptors>();
 }
 
 Mesh::~Mesh(){
@@ -169,6 +169,19 @@ void Mesh::update(float dt){
 	rotation = {0.0f, 0.0f};
 }
 
+void Mesh::drawSilhouette(const glm::mat4 &projView){
+	Shader tmpShader;
+	tmpShader.loadShader("shaders/blank_vertex.glsl", GL_VERTEX_SHADER);
+	tmpShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
+	tmpShader.compileShaders();
+	glBindVertexArray(VAO);
+	tmpShader.use();
+	tmpShader.setUniform("projView", projView);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDrawElements(GL_TRIANGLES, 3*F.rows(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
 void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, const glm::vec3 &cameraPos) {
 	glBindVertexArray(VAO);
 	unsigned int drawMode = GL_FILL;
@@ -265,8 +278,16 @@ void Mesh::saveState() {
 	backupF = F;
 }
 
+void Mesh::compute3DDescriptors(){
+	descriptors->compute3DDescriptors(V, F, Descriptors::descriptor3d_all);
+}
+
+void Mesh::compute2DDescriptors(uint8_t *fb, int w, int h){
+	descriptors->compute2DDescriptors(fb, w, h, Descriptors::descriptor2d_all);
+}
+
 void Mesh::recomputeAndRender() {
-	descriptors->computeDescriptors(V, F, Descriptors::descriptor_all);
+	descriptors->compute3DDescriptors(V, F, Descriptors::descriptor3d_all);
 	if (prepared) {
 		igl::per_vertex_normals(V, F, N);
 		dataToOpenGL();

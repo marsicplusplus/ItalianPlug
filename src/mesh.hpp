@@ -21,6 +21,7 @@ class Mesh {
 		inline std::filesystem::path getPath() const { return meshPath; }
 		inline std::shared_ptr<Descriptors> getDescriptors() const {return descriptors;}
 
+		void drawSilhouette(const glm::mat4 &projView);
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
 		void resetTransformations();
@@ -28,6 +29,8 @@ class Mesh {
 		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
 		void prepare();
+		void compute3DDescriptors();
+		void compute2DDescriptors(uint8_t *fb, int wW, int wH);
 
 		// Subdivision
 		void upsample(int n = 1);

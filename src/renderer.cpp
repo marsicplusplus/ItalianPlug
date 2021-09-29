@@ -71,7 +71,7 @@ void GLAPIENTRY glDebugOutput(GLenum source,
 	std::cerr << std::endl;
 }
 
-bool Renderer::initSystems(){
+bool Renderer::initSystems(const bool hidden){
 	CHECK_ERROR(glfwInit(), "ERROR::Renderer::initSystems > Cannot initialize glfw\n", false)
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
@@ -90,6 +90,8 @@ bool Renderer::initSystems(){
 	glfwSetWindowSizeCallback(window, windowSizeCallback);
 	glfwSetScrollCallback(window, scrollCallback);
 
+	if(hidden) glfwHideWindow(window);
+
 	CHECK_ERROR(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD", false);
 
 	glEnable(GL_DEPTH_TEST);  
@@ -105,6 +107,7 @@ bool Renderer::initSystems(){
 	setupImGuiStyle();
 
 	materialDiffuse = glm::vec3(0.8f, 0.4f, 0.4f);
+
 	// (optional) set browser properties
 	fileDialog.SetTitle("Choose a Mesh");
 	fileDialog.SetTypeFilters({ ".off", ".ply" });
@@ -128,6 +131,39 @@ bool Renderer::initSystems(){
 void Renderer::setMesh(std::string path){
 	mesh = MeshMap::Instance()->getMesh(path);
 	mesh->prepare();
+}
+
+void Renderer::setMesh(MeshPtr tmesh){
+	mesh = tmesh;
+	mesh->prepare();
+}
+
+void Renderer::renderToFB(uint8_t *fb) {
+	glm::mat4 proj = glm::perspective(camera.getFOV(), (float)wWidth/(float)wHeight, 0.1f, 100.0f);
+
+	GLuint fbo, render_buf;
+	glGenFramebuffers(1,&fbo);
+	glGenRenderbuffers(1,&render_buf);
+	glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, wWidth, wHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glViewport(0, 0, wWidth, wHeight);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glm::mat4 projView = proj * camera.getViewMatrix();
+	if(mesh != nullptr){
+		mesh->drawSilhouette(projView);
+	}
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glReadPixels(0,0,wWidth,wHeight,GL_BGRA,GL_UNSIGNED_BYTE,&fb[0]);
+
+	glDeleteFramebuffers(1,&fbo);
+	glDeleteRenderbuffers(1,&render_buf);
+
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 void Renderer::start() {

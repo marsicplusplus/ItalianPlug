@@ -13,6 +13,9 @@
 #include <filesystem>
 #include <Eigen/Core>
 
+#define W_WIDTH 1024
+#define W_HEIGHT 720 
+
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normal;

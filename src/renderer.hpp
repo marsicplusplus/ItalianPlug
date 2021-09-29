@@ -21,10 +21,12 @@ class Renderer {
 	public:
 		Renderer(int w, int h, std::string title) : wWidth(w), wHeight(h), title(title), mesh(nullptr), camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0) {}
 		~Renderer();
-		bool initSystems();
+		bool initSystems(const bool hidden = false);
 		void start();
 		void resizeWindow(int w, int h);
 		void setMesh(std::string path);
+		void setMesh(MeshPtr mesh);
+		void renderToFB(uint8_t* fb);
 
 	private:
 		GLFWwindow *window;
@@ -33,6 +35,7 @@ class Renderer {
 		Camera camera;
 		glm::vec3 materialDiffuse;
 		bool displayUnitCube;
+		bool hiddenWindow;
 
 
 		void renderGUI();
