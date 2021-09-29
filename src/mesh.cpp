@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include "shader_map.hpp"
 #include "normalization.hpp"
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
@@ -34,14 +35,6 @@ void Mesh::writeMesh(std::filesystem::path filePath) {
 }
 
 void Mesh::prepare(){
-	if(!prepared){
-		meshShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
-		meshShader.loadShader("shaders/basic_fragment.glsl", GL_FRAGMENT_SHADER);
-		meshShader.compileShaders();
-		edgeShader.loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
-		edgeShader.loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
-		edgeShader.compileShaders();
-	}
 	init();
 	prepared = true;
 }
@@ -174,26 +167,26 @@ void Mesh::draw(const glm::mat4 &projView, const glm::vec3 &materialDiffuse, con
 	unsigned int drawMode = GL_FILL;
 	switch(OptionsMap::Instance()->getOption(DRAW_MODE)){
 		case WIREFRAME:
-			edgeShader.use();
-			edgeShader.setUniform("projView", projView);
-			edgeShader.setUniform("model", model); 
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->use();
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->setUniform("projView", projView);
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->setUniform("model", model); 
 			drawMode = GL_LINE;
 			break;
 		case POINT_CLOUD:
-			edgeShader.use();
-			edgeShader.setUniform("projView", projView);
-			edgeShader.setUniform("model", model); 
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->use();
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->setUniform("projView", projView);
+			ShaderMap::Instance()->getShader(SHADER_EDGE)->setUniform("model", model); 
 			drawMode = GL_POINT;
 			break;
 		case SHADED_MESH:
 		default:
-			meshShader.use();
-			meshShader.setUniform("projView", projView);
-			meshShader.setUniform("model", model); 
-			meshShader.setUniform("viewPos", cameraPos); 
-			meshShader.setUniform("material.diffuse", materialDiffuse);
-			meshShader.setUniform("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
-			meshShader.setUniform("material.shininess", 32.0f);
+			ShaderMap::Instance()->getShader(SHADER_BASE)->use();
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("projView", projView);
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("model", model); 
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("viewPos", cameraPos); 
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("material.diffuse", materialDiffuse);
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+			ShaderMap::Instance()->getShader(SHADER_BASE)->setUniform("material.shininess", 32.0f);
 			drawMode = GL_FILL;
 			break;
 	};

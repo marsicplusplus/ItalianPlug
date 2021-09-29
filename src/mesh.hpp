@@ -58,8 +58,6 @@ class Mesh {
 
 		std::filesystem::path meshPath;
 
-		Shader meshShader;
-		Shader edgeShader;
 		glm::mat4 model;
 		glm::vec2 rotation;
 		bool prepared = false;

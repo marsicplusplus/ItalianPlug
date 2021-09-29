@@ -52,6 +52,7 @@ set( SRC
 	 src/normalization.cpp
 	 src/descriptors.cpp
 	 src/input_handler.cpp
+	 src/shader_map.cpp
 	 src/camera.cpp
 	 src/mesh_map.cpp
 	 src/unit_cube.cpp)
