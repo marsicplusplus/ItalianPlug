@@ -71,12 +71,12 @@ int main(int argc, char* args[]) {
 			if (extension == offExt || extension == plyExt) {
 				Mesh mesh(p.path().string());
 				featsFile << p.path().string() << "," << 
-							mesh.getDescriptors()->getArea() << "," <<
-							mesh.getDescriptors()->getMeshVolume() << "," <<
-							mesh.getDescriptors()->getBoundingBoxVolume() << "," <<
-							mesh.getDescriptors()->getDiameter() << "," <<
-							mesh.getDescriptors()->getCompactness() << "," <<
-							mesh.getDescriptors()->getEccentricity() << std::endl;
+							mesh.getDescriptor(FEAT_AREA_3D) << "," <<
+							mesh.getDescriptor(FEAT_MVOLUME_3D) << "," <<
+							mesh.getDescriptor(FEAT_BBVOLUME_3D) << "," <<
+							mesh.getDescriptor(FEAT_DIAMETER_3D) << "," <<
+							mesh.getDescriptor(FEAT_COMPACTNESS_3D) << "," <<
+							mesh.getDescriptor(FEAT_ECCENTRICITY_3D) << std::endl;
 			}
 		}
 		featsFile.close();

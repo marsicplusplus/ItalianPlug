@@ -1,26 +1,17 @@
 #pragma once 
 
 #include "Eigen/Dense"
+#include "utils.hpp"
 
-class Descriptors {
-	public:
-		Descriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
-		~Descriptors();
 
-		float getArea() { return m_area; }
-		float getMeshVolume() { return m_meshVolume; }
-		float getBoundingBoxVolume() { return m_boundingBoxVolume; }
-		float getDiameter() { return m_diameter; }
-		float getCompactness() { return m_compactness; }
-		float getEccentricity() { return m_eccentricity; }
-
-		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags);
-		void computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
-		void computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
-		void computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
-		void computeCompactness();
-		void computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
-		void computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
+namespace Descriptors {
+		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats);
+		float computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
+		float computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
+		float computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
+		float computeCompactness(float m_area, float m_meshVolume);
+		float computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
+		float computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 
 		enum descriptors3D : unsigned int
 		{
@@ -32,13 +23,5 @@ class Descriptors {
 			descriptor_eccentricity			= 1 << 5,
 			descriptor_all					= 255 
 		};
-
-	private:
-		float m_area;
-		float m_meshVolume;
-		float m_boundingBoxVolume;
-		float m_diameter;
-		float m_compactness;
-		float m_eccentricity;
 };
 
