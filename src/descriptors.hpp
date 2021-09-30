@@ -14,6 +14,7 @@ class Descriptors {
 		float getCompactness() { return m_compactness; }
 		float getEccentricity() { return m_eccentricity; }
 		int get2DArea() { return m_2dArea; }
+		int get2DPerimeter() { return m_2dPerimeter; }
 
 		void compute3DDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags);
 		void compute2DDescriptors(uint8_t* fb, int wW, int wH, unsigned int flags);
@@ -24,6 +25,7 @@ class Descriptors {
 		void computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		void computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		void compute2DArea(uint8_t* fb, int wW, int wH);
+		void compute2DPerimeter(uint8_t* fb, int wW, int wH);
 
 		enum descriptors3D : unsigned int
 		{
@@ -38,6 +40,7 @@ class Descriptors {
 		enum descriptors2D : unsigned int
 		{
 			descriptor_2Darea				= 1 << 0,
+			descriptor_2Dperimeter 			= 1 << 1,
 			descriptor2d_all					= 255
 		};
 
@@ -49,5 +52,6 @@ class Descriptors {
 		float m_compactness;
 		float m_eccentricity;
 		int m_2dArea;
+		int m_2dPerimeter;
 };
 

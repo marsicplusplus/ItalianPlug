@@ -5,6 +5,10 @@
 #include "igl/centroid.h"
 #include <math.h>
 
+#include "utils.hpp"
+#include <fstream>
+#include <filesystem>
+
 #pragma warning( push )
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
@@ -24,6 +28,7 @@ void Descriptors::compute3DDescriptors(const Eigen::MatrixXf& V, const Eigen::Ma
 
 void Descriptors::compute2DDescriptors(uint8_t* fb, int wW, int wH, unsigned int flags) {
 	if (flags & descriptor_2Darea) compute2DArea(fb, wW, wH);
+	if (flags & descriptor_2Dperimeter) compute2DPerimeter(fb, wW, wH);
 }
 
 void Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
@@ -57,13 +62,71 @@ void Descriptors::computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::Matri
 	m_meshVolume = std::abs(meshVolume) / 6;
 }
 
+void Descriptors::compute2DPerimeter(uint8_t* fb, int wW, int wH) {
+	int res = 0;
+	for(int row = 0; row < wH; row++){
+		for(int col = 0; col < wW*4; col+=4){
+			if(fb[row*wW*4+col] == 255 && fb[row*wW*4+col+1] == 255 && fb[row*wW*4+col+2] == 255){
+				if(row > 0) {
+					if(fb[(row-1)*wW*4+col] == 0 && fb[(row-1)*wW*4+col+1] == 0 && fb[(row-1)*wW*4+col+2] == 0) {
+						res++;
+						continue;
+					}
+					if(col>0){
+						if(fb[(row-1)*wW*4+(col-4)] == 0 && fb[(row-1)*wW*4+(col-4)+1] == 0 && fb[(row-1)*wW*4+(col-4)+2] == 0) {
+							res++;
+							continue;
+						}
+					}
+					if(col < wW * 4){
+						if(fb[(row-1)*wW*4+(col+4)] == 0 && fb[(row-1)*wW*4+(col+4)+1] == 0 && fb[(row-1)*wW*4+(col+4)+2] == 0) {
+							res++;
+							continue;
+						}
+					}
+				}
+				if(row < wH - 1){
+					if(fb[(row+1)*wW*4+col] == 0 && fb[(row+1)*wW*4+col+1] == 0 && fb[(row+1)*wW*4+col+2] == 0) {
+						res++;
+						continue;
+					}
+					if(col>0){
+						if(fb[(row+1)*wW*4+(col-4)] == 0 && fb[(row+1)*wW*4+(col-4)+1] == 0 && fb[(row+1)*wW*4+(col-4)+2] == 0) {
+							res++;
+							continue;
+						}
+					}
+					if(col < wW * 4 - 1){
+						if(fb[(row+1)*wW*4+(col+4)] == 0 && fb[(row+1)*wW*4+(col+4)+1] == 0 && fb[(row+1)*wW*4+(col+4)+2] == 0) {
+							res++;
+							continue;
+						}
+					}
+				}
+				if(col > 0){
+					if(fb[row*wW*4+col-4] == 0 && fb[row*wW*4+col+1-4] == 0 && fb[row*wW*4+col+2-4] == 0){
+						res++;
+						continue;
+					}
+				}
+				if(col < wW * 4 - 1){
+					if(fb[row*wW*4+col+4] == 0 && fb[row*wW*4+col+1+4] == 0 && fb[row*wW*4+col+2+4] == 0){
+						res++;
+						continue;
+					}
+				}
+			}
+		}
+	}
+	m_2dPerimeter = res;
+}
 
 void Descriptors::compute2DArea(uint8_t* fb, int wW, int wH) {
 	m_2dArea = 0;
 	int k = 0;
 	for(int i = 0; i < wW; i++){
 		for(int j = 0; j < wH; j++){
-			if(fb[k] == 255 && fb[k+1] == 255 && fb[k+2]){
+			if(fb[k] == 255 && fb[k+1] == 255 && fb[k+2] == 255){
 				m_2dArea++;
 			}
 			k += 3;
