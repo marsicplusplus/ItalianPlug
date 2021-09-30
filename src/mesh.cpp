@@ -213,11 +213,8 @@ void Mesh::centerToView() {
 
 	Eigen::Vector3f c;
 	igl::centroid(V, F, c);
-	while (c.x() > 0.005f || c.y() > 0.005f || c.z() > 0.005f) {
-		for (int i = 0; i < V.rows(); i++) {
-			V.row(i) -= c;
-		}
-		igl::centroid(V, F, c);
+	for (int i = 0; i < V.rows(); i++) {
+		V.row(i) -= c;
 	}
 	recomputeAndRender();
 }
