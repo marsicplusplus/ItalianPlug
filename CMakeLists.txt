@@ -47,6 +47,8 @@ set( SRC
 	 src/main.cpp
 	 src/renderer.cpp
 	 src/mesh.cpp
+	 src/mesh_base.cpp
+	 src/convex_hull.cpp
 	 src/shader.cpp
 	 src/utils.cpp
 	 src/normalization.cpp
@@ -54,7 +56,8 @@ set( SRC
 	 src/input_handler.cpp
 	 src/camera.cpp
 	 src/mesh_map.cpp
-	 src/unit_cube.cpp)
+	 src/unit_cube.cpp
+	 )
 
 add_executable( ItalianPlug WIN32 ${SRC})
 target_link_libraries( ItalianPlug glfw assimp)
