@@ -19,7 +19,6 @@ Mesh::Mesh(std::filesystem::path path) : meshPath(path){
 	}
 	model = glm::mat4(1.0f);
 	rotation = glm::vec2(0.0f);
-	descriptors = std::make_shared<Descriptors>(V, F);
 }
 
 Mesh::~Mesh(){
@@ -241,7 +240,6 @@ void Mesh::flipMirrorTest() {
 }
 
 void Mesh::undoLastOperation() {
-
 	if (backupV.size() != 0 && backupF.size() != 0) {
 		V = backupV;
 		F = backupF;
@@ -259,10 +257,18 @@ void Mesh::saveState() {
 }
 
 void Mesh::recomputeAndRender() {
-	descriptors->computeDescriptors(V, F, Descriptors::descriptor_all);
 	if (prepared) {
 		igl::per_vertex_normals(V, F, N);
 		dataToOpenGL();
 	}
 }
 
+void Mesh::computeFeatures(){
+	Descriptors::computeDescriptors(V, F, Descriptors::descriptor_all, features);
+}
+
+float Mesh::getDescriptor(Features f) {
+	auto t = features.find(f);
+	if(t == features.end()) return 0.0f;
+	else return t->second;
+}

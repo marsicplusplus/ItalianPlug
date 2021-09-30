@@ -19,7 +19,6 @@ class Mesh {
 		inline int countVertices() const {return V.rows();}
 		inline int countFaces() const {return F.rows();}
 		inline std::filesystem::path getPath() const { return meshPath; }
-		inline std::shared_ptr<Descriptors> getDescriptors() const {return descriptors;}
 
 		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
 		void update(float dt);
@@ -28,6 +27,8 @@ class Mesh {
 		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
 		void prepare();
+		void computeFeatures();
+		float getDescriptor(Features f);
 
 		// Subdivision
 		void upsample(int n = 1);
@@ -62,7 +63,7 @@ class Mesh {
 		glm::vec2 rotation;
 		bool prepared = false;
 
-		std::shared_ptr<Descriptors> descriptors;
+		std::unordered_map<Features, float> features;
 
 		void init();
 		void dataToOpenGL();

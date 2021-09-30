@@ -218,7 +218,6 @@ void Renderer::renderGUI(){
 			}
 		}
     	if (ImGui::CollapsingHeader("Mesh")){
-
 			// Display some basic mesh info
 			ImGui::Text((mesh) ? mesh->getPath().string().c_str() : "Load a mesh!");
 			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
@@ -241,58 +240,57 @@ void Renderer::renderGUI(){
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
+			// Allow the user to change the color of the mesh
+			ImGui::Text("Colour Picker");
+			ImGui::ColorEdit3("", &materialDiffuse[0]);
 
 			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
 				mesh->resetTransformations();
 				camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 			}
-
-			// Allow the user to change the color of the mesh
-			ImGui::Text("Colour Picker");
-			ImGui::ColorEdit3("", &materialDiffuse[0]);
-
-			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
 		}
 
-		if (ImGui::CollapsingHeader("Subdivision")) {
-			// Add button for subdivision
-			if (ImGui::Button("In Plane Subdivision")) {
-				if (mesh) {
-					mesh->upsample();
+		if (ImGui::CollapsingHeader("Remeshing")) {
+			if (ImGui::CollapsingHeader("Subdivision")) {
+				// Add button for subdivision
+				if (ImGui::Button("In Plane")) {
+					if (mesh) {
+						mesh->upsample();
+					}
+				}
+				// Add button for loop subdivision (smoothed as it's refined)
+				if (ImGui::Button("Loop")) {
+					if (mesh) {
+						mesh->loopSubdivide();
+					}
 				}
 			}
 
-			// Add button for loop subdivision (smoothed as it's refined)
-			if (ImGui::Button("Loop Subdivision")) {
-				if (mesh) {
-					mesh->loopSubdivide();
+			if (ImGui::CollapsingHeader("Decimation")) {
+				static int target_percentage = 10;
+				ImGui::PushItemWidth(100);
+				ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
+				ImGui::PopItemWidth();
+
+				// Add button for basic decimation
+				if (ImGui::Button("Decimate")) {
+					if (mesh) {
+						mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
+					}
 				}
-			}
-		}
 
-		if (ImGui::CollapsingHeader("Decimation")) {
-			static int target_percentage = 10;
-			ImGui::PushItemWidth(100);
-			ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
-			ImGui::PopItemWidth();
-
-			// Add button for basic decimation
-			if (ImGui::Button("Decimate")) {
-				if (mesh) {
-					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
-				}
-			}
-
-			// Add button for Q-Slim decimation
-			if (ImGui::Button("Q-Slim")) {
-				if (mesh) {
-					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+				// Add button for Q-Slim decimation
+				if (ImGui::Button("Q-Slim")) {
+					if (mesh) {
+						mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+					}
 				}
 			}
 		}
 
-		if (ImGui::CollapsingHeader("Normalization operations")) {
+		if (ImGui::CollapsingHeader("Normalization")) {
 			// Add button for scaling
 			if (ImGui::Button("Scale to Fit")) {
 				if (mesh) {
@@ -320,14 +318,20 @@ void Renderer::renderGUI(){
 		}
 
 		if (ImGui::CollapsingHeader("3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (mesh) ? mesh->getDescriptors()->getArea() : 0);
-			ImGui::Text("Mesh Volume: %f", (mesh) ? mesh->getDescriptors()->getMeshVolume() : 0);
-			ImGui::Text("Bounding Box Volume: %f", (mesh) ? mesh->getDescriptors()->getBoundingBoxVolume() : 0);
-			ImGui::Text("Diameter: %f", (mesh) ? mesh->getDescriptors()->getDiameter() : 0);
-			ImGui::Text("Eccentricity: %f", (mesh) ? mesh->getDescriptors()->getEccentricity() : 0);
-			ImGui::Text("Compactness: %f", (mesh) ? mesh->getDescriptors()->getCompactness() : 0);
+			ImGui::Text("Surface Area: %f", (mesh) ? mesh->getDescriptor(FEAT_AREA_3D): 0);
+			ImGui::Text("Mesh Volume: %f", (mesh) ? mesh->getDescriptor(FEAT_MVOLUME_3D): 0);
+			ImGui::Text("Bounding Box Volume: %f", (mesh) ? mesh->getDescriptor(FEAT_BBVOLUME_3D): 0);
+			ImGui::Text("Diameter: %f", (mesh) ? mesh->getDescriptor(FEAT_DIAMETER_3D): 0);
+			ImGui::Text("Eccentricity: %f", (mesh) ? mesh->getDescriptor(FEAT_ECCENTRICITY_3D): 0);
+			ImGui::Text("Compactness: %f", (mesh) ? mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
+			ImGui::Separator();
+			if (ImGui::Button("Compute")) {
+				if (mesh) {
+					mesh->computeFeatures();
+				}
+			}
 		}
-
+		ImGui::Separator();
 		// Add button for undo
 		if (ImGui::Button("Undo Last Operation")) {
 			if (mesh) {
