@@ -4,6 +4,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "shader.hpp"
+#include "shader_map.hpp"
 #include "input_handler.hpp"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
@@ -121,6 +122,14 @@ bool Renderer::initSystems(){
 		//glDebugMessageCallback(glDebugOutput, nullptr);
 		//glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	//}
+	auto s = ShaderMap::Instance()->getShader(SHADER_BASE);
+	s->loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+	s->loadShader("shaders/basic_fragment.glsl", GL_FRAGMENT_SHADER);
+	s->compileShaders();
+	s = ShaderMap::Instance()->getShader(SHADER_EDGE);
+	s->loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+	s->loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
+	s->compileShaders();
 
 	return true;
 }
