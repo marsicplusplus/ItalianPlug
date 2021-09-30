@@ -1,4 +1,4 @@
-#define _USE_MATH_DEFINES
+﻿#define _USE_MATH_DEFINES
 
 #include "descriptors.hpp"
 #include "normalization.hpp"
@@ -105,5 +105,88 @@ void Descriptors::computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixX
 
 	m_diameter = max_distance;
 }
+
+float Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& V) {
+
+	// -->    -->   --->   --->
+	// AB dot BC = ||AB|| ||BC|| cos(theta)
+	//
+	//                 -->    -->
+    //               ( AB dot BC )
+    // theta = arccos( --------- )
+	//               (  --->   ---> )}
+	//               || AB|| ||BC || )
+
+	const auto v1 = rand() % V.rows();
+	const auto v2 = rand() % V.rows();
+	const auto v3 = rand() % V.rows();
+
+	const Eigen::Vector3f pointA = V.row(v1);
+	const Eigen::Vector3f pointB = V.row(v2);
+	const Eigen::Vector3f pointC = V.row(v3);
+
+	const Eigen::Vector3f AB = pointB - pointA;
+	const Eigen::Vector3f BC = pointC - pointB;
+
+	const auto dotProduct = AB.dot(BC);
+	const auto theta = acos(dotProduct / (AB.norm() * BC.norm()));
+
+	return theta;
+}
+
+float Descriptors::distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB) {
+	// d = ((x2 - x1)2 + (y2 - y1)2 + (z2 - z1)2) ^ 1/2 
+	return sqrt(pow(pointB.x() - pointA.x(), 2) + pow(pointB.y() - pointA.y(), 2) + pow(pointB.z() - pointA.z(), 2));
+}
+
+float Descriptors::distanceBetween2RandomVeritces(const Eigen::MatrixXf& V) {
+	const auto v1 = rand() % V.rows();
+	const auto v2 = rand() % V.rows();
+
+	const Eigen::Vector3f pointA = V.row(v1);
+	const Eigen::Vector3f pointB = V.row(v2);
+	return distanceBetweenTwoPoints(pointA, pointB);
+}
+
+float Descriptors::distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid) {
+	const auto v1 = rand() % V.rows();
+	const Eigen::Vector3f pointA = V.row(v1);
+
+	return distanceBetweenTwoPoints(centroid, pointA);
+}
+
+float Descriptors::sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V) {
+	const auto v1 = rand() % V.rows();
+	const auto v2 = rand() % V.rows();
+	const auto v3 = rand() % V.rows();
+
+	const Eigen::Vector3f pointA = V.row(v1);
+	const Eigen::Vector3f pointB = V.row(v2);
+	const Eigen::Vector3f pointC = V.row(v3);
+
+	Eigen::Vector3f BA = pointA - pointB;
+	Eigen::Vector3f CA = pointA - pointC;
+	float triangleArea = (BA.cross(CA)).norm() / 2;
+
+	return sqrt(triangleArea);
+}
+
+float Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V) {
+
+	//  V=1/6|(a×b)⋅c|
+
+	const auto v1 = rand() % V.rows();
+	const auto v2 = rand() % V.rows();
+	const auto v3 = rand() % V.rows();
+	const auto v4 = rand() % V.rows();
+
+	const Eigen::Vector3f pointA = V.row(v1);
+	const Eigen::Vector3f pointB = V.row(v2);
+	const Eigen::Vector3f pointC = V.row(v3);
+	const Eigen::Vector3f pointD = V.row(v3);
+
+	return abs((pointA - pointD).dot((pointB - pointD).cross(pointC - pointD))) / 6;
+}
+
 
 #pragma warning( pop )

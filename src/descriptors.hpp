@@ -22,6 +22,13 @@ class Descriptors {
 		void computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		void computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 
+		float computeAngle3RandomVertices(const Eigen::MatrixXf& V);
+		float distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB);
+		float distanceBetween2RandomVeritces(const Eigen::MatrixXf& V);
+		float distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid);
+		float sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V);
+		float cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V);
+
 		enum descriptors3D : unsigned int
 		{
 			descriptor_area					= 1 << 0,
