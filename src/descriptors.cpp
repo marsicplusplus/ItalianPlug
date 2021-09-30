@@ -9,7 +9,13 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-Descriptors::Descriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F){
+Descriptors::Descriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) :
+	m_area(0.0f),
+	m_meshVolume(0.0f),
+	m_boundingBoxVolume(0.0f),
+	m_diameter(0.0f),
+	m_compactness(0.0f),
+	m_eccentricity(0.0f) {
 	computeDescriptors(V, F, descriptor_all);
 }
 
@@ -81,14 +87,23 @@ void Descriptors::computeEccentricity(const Eigen::MatrixXf& V, const Eigen::Mat
 
 void Descriptors::computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
 
-	// TO DO! 
-	Eigen::Vector3f min = V.colwise().minCoeff();
-	Eigen::Vector3f max = V.colwise().maxCoeff();
+	auto max_distance = 0.0f;
+	// Naive Solution N^2
+	// This should be computed on the convex hull of a mesh, not the mesh itself!
+	for (int i = 0; i < V.rows(); i++) {
 
-	Eigen::Vector3f diff = max - min;
-	diff = diff.array().abs();
+		const auto pointA = V.row(i);
+		for (int j = 0; j < V.rows(); j++) {
+			const auto pointB = V.row(j);
+			const auto diff = pointA - pointB;
+			const auto distance = diff.norm();
+			if (distance > max_distance) {
+				max_distance = distance;
+			}
+		}
+	}
 
-	m_diameter = diff.maxCoeff();
+	m_diameter = max_distance;
 }
 
 #pragma warning( pop )

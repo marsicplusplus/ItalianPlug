@@ -13,16 +13,13 @@ class MeshBase {
 		MeshBase();
 		virtual ~MeshBase();
 
-		inline int countVertices() const {return V.rows();}
-		inline int countFaces() const {return F.rows();}
-		inline std::shared_ptr<Descriptors> getDescriptors() const {return descriptors;}
+		inline int countVertices() const {return m_vertices.rows();}
+		inline int countFaces() const {return m_faces.rows();}
+		inline std::shared_ptr<Descriptors> getDescriptors() const {return m_descriptors;}
 
-		void draw(const glm::mat4 &projView, const glm::vec3 &matterialDiffuse, const glm::vec3 &cameraPos);
-		void update(float dt);
-		void resetTransformations();
+
 		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
-		void prepare();
 
 		// Subdivision
 		void upsample(int n = 1);
@@ -39,28 +36,33 @@ class MeshBase {
 		void flipMirrorTest();
 		void undoLastOperation();
 
+		virtual void recomputeAndRender();
+		virtual void draw(const glm::mat4& projView, const glm::vec3& matterialDiffuse, const glm::vec3& cameraPos);
+		virtual void update(float dt);
+		virtual void prepare();
+		virtual void resetTransformations();
+
 	protected:
-		unsigned int VAO;
-		unsigned int VBO;
-		unsigned int EBO;
+		unsigned int m_VAO;
+		unsigned int m_VBO;
+		unsigned int m_EBO;
 
-		Eigen::MatrixXf V;
-		Eigen::MatrixXi F;
-		Eigen::MatrixXf N;
+		Eigen::MatrixXf m_vertices;
+		Eigen::MatrixXi m_faces;
+		Eigen::MatrixXf m_normals;
 
-		Eigen::MatrixXf backupV;
-		Eigen::MatrixXi backupF;
+		Eigen::MatrixXf m_backupV;
+		Eigen::MatrixXi m_backupF;
 
-		Shader meshShader;
-		Shader edgeShader;
-		glm::mat4 model;
-		glm::vec2 rotation;
-		bool prepared = false;
+		Shader m_meshShader;
+		Shader m_edgeShader;
 
-		std::shared_ptr<Descriptors> descriptors;
+		glm::mat4 m_modelMatrix;
+		bool m_prepared = false;
+
+		std::shared_ptr<Descriptors> m_descriptors;
 
 		void init();
 		void dataToOpenGL();
 		void saveState();
-		void recomputeAndRender();
 };

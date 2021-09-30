@@ -18,7 +18,6 @@ set(ASSIMP_BUILD_ASSXML_EXPORTER TRUE)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
 
-add_subdirectory( external/qhull )
 add_subdirectory( external/glfw )
 add_subdirectory( external/assimp )
 
@@ -30,8 +29,8 @@ include_directories(
     external/imgui/backends
     external/libigl/include
     external/eigen
-    external/qhull/src
-    external/qhull/src/libqhullcpp
+    external/quickhull
+    external/quickhull/Structs
     )
 
 if( MSVC )
@@ -47,6 +46,7 @@ set( SRC
      external/imgui/imgui.cpp
      external/imgui/backends/imgui_impl_glfw.cpp
      external/imgui/backends/imgui_impl_opengl3.cpp
+     external/quickhull/QuickHull.cpp
      src/main.cpp
      src/renderer.cpp
      src/mesh.cpp
@@ -62,9 +62,8 @@ set( SRC
      src/mesh_map.cpp
      src/unit_cube.cpp)
 
-LINK_DIRECTORIES(external/qhull/build)
 add_executable( ItalianPlug WIN32 ${SRC})
-target_link_libraries( ItalianPlug glfw assimp qhullcpp qhull_r)
+target_link_libraries( ItalianPlug glfw assimp )
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )

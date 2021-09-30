@@ -20,7 +20,7 @@ Renderer::~Renderer() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(m_window);
 	glfwTerminate();
 	MeshMap::Instance()->destroy();
 	OptionsMap::Instance()->destroy();
@@ -81,15 +81,15 @@ bool Renderer::initSystems(){
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-	CHECK_ERROR(window = glfwCreateWindow(wWidth, wHeight, title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window\n", false)
+	CHECK_ERROR(m_window = glfwCreateWindow(m_wWidth, m_wHeight, m_title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window\n", false)
 
-	glfwMakeContextCurrent(window);
-	glfwSetWindowUserPointer(window, this);
-	glfwSetKeyCallback(window, keyboardCallback);
-	glfwSetMouseButtonCallback(window, mouseCallback);
-	glfwSetMouseButtonCallback(window, mouseCallback);
-	glfwSetWindowSizeCallback(window, windowSizeCallback);
-	glfwSetScrollCallback(window, scrollCallback);
+	glfwMakeContextCurrent(m_window);
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetKeyCallback(m_window, keyboardCallback);
+	glfwSetMouseButtonCallback(m_window, mouseCallback);
+	glfwSetMouseButtonCallback(m_window, mouseCallback);
+	glfwSetWindowSizeCallback(m_window, windowSizeCallback);
+	glfwSetScrollCallback(m_window, scrollCallback);
 
 	CHECK_ERROR(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD", false);
 
@@ -100,20 +100,24 @@ bool Renderer::initSystems(){
 	ImGui::CreateContext();
 	ImGuiIO &io = ImGui::GetIO();
 	// Setup Platform/Renderer bindings
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 	ImGui_ImplOpenGL3_Init("#version 450");
 	// Setup Dear ImGui style
 	setupImGuiStyle();
 
-	materialDiffuse = glm::vec3(0.8f, 0.4f, 0.4f);
+	m_meshMaterialDiffuse = glm::vec3(0.8f, 0.4f, 0.4f);
+	m_convexHullMaterialDiffuse = glm::vec3(0.8f, 0.4f, 0.4f);
 	// (optional) set browser properties
-	fileDialog.SetTitle("Choose a Mesh");
-	fileDialog.SetTypeFilters({ ".off", ".ply" });
+	m_fileDialog.SetTitle("Choose a Mesh");
+	m_fileDialog.SetTypeFilters({ ".off", ".ply" });
 
 	OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH);
 	glPointSize(3.0f);
 
-	displayUnitCube = false;
+	m_renderMesh = true;
+	m_renderConvexHull = false;
+	m_renderUnitCube = false;
+
 	// Setup Debugging
 	//int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	//if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
@@ -135,8 +139,8 @@ bool Renderer::initSystems(){
 }
 
 void Renderer::setMesh(std::string path){
-	mesh = MeshMap::Instance()->getMesh(path);
-	mesh->prepare();
+	m_mesh = MeshMap::Instance()->getMesh(path);
+	m_mesh->prepare();
 }
 
 void Renderer::start() {
@@ -147,14 +151,14 @@ void Renderer::start() {
 
 	float lastTime = glfwGetTime();
 
-	glm::mat4 proj = glm::perspective(camera.getFOV(), (float)wWidth/(float)wHeight, 0.1f, 100.0f);
-	while(!glfwWindowShouldClose(window)){
+	glm::mat4 proj = glm::perspective(m_camera.getFOV(), (float)m_wWidth/(float)m_wHeight, 0.1f, 100.0f);
+	while(!glfwWindowShouldClose(m_window)){
 		glfwPollEvents();
 		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
+		glfwGetCursorPos(m_window, &xpos, &ypos);
 		InputHandler::Instance()->setMouseState(xpos, ypos);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport(0, 0, wWidth, wHeight);
+		glViewport(0, 0, m_wWidth, m_wHeight);
 
 		float currentTime = glfwGetTime();
 		float deltaTime = ( currentTime - lastTime ) / 1000.0f;
@@ -164,27 +168,34 @@ void Renderer::start() {
 			deltaTime = HIGH_LIMIT;
 		lastTime = currentTime;
 
-		glm::mat4 projView = proj * camera.getViewMatrix();
+		glm::mat4 projView = proj * m_camera.getViewMatrix();
 
-		if (displayUnitCube) {
+		if (m_renderUnitCube) {
 			unitCube.draw(projView);
 		}
 
-		if(mesh != nullptr){
-			if(!fileDialog.IsOpened()){
-				camera.update(deltaTime);
+		if(m_mesh != nullptr){
+			if(!m_fileDialog.IsOpened()){
+				m_camera.update(deltaTime);
 				MouseState ms = InputHandler::Instance()->getMouseState();
-				mesh->update(deltaTime);
+				m_mesh->update(deltaTime);
 			}
-			mesh->draw(projView, materialDiffuse, camera.getPosition());
-			if(OptionsMap::Instance()->getOption(DRAW_MODE) == SHADED_MESH_WIREFRAME){
-				OptionsMap::Instance()->setOption(DRAW_MODE, WIREFRAME);
-				mesh->draw(projView, materialDiffuse, camera.getPosition());
-				OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH_WIREFRAME);
+
+			if (m_renderMesh) {
+				m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
+				if (OptionsMap::Instance()->getOption(DRAW_MODE) == SHADED_MESH_WIREFRAME) {
+					OptionsMap::Instance()->setOption(DRAW_MODE, WIREFRAME);
+					m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
+					OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH_WIREFRAME);
+				}
+			}
+
+			if (m_renderConvexHull) {
+				m_mesh->getConvexHull()->draw(projView, m_convexHullMaterialDiffuse, m_camera.getPosition());
 			}
 		}
 		renderGUI();
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(m_window);
 	}
 }
 
@@ -193,36 +204,36 @@ void Renderer::renderGUI(){
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::SetNextWindowPos(ImVec2(.0f, .0f));
-	ImGui::SetNextWindowSize(ImVec2(wWidth / 5, wHeight));
+	ImGui::SetNextWindowSize(ImVec2(m_wWidth / 5, m_wHeight));
 	{
 		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		// render your GUI
     	if (ImGui::CollapsingHeader("File")){
 			if(ImGui::Button("Load Mesh")){
-				fileDialog.Open();
+				m_fileDialog.Open();
 			}
 			if(ImGui::Button("Save Mesh")){
-				if(mesh){
-					mesh->writeMesh();
+				if(m_mesh){
+					m_mesh->writeMesh();
 				}
 			}
 			if(ImGui::Button("Exit")){
-				glfwSetWindowShouldClose(window, true);
+				glfwSetWindowShouldClose(m_window, true);
 			}
-			fileDialog.Display();
-			if(fileDialog.HasSelected()) {
-				mesh = MeshMap::Instance()->getMesh(fileDialog.GetSelected().string());
-				mesh->prepare();
-				camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
-				fileDialog.ClearSelected();
+			m_fileDialog.Display();
+			if(m_fileDialog.HasSelected()) {
+				m_mesh = MeshMap::Instance()->getMesh(m_fileDialog.GetSelected().string());
+				m_mesh->prepare();
+				m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+				m_fileDialog.ClearSelected();
 			}
 		}
     	if (ImGui::CollapsingHeader("Mesh")){
 
 			// Display some basic mesh info
-			ImGui::Text((mesh) ? mesh->getPath().string().c_str() : "Load a mesh!");
-			ImGui::Text("# of vertices: %d", (mesh) ? mesh->countVertices() : 0);
-			ImGui::Text("# of faces: %d", (mesh) ? mesh->countFaces() : 0);
+			ImGui::Text((m_mesh) ? m_mesh->getPath().string().c_str() : "Load a mesh!");
+			ImGui::Text("# of vertices: %d", (m_mesh) ? m_mesh->countVertices() : 0);
+			ImGui::Text("# of faces: %d", (m_mesh) ? m_mesh->countFaces() : 0);
 			ImGui::Separator();
 
 			// Create a combo box to allow user to select different draw options
@@ -244,29 +255,35 @@ void Renderer::renderGUI(){
 
 			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
-				mesh->resetTransformations();
-				camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+				m_mesh->resetTransformations();
+				m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 			}
 
 			// Allow the user to change the color of the mesh
-			ImGui::Text("Colour Picker");
-			ImGui::ColorEdit3("", &materialDiffuse[0]);
+			ImGui::Text("Mesh Colour Picker");
+			ImGui::ColorEdit3("Mesh", &m_meshMaterialDiffuse[0]);
 
-			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
+			ImGui::Text("Convex Hull Colour Picker");
+			ImGui::ColorEdit3("Convex Hull", &m_convexHullMaterialDiffuse[0]);
+
+			ImGui::Checkbox("Render Mesh", &m_renderMesh);
+			ImGui::Checkbox("Render Convex Hull", &m_renderConvexHull);
+			ImGui::Checkbox("Render Unit Cube", &m_renderUnitCube);
+
 		}
 
 		if (ImGui::CollapsingHeader("Subdivision")) {
 			// Add button for subdivision
 			if (ImGui::Button("In Plane Subdivision")) {
-				if (mesh) {
-					mesh->upsample();
+				if (m_mesh) {
+					m_mesh->upsample();
 				}
 			}
 
 			// Add button for loop subdivision (smoothed as it's refined)
 			if (ImGui::Button("Loop Subdivision")) {
-				if (mesh) {
-					mesh->loopSubdivide();
+				if (m_mesh) {
+					m_mesh->loopSubdivide();
 				}
 			}
 		}
@@ -279,15 +296,15 @@ void Renderer::renderGUI(){
 
 			// Add button for basic decimation
 			if (ImGui::Button("Decimate")) {
-				if (mesh) {
-					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
+				if (m_mesh) {
+					m_mesh->decimate(m_mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 
 			// Add button for Q-Slim decimation
 			if (ImGui::Button("Q-Slim")) {
-				if (mesh) {
-					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+				if (m_mesh) {
+					m_mesh->qslim(m_mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 		}
@@ -295,43 +312,52 @@ void Renderer::renderGUI(){
 		if (ImGui::CollapsingHeader("Normalization operations")) {
 			// Add button for scaling
 			if (ImGui::Button("Scale to Fit")) {
-				if (mesh) {
-					mesh->scale();
+				if (m_mesh) {
+					m_mesh->scale();
 				}
 			}
 			// Add button for centering to view
 			if (ImGui::Button("Center To View")) {
-				if (mesh) {
-					mesh->centerToView();
+				if (m_mesh) {
+					m_mesh->centerToView();
 				}
 			}
 			// Add button for alignment
 			if (ImGui::Button("Align")) {
-				if (mesh) {
-					mesh->alignEigenVectorsToAxes();
+				if (m_mesh) {
+					m_mesh->alignEigenVectorsToAxes();
 				}
 			}
 			// Add button for flip test
 			if (ImGui::Button("Flip Test")) {
-				if (mesh) {
-					mesh->flipMirrorTest();
+				if (m_mesh) {
+					m_mesh->flipMirrorTest();
 				}
 			}
 		}
 
 		if (ImGui::CollapsingHeader("3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (mesh) ? mesh->getDescriptors()->getArea() : 0);
-			ImGui::Text("Mesh Volume: %f", (mesh) ? mesh->getDescriptors()->getMeshVolume() : 0);
-			ImGui::Text("Bounding Box Volume: %f", (mesh) ? mesh->getDescriptors()->getBoundingBoxVolume() : 0);
-			ImGui::Text("Diameter: %f", (mesh) ? mesh->getDescriptors()->getDiameter() : 0);
-			ImGui::Text("Eccentricity: %f", (mesh) ? mesh->getDescriptors()->getEccentricity() : 0);
-			ImGui::Text("Compactness: %f", (mesh) ? mesh->getDescriptors()->getCompactness() : 0);
+			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getDescriptors()->getArea() : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getDescriptors()->getMeshVolume() : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptors()->getBoundingBoxVolume() : 0);
+			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getDescriptors()->getDiameter() : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptors()->getEccentricity() : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptors()->getCompactness() : 0);
+		}
+
+		if (ImGui::CollapsingHeader("Convex Hull 3D Descriptors")) {
+			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getArea() : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getMeshVolume() : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getBoundingBoxVolume() : 0);
+			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getDiameter() : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getEccentricity() : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getCompactness() : 0);
 		}
 
 		// Add button for undo
 		if (ImGui::Button("Undo Last Operation")) {
-			if (mesh) {
-				mesh->undoLastOperation();
+			if (m_mesh) {
+				m_mesh->undoLastOperation();
 			}
 		}
 
@@ -345,8 +371,8 @@ void Renderer::renderGUI(){
 /**************** GLFW Callbacks ****************/
 
 void Renderer::resizeWindow(int w, int h){
-	wWidth = w;
-	wHeight = h;
+	m_wWidth = w;
+	m_wHeight = h;
 }
 
 void Renderer::windowSizeCallback(GLFWwindow* window, int width, int height) {

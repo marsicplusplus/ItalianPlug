@@ -8,9 +8,13 @@ class Mesh :public MeshBase {
 		~Mesh() {};
 
 		inline std::filesystem::path getPath() const { return m_meshPath; }
-		void writeMesh();
-		void writeMesh(std::filesystem::path filePath);
 		inline std::shared_ptr<ConvexHull> getConvexHull() const { return m_convexHull; }
+
+		void writeMesh();
+		void prepare() override;
+		void update(float dt) override;
+		void recomputeAndRender() override;
+		void resetTransformations() override;
 
 
 	private:
