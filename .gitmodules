@@ -18,4 +18,4 @@
 	url = https://github.com/libigl/eigen/
 [submodule "external/qhull"]
 	path = external/qhull
-	url = https://github.com/qhull/qhull
+	url = https://github.com/qhull/qhull/

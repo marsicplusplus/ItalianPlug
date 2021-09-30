@@ -6,7 +6,12 @@
 namespace Normalization {
 
 	template <typename T> int sgn(T val) {
-		return (T(0) < val) - (val < T(0));
+		auto res =  (T(0) < val) - (val < T(0));
+		if (res == 0) {
+			res = 1;
+		}
+
+		return res;
 	}
 
 	void scale(Eigen::MatrixXf& V);
