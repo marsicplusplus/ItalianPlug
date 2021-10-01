@@ -252,6 +252,10 @@ void Renderer::renderGUI(){
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
+			// Allow the user to change the color of the mesh
+			ImGui::Text("Colour Picker");
+			ImGui::ColorEdit3("", &materialDiffuse[0]);
 
 			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
@@ -272,18 +276,20 @@ void Renderer::renderGUI(){
 
 		}
 
-		if (ImGui::CollapsingHeader("Subdivision")) {
-			// Add button for subdivision
-			if (ImGui::Button("In Plane Subdivision")) {
-				if (m_mesh) {
-					m_mesh->upsample();
+		if (ImGui::CollapsingHeader("Remeshing")) {
+			if (ImGui::CollapsingHeader("Subdivision")) {
+				// Add button for subdivision
+				if (ImGui::Button("In Plane")) {
+					if (m_mesh) {
+						m_mesh->upsample();
+					}
 				}
-			}
+			
 
 			// Add button for loop subdivision (smoothed as it's refined)
 			if (ImGui::Button("Loop Subdivision")) {
 				if (m_mesh) {
-					m_mesh->loopSubdivide();
+					mesh->loopSubdivide();
 				}
 			}
 		}
@@ -296,20 +302,21 @@ void Renderer::renderGUI(){
 
 			// Add button for basic decimation
 			if (ImGui::Button("Decimate")) {
-				if (m_mesh) {
-					m_mesh->decimate(m_mesh->countFaces() * 0.01 * target_percentage);
+				if (mesh) {
+					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 
 			// Add button for Q-Slim decimation
 			if (ImGui::Button("Q-Slim")) {
-				if (m_mesh) {
-					m_mesh->qslim(m_mesh->countFaces() * 0.01 * target_percentage);
+				if (mesh) {
+					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 		}
+		}
 
-		if (ImGui::CollapsingHeader("Normalization operations")) {
+		if (ImGui::CollapsingHeader("Normalization")) {
 			// Add button for scaling
 			if (ImGui::Button("Scale to Fit")) {
 				if (m_mesh) {
@@ -353,7 +360,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getEccentricity() : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getCompactness() : 0);
 		}
-
+		ImGui::Separator();
 		// Add button for undo
 		if (ImGui::Button("Undo Last Operation")) {
 			if (m_mesh) {

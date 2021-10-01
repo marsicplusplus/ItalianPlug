@@ -8,6 +8,7 @@
 #include "igl/writePLY.h"
 #include "igl/readOFF.h"
 #include "igl/readPLY.h"
+#include "mesh.hpp"
 
 
 namespace Importer {
@@ -113,13 +114,21 @@ namespace Stats {
 		}
 		std::cout << modelFilePath << std::endl;
 		const auto classType = getParentFolderName(modelFilePath);
+		Mesh mesh(modelFilePath);
+		Eigen::Vector3f c;
+		mesh.getCentroid(c);
+		glm::vec3 bbMin(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z);
+		glm::vec3 bbMax(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z);
+		glm::vec3 res = bbMax - bbMin;
 		ModelStatistics modelStats = ModelStatistics{
 			classType,
 			paiMesh->mNumVertices,
 			paiMesh->mNumFaces,
 			faceType,
-			glm::vec3(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z),
-			glm::vec3(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z)
+			c.norm(),
+			fmaxf(fmaxf(res.x, res.y), res.z),
+			bbMin,
+			bbMax
 		};
 
 		return modelStats;
@@ -136,6 +145,8 @@ namespace Stats {
 			"Number of Vertices" << "," <<
 			"Number of Faces" << "," <<
 			"Types of Faces" << "," <<
+			"Longest Edge" << "," << 
+			"Centroid Distance" << "," << 
 			"Min Bounding Box: X" << "," <<
 			"Min Bounding Box: Y" << "," <<
 			"Min Bounding Box: Z" << "," <<
@@ -155,6 +166,8 @@ namespace Stats {
 					modelStats.numVertices << "," <<
 					modelStats.numFaces << "," <<
 					modelStats.faceType << "," <<
+					modelStats.longestEdge << "," <<
+					modelStats.centroidDistance << "," << 
 					modelStats.minBoundingBox.x << "," <<
 					modelStats.minBoundingBox.y << "," <<
 					modelStats.minBoundingBox.z << "," <<

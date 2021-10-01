@@ -33,3 +33,13 @@ void Mesh::resetTransformations() {
 	MeshBase::resetTransformations();
 	m_convexHull->resetTransformations();
 }
+
+void Mesh::computeFeatures(){
+	Descriptors::computeDescriptors(V, F, Descriptors::descriptor_all, features);
+}
+
+float Mesh::getDescriptor(Features f) {
+	auto t = features.find(f);
+	if(t == features.end()) return 0.0f;
+	else return t->second;
+}

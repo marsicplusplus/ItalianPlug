@@ -6,18 +6,18 @@ set( GLFW_BUILD_DOCS OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_BUILD_EXAMPLES OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_BUILD_TESTS OFF CACHE BOOL "GLFW lib only" FORCE)
 set( GLFW_INSTALL OFF CACHE BOOL "GLFW lib only" FORCE)
-SET (ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_BUILD_OFF_IMPORTER TRUE)
 set(ASSIMP_BUILD_PLY_IMPORTER TRUE)
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 # Needed for compilation?
 set(ASSIMP_BUILD_ASSBIN_EXPORTER TRUE)
 set(ASSIMP_BUILD_ASSXML_EXPORTER TRUE)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(ALLOW_DUPLICATE_CUSTOM_TARGETS TRUE)
-
 add_subdirectory( external/glfw )
 add_subdirectory( external/assimp )
 
@@ -63,7 +63,7 @@ set( SRC
      src/unit_cube.cpp)
 
 add_executable( ItalianPlug WIN32 ${SRC})
-target_link_libraries( ItalianPlug glfw assimp )
+target_link_libraries( ItalianPlug dl pthread glfw assimp)
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
@@ -105,3 +105,4 @@ if( MSVC )
         set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT GLFW-CMake-starter )
     endif()
 endif()
+

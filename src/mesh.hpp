@@ -21,5 +21,5 @@ class Mesh :public MeshBase {
 
 		std::filesystem::path m_meshPath;
 		std::shared_ptr<ConvexHull> m_convexHull;
+		std::unordered_map<Features, float> features;
 };
-

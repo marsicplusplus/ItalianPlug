@@ -23,6 +23,8 @@ struct ModelStatistics {
 	unsigned int numVertices;
 	unsigned int numFaces;
 	std::string faceType;
+	float centroidDistance;
+	float longestEdge;
 	glm::vec3 minBoundingBox;
 	glm::vec3 maxBoundingBox;
 };
@@ -49,6 +51,15 @@ namespace Stats {
 
 enum Options{
 	DRAW_MODE,
+};
+
+enum Features{
+	FEAT_AREA_3D 		= 0,
+	FEAT_MVOLUME_3D,
+	FEAT_BBVOLUME_3D,
+	FEAT_DIAMETER_3D,
+	FEAT_COMPACTNESS_3D,
+	FEAT_ECCENTRICITY_3D,
 };
 
 enum DrawMode {
