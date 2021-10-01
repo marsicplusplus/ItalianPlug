@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __CONVEX_HULL_HPP__
+#define __CONVEX_HULL_HPP__
 
 #include "mesh_base.hpp"
 
@@ -12,3 +13,4 @@ class ConvexHull :public  MeshBase {
 
 };
 
+#endif

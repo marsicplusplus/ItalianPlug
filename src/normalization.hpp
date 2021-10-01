@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __NORMALIZATION_HPP__
+#define __NORMALIZATION_HPP__
 
 #include <Eigen/Core>
 #include "Eigen/Dense"
@@ -25,3 +26,5 @@ namespace Normalization {
 	void alignPrincipalAxes(Eigen::MatrixXf& V, const Eigen::Vector3f& centroid, const Eigen::Vector3f& majorEigenVector, const Eigen::Vector3f& minorEigenVector);
 
 };
+
+#endif

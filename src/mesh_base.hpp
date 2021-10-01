@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __MESH_BASE_HPP__
+#define __MESH_BASE_HPP__
 
 #include "utils.hpp"
 #include "descriptors.hpp"
@@ -68,3 +69,5 @@ class MeshBase {
 		void dataToOpenGL();
 		void saveState();
 };
+
+#endif

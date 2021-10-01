@@ -74,9 +74,10 @@ else()
 		assimp)
 endif()
 
+set(CXX_OPTIONS -g -Wall)
 add_executable( ItalianPlug WIN32 ${SRC})
 target_link_libraries( ItalianPlug ${LIBS})
-target_compile_options( ItalianPlug PRIVATE -g)
+target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
     add_custom_command(

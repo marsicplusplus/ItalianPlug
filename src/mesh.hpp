@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __MESH_HPP__
+#define __MESH_HPP__
 #include "mesh_base.hpp"
 #include "convex_hull.hpp"
 
@@ -21,3 +22,5 @@ class Mesh :public MeshBase {
 		std::filesystem::path m_meshPath;
 		std::shared_ptr<ConvexHull> m_convexHull;
 };
+
+#endif

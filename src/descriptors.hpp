@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef __DESCRIPTORS_HPP__
+#define __DESCRIPTORS_HPP__
 
 #include "Eigen/Dense"
 #include "utils.hpp"
@@ -32,3 +33,4 @@ namespace Descriptors {
 		};
 };
 
+#endif
