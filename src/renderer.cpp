@@ -339,12 +339,11 @@ void Renderer::renderGUI(){
 			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_AREA_3D) : 0);
 			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_MVOLUME_3D) : 0);
 			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_BBVOLUME_3D) : 0);
-			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_DIAMETER_3D) : 0);
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
 			if (ImGui::Button("Compute")) {
 				if(m_mesh){
-					m_mesh->computeFeatures();
+					m_mesh->computeFeatures(Descriptors::descriptor_area | Descriptors::descriptor_meshVolume | Descriptors::descriptor_boundingBoxVolume | Descriptors::descriptor_compactness | Descriptors::descriptor_eccentricity);
 				}
 			}
 		}

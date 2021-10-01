@@ -11,7 +11,6 @@
 #include "igl/qslim.h"
 #include "igl/centroid.h"
 #include "input_handler.hpp"
-#include <glm/gtx/string_cast.hpp>
 
 MeshBase::MeshBase() {
 	m_modelMatrix = glm::mat4(1.0f);
@@ -240,8 +239,8 @@ void MeshBase::recomputeAndRender() {
 		dataToOpenGL();
 	}
 }
-void MeshBase::computeFeatures(){
-	Descriptors::computeDescriptors(m_vertices, m_faces, Descriptors::descriptor_all, features);
+void MeshBase::computeFeatures(unsigned int descs){
+	Descriptors::computeDescriptors(m_vertices, m_faces, descs, features);
 }
 
 float MeshBase::getDescriptor(Features f) {

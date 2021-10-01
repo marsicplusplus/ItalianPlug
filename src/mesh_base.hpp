@@ -35,7 +35,7 @@ class MeshBase {
 		void undoLastOperation();
 
 		float getDescriptor(Features f);
-		void computeFeatures();
+		void computeFeatures(unsigned int desc = Descriptors::descriptor_all);
 		void getCentroid(Eigen::Vector3f &c);
 
 		virtual void recomputeAndRender();

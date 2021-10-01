@@ -62,8 +62,20 @@ set( SRC
      src/mesh_map.cpp
      src/unit_cube.cpp)
 
+if (UNIX) 
+	set (LIBS 
+		dl
+		pthread
+		glfw
+		assimp)
+else()
+	set (LIBS 
+		glfw
+		assimp)
+endif()
+
 add_executable( ItalianPlug WIN32 ${SRC})
-target_link_libraries( ItalianPlug dl pthread glfw assimp)
+target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE -g)
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
