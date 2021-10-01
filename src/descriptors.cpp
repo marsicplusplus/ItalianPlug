@@ -9,8 +9,13 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-Descriptors::Descriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F){
-	computeDescriptors(V, F, descriptor_all);
+void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats) {
+	if (flags & descriptor_area) feats[FEAT_AREA_3D] = computeArea(V, F);
+	if (flags & descriptor_meshVolume) feats[FEAT_MVOLUME_3D] = computeMeshVolume(V, F);
+	if (flags & descriptor_boundingBoxVolume) feats[FEAT_BBVOLUME_3D] = computeBoundingBoxVolume(V, F);
+	if (flags & descriptor_compactness) feats[FEAT_COMPACTNESS_3D] = computeCompactness(feats[FEAT_AREA_3D], feats[FEAT_MVOLUME_3D]);
+	if (flags & descriptor_eccentricity) feats[FEAT_ECCENTRICITY_3D] = computeEccentricity(V, F);
+	if (flags & descriptor_diameter) feats[FEAT_DIAMETER_3D] = computeDiameter(V, F);
 }
 
 float Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {

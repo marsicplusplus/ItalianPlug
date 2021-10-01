@@ -4,8 +4,6 @@ Mesh::Mesh(std::filesystem::path path) : m_meshPath(path) {
 	if (!Importer::importModel(path, m_vertices, m_faces)) {
 		return;
 	}
-
-	m_descriptors = std::make_shared<Descriptors>(m_vertices, m_faces);
 	m_convexHull = std::make_shared<ConvexHull>(m_vertices);
 }
 
@@ -34,12 +32,3 @@ void Mesh::resetTransformations() {
 	m_convexHull->resetTransformations();
 }
 
-void Mesh::computeFeatures(){
-	Descriptors::computeDescriptors(V, F, Descriptors::descriptor_all, features);
-}
-
-float Mesh::getDescriptor(Features f) {
-	auto t = features.find(f);
-	if(t == features.end()) return 0.0f;
-	else return t->second;
-}

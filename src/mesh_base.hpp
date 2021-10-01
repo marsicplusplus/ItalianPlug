@@ -15,8 +15,6 @@ class MeshBase {
 
 		inline int countVertices() const {return m_vertices.rows();}
 		inline int countFaces() const {return m_faces.rows();}
-		inline std::shared_ptr<Descriptors> getDescriptors() const {return m_descriptors;}
-
 
 		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
@@ -35,6 +33,10 @@ class MeshBase {
 		void alignEigenVectorsToAxes();
 		void flipMirrorTest();
 		void undoLastOperation();
+
+		float getDescriptor(Features f);
+		void computeFeatures();
+		void getCentroid(Eigen::Vector3f &c);
 
 		virtual void recomputeAndRender();
 		virtual void draw(const glm::mat4& projView, const glm::vec3& matterialDiffuse, const glm::vec3& cameraPos);
@@ -60,7 +62,7 @@ class MeshBase {
 		glm::mat4 m_modelMatrix;
 		bool m_prepared = false;
 
-		std::shared_ptr<Descriptors> m_descriptors;
+		std::unordered_map<Features, float> features;
 
 		void init();
 		void dataToOpenGL();

@@ -8,7 +8,7 @@ class Mesh :public MeshBase {
 		~Mesh() {};
 
 		inline std::filesystem::path getPath() const { return m_meshPath; }
-		inline std::shared_ptr<ConvexHull> getConvexHull() const { return m_convexHull; }
+		inline std::shared_ptr<ConvexHull> getConvexHull() { return (m_convexHull) ? m_convexHull : (m_convexHull = std::make_shared<ConvexHull>(m_vertices)); }
 
 		void writeMesh();
 		void prepare() override;
@@ -16,10 +16,8 @@ class Mesh :public MeshBase {
 		void recomputeAndRender() override;
 		void resetTransformations() override;
 
-
 	private:
 
 		std::filesystem::path m_meshPath;
 		std::shared_ptr<ConvexHull> m_convexHull;
-		std::unordered_map<Features, float> features;
 };

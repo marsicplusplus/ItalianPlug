@@ -198,18 +198,6 @@ void MeshBase::scale() {
 	recomputeAndRender();
 }
 
-void MeshBase::centerToView() {
-	saveState();
-
-	Eigen::Vector3f centroid;
-	igl::centroid(m_vertices, m_faces, centroid);
-	for (int i = 0; i < m_vertices.rows(); i++) {
-		m_vertices.row(i) -= centroid;
-	}
-
-	recomputeAndRender();
-}
-
 void MeshBase::alignEigenVectorsToAxes() {
 	saveState();
 
@@ -247,10 +235,30 @@ void MeshBase::saveState() {
 }
 
 void MeshBase::recomputeAndRender() {
-	m_descriptors->computeDescriptors(m_vertices, m_faces, Descriptors::descriptor_all);
 	if (m_prepared) {
 		igl::per_vertex_normals(m_vertices, m_faces, m_normals);
 		dataToOpenGL();
 	}
 }
+void MeshBase::computeFeatures(){
+	Descriptors::computeDescriptors(m_vertices, m_faces, Descriptors::descriptor_all, features);
+}
 
+float MeshBase::getDescriptor(Features f) {
+	auto t = features.find(f);
+	if(t == features.end()) return 0.0f;
+	else return t->second;
+}
+
+void MeshBase::getCentroid(Eigen::Vector3f &c){
+	igl::centroid(m_vertices, m_faces, c);
+}
+void MeshBase::centerToView() {
+	saveState();
+	Eigen::Vector3f c;
+	getCentroid(c);
+	for (int i = 0; i < m_vertices.rows(); i++) {
+		m_vertices.row(i) -= c;
+	}
+	recomputeAndRender();
+}

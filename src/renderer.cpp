@@ -252,10 +252,6 @@ void Renderer::renderGUI(){
 				}
 				ImGui::EndCombo();
 			}
-			ImGui::Checkbox("Display Unit Cube", &displayUnitCube);
-			// Allow the user to change the color of the mesh
-			ImGui::Text("Colour Picker");
-			ImGui::ColorEdit3("", &materialDiffuse[0]);
 
 			// Add button to reset the position of the camera
 			if(ImGui::Button("Reset View")){
@@ -267,13 +263,9 @@ void Renderer::renderGUI(){
 			ImGui::Text("Mesh Colour Picker");
 			ImGui::ColorEdit3("Mesh", &m_meshMaterialDiffuse[0]);
 
-			ImGui::Text("Convex Hull Colour Picker");
-			ImGui::ColorEdit3("Convex Hull", &m_convexHullMaterialDiffuse[0]);
-
 			ImGui::Checkbox("Render Mesh", &m_renderMesh);
 			ImGui::Checkbox("Render Convex Hull", &m_renderConvexHull);
 			ImGui::Checkbox("Render Unit Cube", &m_renderUnitCube);
-
 		}
 
 		if (ImGui::CollapsingHeader("Remeshing")) {
@@ -289,7 +281,7 @@ void Renderer::renderGUI(){
 			// Add button for loop subdivision (smoothed as it's refined)
 			if (ImGui::Button("Loop Subdivision")) {
 				if (m_mesh) {
-					mesh->loopSubdivide();
+					m_mesh->loopSubdivide();
 				}
 			}
 		}
@@ -302,15 +294,15 @@ void Renderer::renderGUI(){
 
 			// Add button for basic decimation
 			if (ImGui::Button("Decimate")) {
-				if (mesh) {
-					mesh->decimate(mesh->countFaces() * 0.01 * target_percentage);
+				if (m_mesh) {
+					m_mesh->decimate(m_mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 
 			// Add button for Q-Slim decimation
 			if (ImGui::Button("Q-Slim")) {
-				if (mesh) {
-					mesh->qslim(mesh->countFaces() * 0.01 * target_percentage);
+				if (m_mesh) {
+					m_mesh->qslim(m_mesh->countFaces() * 0.01 * target_percentage);
 				}
 			}
 		}
@@ -344,21 +336,32 @@ void Renderer::renderGUI(){
 		}
 
 		if (ImGui::CollapsingHeader("3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getDescriptors()->getArea() : 0);
-			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getDescriptors()->getMeshVolume() : 0);
-			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptors()->getBoundingBoxVolume() : 0);
-			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getDescriptors()->getDiameter() : 0);
-			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptors()->getEccentricity() : 0);
-			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptors()->getCompactness() : 0);
+			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_AREA_3D) : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_MVOLUME_3D) : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_BBVOLUME_3D) : 0);
+			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_DIAMETER_3D) : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
+			if (ImGui::Button("Compute")) {
+				if(m_mesh){
+					m_mesh->computeFeatures();
+				}
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Convex Hull 3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getArea() : 0);
-			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getMeshVolume() : 0);
-			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getBoundingBoxVolume() : 0);
-			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getDiameter() : 0);
-			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getEccentricity() : 0);
-			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptors()->getCompactness() : 0);
+			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_AREA_3D) : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_MVOLUME_3D) : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_BBVOLUME_3D) : 0);
+			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D) : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
+			if (ImGui::Button("Compute")) {
+				if(m_mesh){
+					m_mesh->getConvexHull()->computeFeatures();
+				}
+			}
+
 		}
 		ImGui::Separator();
 		// Add button for undo
