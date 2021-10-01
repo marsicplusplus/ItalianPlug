@@ -23,6 +23,8 @@ struct ModelStatistics {
 	unsigned int numVertices;
 	unsigned int numFaces;
 	std::string faceType;
+	float centroidDistance;
+	float longestEdge;
 	glm::vec3 minBoundingBox;
 	glm::vec3 maxBoundingBox;
 };

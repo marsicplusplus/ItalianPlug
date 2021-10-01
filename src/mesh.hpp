@@ -29,6 +29,7 @@ class Mesh {
 		void prepare();
 		void computeFeatures();
 		float getDescriptor(Features f);
+		void getCentroid(Eigen::Vector3f &c);
 
 		// Subdivision
 		void upsample(int n = 1);
