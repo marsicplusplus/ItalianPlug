@@ -6,7 +6,6 @@ int main(int argc, char* args[]) {
 	bool help = false;
 	bool dirStats = false;
 	bool calcFeats = false;
-	bool hasMesh = false;
 	bool normalizeMesh = false;
 	int targetVerts = 0;
 	std::string meshPath;

@@ -177,7 +177,6 @@ void Renderer::start() {
 		if(m_mesh != nullptr){
 			if(!m_fileDialog.IsOpened()){
 				m_camera.update(deltaTime);
-				MouseState ms = InputHandler::Instance()->getMouseState();
 				m_mesh->update(deltaTime);
 			}
 
