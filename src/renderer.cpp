@@ -341,7 +341,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_BBVOLUME_3D) : 0);
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
-			if (ImGui::Button("Compute")) {
+			if (ImGui::Button("Compute##Mesh")) {
 				if(m_mesh){
 					m_mesh->computeFeatures(Descriptors::descriptor_area | Descriptors::descriptor_meshVolume | Descriptors::descriptor_boundingBoxVolume | Descriptors::descriptor_compactness | Descriptors::descriptor_eccentricity);
 				}
@@ -355,7 +355,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D) : 0);
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
-			if (ImGui::Button("Compute")) {
+			if (ImGui::Button("Compute##ConvexHull")) {
 				if(m_mesh){
 					m_mesh->getConvexHull()->computeFeatures();
 				}
