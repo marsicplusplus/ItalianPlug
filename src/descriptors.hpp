@@ -21,6 +21,9 @@ namespace Descriptors {
 		float sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V);
 		float cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V);
 
+		std::vector<int> generateNUniqueRandomNumbers(int N, int upperBound);
+
+
 		enum descriptors3D : unsigned int
 		{
 			descriptor_area					= 1 << 0,

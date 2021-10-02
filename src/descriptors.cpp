@@ -31,6 +31,7 @@ float Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& 
 		float triangleArea = vecA.cross(vecB).norm() / 2;
 		meshArea += triangleArea;
 	}
+
 	return meshArea;
 }
 
@@ -59,8 +60,8 @@ float Descriptors::computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eige
 	return diff.x() * diff.y() * diff.z();
 }
 
-float Descriptors::computeCompactness(float m_area, float m_meshVolume) {
-	return pow(m_area, 3) / (36 * M_PI * m_meshVolume * m_meshVolume);
+float Descriptors::computeCompactness(float area, float volume) {
+	return pow(area, 3) / (36 * M_PI * volume * volume);
 }
 
 float Descriptors::computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
@@ -103,9 +104,10 @@ float Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& V) {
 	//               (  --->   ---> )}
 	//               || AB|| ||BC || )
 
-	const auto v1 = rand() % V.rows();
-	const auto v2 = rand() % V.rows();
-	const auto v3 = rand() % V.rows();
+	const auto randomNumbers = generateNUniqueRandomNumbers(3, V.rows());
+	const auto v1 = randomNumbers[0];
+	const auto v2 = randomNumbers[1];
+	const auto v3 = randomNumbers[2];
 
 	const Eigen::Vector3f pointA = V.row(v1);
 	const Eigen::Vector3f pointB = V.row(v2);
@@ -126,8 +128,9 @@ float Descriptors::distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const
 }
 
 float Descriptors::distanceBetween2RandomVeritces(const Eigen::MatrixXf& V) {
-	const auto v1 = rand() % V.rows();
-	const auto v2 = rand() % V.rows();
+	const auto randomNumbers = generateNUniqueRandomNumbers(2, V.rows());
+	const auto v1 = randomNumbers[0];
+	const auto v2 = randomNumbers[1];
 
 	const Eigen::Vector3f pointA = V.row(v1);
 	const Eigen::Vector3f pointB = V.row(v2);
@@ -142,9 +145,10 @@ float Descriptors::distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixX
 }
 
 float Descriptors::sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V) {
-	const auto v1 = rand() % V.rows();
-	const auto v2 = rand() % V.rows();
-	const auto v3 = rand() % V.rows();
+	const auto randomNumbers = generateNUniqueRandomNumbers(3, V.rows());
+	const auto v1 = randomNumbers[0];
+	const auto v2 = randomNumbers[1];
+	const auto v3 = randomNumbers[2];
 
 	const Eigen::Vector3f pointA = V.row(v1);
 	const Eigen::Vector3f pointB = V.row(v2);
@@ -160,11 +164,11 @@ float Descriptors::sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V) {
 float Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V) {
 
 	//  V=1/6|(a×b)⋅c|
-
-	const auto v1 = rand() % V.rows();
-	const auto v2 = rand() % V.rows();
-	const auto v3 = rand() % V.rows();
-	const auto v4 = rand() % V.rows();
+	const auto randomNumbers = generateNUniqueRandomNumbers(4, V.rows());
+	const auto v1 = randomNumbers[0];
+	const auto v2 = randomNumbers[1];
+	const auto v3 = randomNumbers[2];
+	const auto v4 = randomNumbers[3];
 
 	const Eigen::Vector3f pointA = V.row(v1);
 	const Eigen::Vector3f pointB = V.row(v2);
@@ -174,5 +178,20 @@ float Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixX
 	return abs((pointA - pointD).dot((pointB - pointD).cross(pointC - pointD))) / 6;
 }
 
+std::vector<int> Descriptors::generateNUniqueRandomNumbers(int N, int upperBound) {
+
+	std::vector<int> randomNumbers;
+	for (int i = 0; i < N; i++) {
+		auto random = rand() % upperBound;
+		auto it = std::find(randomNumbers.begin(), randomNumbers.end(), random);
+		while (it != randomNumbers.end()) {
+			random = rand() % upperBound;
+			it = std::find(randomNumbers.begin(), randomNumbers.end(), random);
+		}
+		randomNumbers.push_back(random);
+	}
+	
+	return randomNumbers;
+}
 
 #pragma warning( pop )
