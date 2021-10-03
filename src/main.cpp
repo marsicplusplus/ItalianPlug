@@ -63,7 +63,7 @@ int main(int argc, char* args[]) {
 		std::filesystem::path fp = dirPath;
 		fp /= "feats.csv";
 		featsFile.open(fp);
-		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,2D_Area,2D_Perimeter\n";
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,2D_Area,2D_Perimeter,2D_Compactness\n";
 		std::string offExt(".off");
 		std::string plyExt(".ply");
 		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
@@ -84,7 +84,8 @@ int main(int argc, char* args[]) {
 					mesh->getDescriptor(FEAT_COMPACTNESS_3D) << "," <<
 					mesh->getDescriptor(FEAT_ECCENTRICITY_3D) << "," <<
 					mesh->getDescriptor(FEAT_AREA_2D) << "," <<
-					mesh->getDescriptor(FEAT_PERIMETER_2D) << std::endl;
+					mesh->getDescriptor(FEAT_PERIMETER_2D) << "," <<
+					mesh->getDescriptor(FEAT_COMPACTNESS_2D) << std::endl;
 			}
 		}
 		featsFile.close();
@@ -94,7 +95,7 @@ int main(int argc, char* args[]) {
 		mesh.writeMesh();
 	} else {
 		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
-		rend.initSystems();
+		rend.initSystems(/*hidden*/ false);
 		rend.start();
 	}
 	return 0;

@@ -21,6 +21,17 @@ void Descriptors::compute3DDescriptors(const Eigen::MatrixXf& V, const Eigen::Ma
 void Descriptors::compute2DDescriptors(const uint8_t* fb, unsigned int flags, std::unordered_map<Features, float> &feats) {
 	if (flags & descriptor2d_area) feats[FEAT_AREA_2D] = compute2DArea(fb);
 	if (flags & descriptor2d_perimeter) feats[FEAT_PERIMETER_2D] = compute2DPerimeter(fb);
+	if (flags & descriptor2d_compactness){
+		if(feats.find(FEAT_AREA_2D) == feats.end())
+			feats[FEAT_AREA_2D] = compute2DArea(fb);
+		if(feats.find(FEAT_AREA_2D) == feats.end())
+			feats[FEAT_PERIMETER_2D] = compute2DPerimeter(fb);
+		feats[FEAT_COMPACTNESS_2D] = compute2DCompactness(feats[FEAT_AREA_2D], feats[FEAT_PERIMETER_2D]);
+	}
+}
+
+float Descriptors::compute2DCompactness(int area, int perimeter){
+	return (float)(perimeter * perimeter) / (4.0f * M_PI * area);
 }
 
 float Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {

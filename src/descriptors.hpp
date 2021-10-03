@@ -10,6 +10,7 @@ namespace Descriptors {
 		void compute2DDescriptors(const uint8_t *fb, unsigned int flags, std::unordered_map<Features, float> &feats);
 		int compute2DArea(const uint8_t* fb);
 		int compute2DPerimeter(const uint8_t* fb);
+		float compute2DCompactness(int area, int perimeter);
 
 		float computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
@@ -39,6 +40,7 @@ namespace Descriptors {
 		enum descriptors2D : unsigned int {
 			descriptor2d_area					= 1 << 0,
 			descriptor2d_perimeter				= 1 << 1,
+			descriptor2d_compactness			= 1 << 2,
 			descriptor2d_all					= 255
 		};
 };

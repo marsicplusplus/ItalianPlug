@@ -65,6 +65,7 @@ enum Features{
 	FEAT_ECCENTRICITY_3D,
 	FEAT_AREA_2D,
 	FEAT_PERIMETER_2D,
+	FEAT_COMPACTNESS_2D,
 };
 
 enum DrawMode {
