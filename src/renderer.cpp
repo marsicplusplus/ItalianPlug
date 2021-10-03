@@ -27,12 +27,12 @@ Renderer::~Renderer() {
 }
 
 void GLAPIENTRY glDebugOutput(GLenum source,
-	GLenum type,
-	unsigned int id,
-	GLenum severity,
-	GLsizei length,
-	const char* message,
-	const void* userParam) {
+		GLenum type,
+		unsigned int id,
+		GLenum severity,
+		GLsizei length,
+		const char* message,
+		const void* userParam) {
 	// ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
@@ -41,41 +41,41 @@ void GLAPIENTRY glDebugOutput(GLenum source,
 
 	switch (source)
 	{
-	case GL_DEBUG_SOURCE_API:             std::cerr << "Source: API"; break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cerr << "Source: Window System"; break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cerr << "Source: Shader Compiler"; break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cerr << "Source: Third Party"; break;
-	case GL_DEBUG_SOURCE_APPLICATION:     std::cerr << "Source: Application"; break;
-	case GL_DEBUG_SOURCE_OTHER:           std::cerr << "Source: Other"; break;
+		case GL_DEBUG_SOURCE_API:             std::cerr << "Source: API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cerr << "Source: Window System"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cerr << "Source: Shader Compiler"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cerr << "Source: Third Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION:     std::cerr << "Source: Application"; break;
+		case GL_DEBUG_SOURCE_OTHER:           std::cerr << "Source: Other"; break;
 	} std::cerr << std::endl;
 
 	switch (type)
 	{
-	case GL_DEBUG_TYPE_ERROR:               std::cerr << "Type: Error"; break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cerr << "Type: Deprecated Behaviour"; break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cerr << "Type: Undefined Behaviour"; break;
-	case GL_DEBUG_TYPE_PORTABILITY:         std::cerr << "Type: Portability"; break;
-	case GL_DEBUG_TYPE_PERFORMANCE:         std::cerr << "Type: Performance"; break;
-	case GL_DEBUG_TYPE_MARKER:              std::cerr << "Type: Marker"; break;
-	case GL_DEBUG_TYPE_PUSH_GROUP:          std::cerr << "Type: Push Group"; break;
-	case GL_DEBUG_TYPE_POP_GROUP:           std::cerr << "Type: Pop Group"; break;
-	case GL_DEBUG_TYPE_OTHER:               std::cerr << "Type: Other"; break;
+		case GL_DEBUG_TYPE_ERROR:               std::cerr << "Type: Error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cerr << "Type: Deprecated Behaviour"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cerr << "Type: Undefined Behaviour"; break;
+		case GL_DEBUG_TYPE_PORTABILITY:         std::cerr << "Type: Portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE:         std::cerr << "Type: Performance"; break;
+		case GL_DEBUG_TYPE_MARKER:              std::cerr << "Type: Marker"; break;
+		case GL_DEBUG_TYPE_PUSH_GROUP:          std::cerr << "Type: Push Group"; break;
+		case GL_DEBUG_TYPE_POP_GROUP:           std::cerr << "Type: Pop Group"; break;
+		case GL_DEBUG_TYPE_OTHER:               std::cerr << "Type: Other"; break;
 	} std::cerr << std::endl;
 
 	switch (severity)
 	{
-	case GL_DEBUG_SEVERITY_HIGH:         std::cerr << "Severity: high"; break;
-	case GL_DEBUG_SEVERITY_MEDIUM:       std::cerr << "Severity: medium"; break;
-	case GL_DEBUG_SEVERITY_LOW:          std::cerr << "Severity: low"; break;
-	case GL_DEBUG_SEVERITY_NOTIFICATION: std::cerr << "Severity: notification"; break;
+		case GL_DEBUG_SEVERITY_HIGH:         std::cerr << "Severity: high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM:       std::cerr << "Severity: medium"; break;
+		case GL_DEBUG_SEVERITY_LOW:          std::cerr << "Severity: low"; break;
+		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cerr << "Severity: notification"; break;
 	} std::cerr << std::endl;
 	std::cerr << std::endl;
 }
 
-bool Renderer::initSystems(){
+bool Renderer::initSystems(bool hidden){
 	CHECK_ERROR(glfwInit(), "ERROR::Renderer::initSystems > Cannot initialize glfw\n", false)
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -83,13 +83,15 @@ bool Renderer::initSystems(){
 
 	CHECK_ERROR(m_window = glfwCreateWindow(m_wWidth, m_wHeight, m_title.c_str(), NULL, NULL), "ERROR::Renderer::initSystems > could not create GLFW3 window\n", false)
 
-	glfwMakeContextCurrent(m_window);
+		glfwMakeContextCurrent(m_window);
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetKeyCallback(m_window, keyboardCallback);
 	glfwSetMouseButtonCallback(m_window, mouseCallback);
 	glfwSetMouseButtonCallback(m_window, mouseCallback);
 	glfwSetWindowSizeCallback(m_window, windowSizeCallback);
 	glfwSetScrollCallback(m_window, scrollCallback);
+
+	if(hidden) glfwHideWindow(m_window);
 
 	CHECK_ERROR(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD", false);
 
@@ -121,10 +123,10 @@ bool Renderer::initSystems(){
 	// Setup Debugging
 	//int flags; glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
 	//if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-		//glEnable(GL_DEBUG_OUTPUT);
-		//glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		//glDebugMessageCallback(glDebugOutput, nullptr);
-		//glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	//glEnable(GL_DEBUG_OUTPUT);
+	//glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	//glDebugMessageCallback(glDebugOutput, nullptr);
+	//glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	//}
 	auto s = ShaderMap::Instance()->getShader(SHADER_BASE);
 	s->loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
@@ -132,6 +134,10 @@ bool Renderer::initSystems(){
 	s->compileShaders();
 	s = ShaderMap::Instance()->getShader(SHADER_EDGE);
 	s->loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
+	s->loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
+	s->compileShaders();
+	s = ShaderMap::Instance()->getShader(SHADER_SILHOUETTE);
+	s->loadShader("shaders/cube_vertex.glsl", GL_VERTEX_SHADER);
 	s->loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
 	s->compileShaders();
 
@@ -207,7 +213,7 @@ void Renderer::renderGUI(){
 	{
 		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		// render your GUI
-    	if (ImGui::CollapsingHeader("File")){
+		if (ImGui::CollapsingHeader("File")){
 			if(ImGui::Button("Load Mesh")){
 				m_fileDialog.Open();
 			}
@@ -227,7 +233,7 @@ void Renderer::renderGUI(){
 				m_fileDialog.ClearSelected();
 			}
 		}
-    	if (ImGui::CollapsingHeader("Mesh")){
+		if (ImGui::CollapsingHeader("Mesh")){
 
 			// Display some basic mesh info
 			ImGui::Text((m_mesh) ? m_mesh->getPath().string().c_str() : "Load a mesh!");
@@ -275,36 +281,36 @@ void Renderer::renderGUI(){
 						m_mesh->upsample();
 					}
 				}
-			
 
-			// Add button for loop subdivision (smoothed as it's refined)
-			if (ImGui::Button("Loop Subdivision")) {
-				if (m_mesh) {
-					m_mesh->loopSubdivide();
-				}
-			}
-		}
 
-		if (ImGui::CollapsingHeader("Decimation")) {
-			static int target_percentage = 10;
-			ImGui::PushItemWidth(100);
-			ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
-			ImGui::PopItemWidth();
-
-			// Add button for basic decimation
-			if (ImGui::Button("Decimate")) {
-				if (m_mesh) {
-					m_mesh->decimate(m_mesh->countFaces() * 0.01 * target_percentage);
+				// Add button for loop subdivision (smoothed as it's refined)
+				if (ImGui::Button("Loop Subdivision")) {
+					if (m_mesh) {
+						m_mesh->loopSubdivide();
+					}
 				}
 			}
 
-			// Add button for Q-Slim decimation
-			if (ImGui::Button("Q-Slim")) {
-				if (m_mesh) {
-					m_mesh->qslim(m_mesh->countFaces() * 0.01 * target_percentage);
+			if (ImGui::CollapsingHeader("Decimation")) {
+				static int target_percentage = 10;
+				ImGui::PushItemWidth(100);
+				ImGui::SliderInt("Percentage", &target_percentage, 1, 99);
+				ImGui::PopItemWidth();
+
+				// Add button for basic decimation
+				if (ImGui::Button("Decimate")) {
+					if (m_mesh) {
+						m_mesh->decimate(m_mesh->countFaces() * 0.01 * target_percentage);
+					}
+				}
+
+				// Add button for Q-Slim decimation
+				if (ImGui::Button("Q-Slim")) {
+					if (m_mesh) {
+						m_mesh->qslim(m_mesh->countFaces() * 0.01 * target_percentage);
+					}
 				}
 			}
-		}
 		}
 
 		if (ImGui::CollapsingHeader("Normalization")) {
@@ -342,7 +348,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
 			if (ImGui::Button("Compute##Mesh")) {
 				if(m_mesh){
-					m_mesh->computeFeatures(Descriptors::descriptor_area | Descriptors::descriptor_meshVolume | Descriptors::descriptor_boundingBoxVolume | Descriptors::descriptor_compactness | Descriptors::descriptor_eccentricity);
+					m_mesh->compute3DFeatures(Descriptors::descriptor3d_area | Descriptors::descriptor3d_meshVolume | Descriptors::descriptor3d_boundingBoxVolume | Descriptors::descriptor3d_compactness | Descriptors::descriptor3d_eccentricity);
 				}
 			}
 		}
@@ -356,7 +362,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
 			if (ImGui::Button("Compute##ConvexHull")) {
 				if(m_mesh){
-					m_mesh->getConvexHull()->computeFeatures();
+					m_mesh->getConvexHull()->compute3DFeatures();
 				}
 			}
 

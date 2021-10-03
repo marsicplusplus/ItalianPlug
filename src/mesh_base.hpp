@@ -36,7 +36,9 @@ class MeshBase {
 		void undoLastOperation();
 
 		float getDescriptor(Features f);
-		void computeFeatures(unsigned int desc = Descriptors::descriptor_all);
+		void compute3DFeatures(unsigned int desc = Descriptors::descriptor3d_all);
+		void compute2DFeatures(unsigned int desc = Descriptors::descriptor2d_all);
+
 		void getCentroid(Eigen::Vector3f &c);
 
 		virtual void recomputeAndRender();
@@ -44,6 +46,7 @@ class MeshBase {
 		virtual void update(float dt);
 		virtual void prepare();
 		virtual void resetTransformations();
+		void renderSilhouette(uint8_t *fb);
 
 	protected:
 		unsigned int m_VAO;

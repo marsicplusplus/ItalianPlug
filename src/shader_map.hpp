@@ -12,6 +12,7 @@ typedef std::shared_ptr<Shader> ShaderPtr;
 enum Shaders {
 	SHADER_BASE,
 	SHADER_EDGE,
+	SHADER_SILHOUETTE,
 };
 
 class ShaderMap {

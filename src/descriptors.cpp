@@ -9,13 +9,18 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats) {
-	if (flags & descriptor_area) feats[FEAT_AREA_3D] = computeArea(V, F);
-	if (flags & descriptor_meshVolume) feats[FEAT_MVOLUME_3D] = computeMeshVolume(V, F);
-	if (flags & descriptor_boundingBoxVolume) feats[FEAT_BBVOLUME_3D] = computeBoundingBoxVolume(V, F);
-	if (flags & descriptor_compactness) feats[FEAT_COMPACTNESS_3D] = computeCompactness(feats[FEAT_AREA_3D], feats[FEAT_MVOLUME_3D]);
-	if (flags & descriptor_eccentricity) feats[FEAT_ECCENTRICITY_3D] = computeEccentricity(V, F);
-	if (flags & descriptor_diameter) feats[FEAT_DIAMETER_3D] = computeDiameter(V, F);
+void Descriptors::compute3DDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats) {
+	if (flags & descriptor3d_area) feats[FEAT_AREA_3D] = computeArea(V, F);
+	if (flags & descriptor3d_meshVolume) feats[FEAT_MVOLUME_3D] = computeMeshVolume(V, F);
+	if (flags & descriptor3d_boundingBoxVolume) feats[FEAT_BBVOLUME_3D] = computeBoundingBoxVolume(V, F);
+	if (flags & descriptor3d_compactness) feats[FEAT_COMPACTNESS_3D] = computeCompactness(feats[FEAT_AREA_3D], feats[FEAT_MVOLUME_3D]);
+	if (flags & descriptor3d_eccentricity) feats[FEAT_ECCENTRICITY_3D] = computeEccentricity(V, F);
+	if (flags & descriptor3d_diameter) feats[FEAT_DIAMETER_3D] = computeDiameter(V, F);
+}
+
+void Descriptors::compute2DDescriptors(const uint8_t* fb, unsigned int flags, std::unordered_map<Features, float> &feats) {
+	if (flags & descriptor2d_area) feats[FEAT_AREA_2D] = compute2DArea(fb);
+	if (flags & descriptor2d_perimeter) feats[FEAT_PERIMETER_2D] = compute2DPerimeter(fb);
 }
 
 float Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
@@ -174,5 +179,77 @@ float Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixX
 	return abs((pointA - pointD).dot((pointB - pointD).cross(pointC - pointD))) / 6;
 }
 
+int Descriptors::compute2DPerimeter(const uint8_t* fb) {
+	int res = 0;
+	for(int row = 0; row < W_HEIGHT; row++){
+		for(int col = 0; col < W_WIDTH*4; col+=4){
+			if(fb[row*W_WIDTH*4+col] == 0 && fb[row*W_WIDTH*4+col+1] == 0 && fb[row*W_WIDTH*4+col+2] == 0){
+				if(row > 0) {
+					if(fb[(row-1)*W_WIDTH*4+col] == 255 && fb[(row-1)*W_WIDTH*4+col+1] == 255 && fb[(row-1)*W_WIDTH*4+col+2] == 255) {
+						res++;
+						continue;
+					}
+					if(col>0){
+						if(fb[(row-1)*W_WIDTH*4+(col-4)] == 255 && fb[(row-1)*W_WIDTH*4+(col-4)+1] == 255 && fb[(row-1)*W_WIDTH*4+(col-4)+2] == 255) {
+							res++;
+							continue;
+						}
+					}
+					if(col < W_WIDTH * 4){
+						if(fb[(row-1)*W_WIDTH*4+(col+4)] == 255 && fb[(row-1)*W_WIDTH*4+(col+4)+1] == 255 && fb[(row-1)*W_WIDTH*4+(col+4)+2] == 255) {
+							res++;
+							continue;
+						}
+					}
+				}
+				if(row < W_HEIGHT - 1){
+					if(fb[(row+1)*W_WIDTH*4+col] == 255 && fb[(row+1)*W_WIDTH*4+col+1] == 255 && fb[(row+1)*W_WIDTH*4+col+2] == 255) {
+						res++;
+						continue;
+					}
+					if(col>0){
+						if(fb[(row+1)*W_WIDTH*4+(col-4)] == 255 && fb[(row+1)*W_WIDTH*4+(col-4)+1] == 255 && fb[(row+1)*W_WIDTH*4+(col-4)+2] == 255) {
+							res++;
+							continue;
+						}
+					}
+					if(col < W_WIDTH * 4 - 1){
+						if(fb[(row+1)*W_WIDTH*4+(col+4)] == 255 && fb[(row+1)*W_WIDTH*4+(col+4)+1] == 255 && fb[(row+1)*W_WIDTH*4+(col+4)+2] == 255) {
+							res++;
+							continue;
+						}
+					}
+				}
+				if(col > 0){
+					if(fb[row*W_WIDTH*4+col-4] == 255 && fb[row*W_WIDTH*4+col+1-4] == 255 && fb[row*W_WIDTH*4+col+2-4] == 255){
+						res++;
+						continue;
+					}
+				}
+				if(col < W_WIDTH * 4 - 1){
+					if(fb[row*W_WIDTH*4+col+4] == 255 && fb[row*W_WIDTH*4+col+1+4] == 255 && fb[row*W_WIDTH*4+col+2+4] == 255){
+						res++;
+						continue;
+					}
+				}
+			}
+		}
+	}
+	return res;
+}
+
+int Descriptors::compute2DArea(const uint8_t* fb) {
+	int area = 0;
+	int k = 0;
+	for(int i = 0; i < W_WIDTH; i++){
+		for(int j = 0; j < W_HEIGHT; j++){
+			if(fb[k] == 0 && fb[k+1] == 0 && fb[k+2] == 0){
+				area++;
+			}
+			k += 4;
+		}
+	}
+	return area;
+}
 
 #pragma warning( pop )

@@ -18,7 +18,7 @@ class Renderer {
 	public:
 		Renderer(int w, int h, std::string title) : m_wWidth(w), m_wHeight(h), m_title(title), m_mesh(nullptr), m_camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0) {}
 		~Renderer();
-		bool initSystems();
+		bool initSystems(bool hidden = false);
 		void start();
 		void resizeWindow(int w, int h);
 		void setMesh(std::string path);

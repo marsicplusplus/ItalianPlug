@@ -1,6 +1,7 @@
 #define IGL_HEADER_ONLY
 #include "renderer.hpp"
 #include "utils.hpp"
+#include "future"
 
 int main(int argc, char* args[]) {
 	bool help = false;
@@ -62,20 +63,28 @@ int main(int argc, char* args[]) {
 		std::filesystem::path fp = dirPath;
 		fp /= "feats.csv";
 		featsFile.open(fp);
-		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity\n";
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,2D_Area,2D_Perimeter\n";
 		std::string offExt(".off");
 		std::string plyExt(".ply");
+		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
+		rend.initSystems(/*hidden*/ true);
 		for (auto& p : std::filesystem::recursive_directory_iterator(dirPath)) {
 			std::string extension = p.path().extension().string();
 			if (extension == offExt || extension == plyExt) {
-				Mesh mesh(p.path().string());
-				featsFile << p.path().string() << "," << 
-							mesh.getDescriptor(FEAT_AREA_3D) << "," <<
-							mesh.getDescriptor(FEAT_MVOLUME_3D) << "," <<
-							mesh.getDescriptor(FEAT_BBVOLUME_3D) << "," <<
-							mesh.getDescriptor(FEAT_DIAMETER_3D) << "," <<
-							mesh.getDescriptor(FEAT_COMPACTNESS_3D) << "," <<
-							mesh.getDescriptor(FEAT_ECCENTRICITY_3D) << std::endl;
+				MeshPtr mesh = std::make_shared<Mesh>(p.path().string());
+				mesh->prepare();
+				mesh->compute3DFeatures(Descriptors::descriptor3d_area | Descriptors::descriptor3d_meshVolume | Descriptors::descriptor3d_boundingBoxVolume | Descriptors::descriptor3d_compactness | Descriptors::descriptor3d_eccentricity);
+				mesh->getConvexHull()->compute3DFeatures(Descriptors::descriptor3d_diameter);
+				mesh->compute2DFeatures();
+				featsFile << std::filesystem::absolute(p.path()).string() << "," << 
+					mesh->getDescriptor(FEAT_AREA_3D) << "," <<
+					mesh->getDescriptor(FEAT_MVOLUME_3D) << "," <<
+					mesh->getDescriptor(FEAT_BBVOLUME_3D) << "," <<
+					mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D) << "," <<
+					mesh->getDescriptor(FEAT_COMPACTNESS_3D) << "," <<
+					mesh->getDescriptor(FEAT_ECCENTRICITY_3D) << "," <<
+					mesh->getDescriptor(FEAT_AREA_2D) << "," <<
+					mesh->getDescriptor(FEAT_PERIMETER_2D) << std::endl;
 			}
 		}
 		featsFile.close();
@@ -84,7 +93,7 @@ int main(int argc, char* args[]) {
 		mesh.normalize(targetVerts);
 		mesh.writeMesh();
 	} else {
-		Renderer rend(1024, 720, "RendererGL");
+		Renderer rend(W_WIDTH, W_HEIGHT, "ItalianPlug");
 		rend.initSystems();
 		rend.start();
 	}

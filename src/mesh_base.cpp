@@ -1,5 +1,7 @@
 #include "mesh_base.hpp"
 #include "shader_map.hpp"
+#include "utils.hpp"
+#include "camera.hpp"
 #include "normalization.hpp"
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
@@ -38,6 +40,42 @@ void MeshBase::upsample(int n){
 
 	igl::upsample(m_vertices, m_faces, n);
 	recomputeAndRender();
+}
+
+void MeshBase::renderSilhouette(uint8_t *fb){
+	Camera camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0);
+	glm::mat4 proj = glm::perspective(camera.getFOV(), (float)W_WIDTH/(float)W_HEIGHT, 0.1f, 100.0f);
+	GLuint fbo, render_buf;
+	glGenFramebuffers(1,&fbo);
+	glGenRenderbuffers(1,&render_buf);
+	glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, W_WIDTH, W_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glViewport(0, 0, W_WIDTH, W_HEIGHT);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glm::mat4 projView = proj * camera.getViewMatrix();
+
+
+	ShaderMap::Instance()->getShader(SHADER_SILHOUETTE)->use();
+	ShaderMap::Instance()->getShader(SHADER_SILHOUETTE)->setUniform("projView", projView);
+
+	glBindVertexArray(m_VAO);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDrawElements(GL_TRIANGLES, 3*m_faces.rows(), GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
+	glReadPixels(0,0,W_WIDTH,W_HEIGHT,GL_BGRA,GL_UNSIGNED_BYTE,fb);
+
+	glDeleteFramebuffers(1,&fbo);
+	glDeleteRenderbuffers(1,&render_buf);
+
+	glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 void MeshBase::normalize(int target){
@@ -239,8 +277,14 @@ void MeshBase::recomputeAndRender() {
 		dataToOpenGL();
 	}
 }
-void MeshBase::computeFeatures(unsigned int descs){
-	Descriptors::computeDescriptors(m_vertices, m_faces, descs, features);
+void MeshBase::compute3DFeatures(unsigned int descs){
+	Descriptors::compute3DDescriptors(m_vertices, m_faces, descs, features);
+}
+
+void MeshBase::compute2DFeatures(unsigned int descs){
+	uint8_t fb[W_WIDTH * W_HEIGHT * 4];
+	renderSilhouette(&fb[0]);
+	Descriptors::compute2DDescriptors(&fb[0], descs, features);
 }
 
 float MeshBase::getDescriptor(Features f) {
