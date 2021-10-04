@@ -74,7 +74,7 @@ else()
 		assimp)
 endif()
 
-set(CXX_OPTIONS -g -Wall)
+set(CXX_OPTIONS -g )
 add_executable( ItalianPlug WIN32 ${SRC})
 target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})

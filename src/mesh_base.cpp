@@ -243,7 +243,7 @@ void MeshBase::computeFeatures(unsigned int descs){
 	Descriptors::computeDescriptors(m_vertices, m_faces, descs, features);
 }
 
-float MeshBase::getDescriptor(Features f) {
+DescriptorType MeshBase::getDescriptor(Features f) {
 	auto t = features.find(f);
 	if(t == features.end()) return 0.0f;
 	else return t->second;

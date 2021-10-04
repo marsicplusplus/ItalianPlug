@@ -12,7 +12,7 @@ int main(int argc, char* args[]) {
 	std::string dirPath;
 	for(int i = 1; i < argc; i++){
 		if(strncmp(args[i], "--help", strlen("--help")) == 0){
-			help = true;	
+			help = true;
 		}
 		if (strncmp(args[i], "--dir-stats", strlen("--dir-stats")) == 0) {
 			if (i + 1 <= argc) {
@@ -52,7 +52,7 @@ int main(int argc, char* args[]) {
 		std::cout << "Available options:\n";
 		std::cout << "--help \t\t Show this message\n";
 		std::cout << "--dir-stats path/to/db/ \t Recursively analyze and print the stats of every single mesh found in the passed directory\n";
-		std::cout << "--calc-features path/to/db/ \t Recursively compute features for each shape in the database and store the result as a csv in the root folder;\n"; 
+		std::cout << "--calc-features path/to/db/ \t Recursively compute features for each shape in the database and store the result as a csv in the root folder;\n";
 		return 0;
 	}
 	if(dirStats){
@@ -62,20 +62,34 @@ int main(int argc, char* args[]) {
 		std::filesystem::path fp = dirPath;
 		fp /= "feats.csv";
 		featsFile.open(fp);
-		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity\n";
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,3D_A3,3D_D1,3D_D2,3D_D3,3D_D4\n";
 		std::string offExt(".off");
 		std::string plyExt(".ply");
 		for (auto& p : std::filesystem::recursive_directory_iterator(dirPath)) {
 			std::string extension = p.path().extension().string();
 			if (extension == offExt || extension == plyExt) {
+				std::cout << "Compute features for " << p.path().string() << std::endl;
 				Mesh mesh(p.path().string());
-				featsFile << p.path().string() << "," << 
-							mesh.getDescriptor(FEAT_AREA_3D) << "," <<
-							mesh.getDescriptor(FEAT_MVOLUME_3D) << "," <<
-							mesh.getDescriptor(FEAT_BBVOLUME_3D) << "," <<
-							mesh.getDescriptor(FEAT_DIAMETER_3D) << "," <<
-							mesh.getDescriptor(FEAT_COMPACTNESS_3D) << "," <<
-							mesh.getDescriptor(FEAT_ECCENTRICITY_3D) << std::endl;
+				mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+				mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+				try{
+					featsFile << p.path().string() << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_AREA_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_MVOLUME_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_BBVOLUME_3D)) << "," <<
+						std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
+						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_A3_3D))) << "," <<
+						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D1_3D))) << "," <<
+						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D2_3D))) << "," <<
+						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D3_3D))) << "," <<
+						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D4_3D))) <<
+					std::endl;
+				} catch(std::bad_variant_access e){
+					std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();
+					featsFile << p.path().string() << ",-" << std::endl;
+				}
 			}
 		}
 		featsFile.close();

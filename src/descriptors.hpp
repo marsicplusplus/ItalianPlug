@@ -3,10 +3,15 @@
 
 #include "Eigen/Dense"
 #include "utils.hpp"
+#include <variant>
+#include <vector>
+#include <map>
 
+typedef std::map<float, int> HistogramMap;
+typedef std::variant<int, float, HistogramMap> DescriptorType;
 
 namespace Descriptors {
-		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats);
+		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, DescriptorType> &feats);
 		float computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
@@ -18,13 +23,19 @@ namespace Descriptors {
 		float distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB);
 		float distanceBetween2RandomVeritces(const Eigen::MatrixXf& V);
 		float distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid);
+		HistogramMap computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		HistogramMap computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		HistogramMap computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		HistogramMap computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		HistogramMap computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 		float sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V);
 		float cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V);
 
 		std::vector<int> generateNUniqueRandomNumbers(int N, int upperBound);
 
+		std::string toString(HistogramMap map);
 
-		enum descriptors3D : unsigned int
+		enum descriptors3D : uint16_t
 		{
 			descriptor_area					= 1 << 0,
 			descriptor_meshVolume			= 1 << 1,
@@ -32,7 +43,12 @@ namespace Descriptors {
 			descriptor_diameter				= 1 << 3,
 			descriptor_compactness			= 1 << 4,
 			descriptor_eccentricity			= 1 << 5,
-			descriptor_all					= 255 
+			descriptor_a3					= 1 << 6,
+			descriptor_d1					= 1 << 7,
+			descriptor_d2					= 1 << 8,
+			descriptor_d3					= 1 << 9,
+			descriptor_d4					= 1 << 9,
+			descriptor_all					= ~0x0000 & 0xFFFF 
 		};
 };
 

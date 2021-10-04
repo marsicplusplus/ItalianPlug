@@ -93,7 +93,7 @@ bool Renderer::initSystems(){
 
 	CHECK_ERROR(gladLoadGLLoader((GLADloadproc)glfwGetProcAddress), "Failed to initialize GLAD", false);
 
-	glEnable(GL_DEPTH_TEST);  
+	glEnable(GL_DEPTH_TEST);
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -275,7 +275,7 @@ void Renderer::renderGUI(){
 						m_mesh->upsample();
 					}
 				}
-			
+
 
 			// Add button for loop subdivision (smoothed as it's refined)
 			if (ImGui::Button("Loop Subdivision")) {
@@ -335,25 +335,25 @@ void Renderer::renderGUI(){
 		}
 
 		if (ImGui::CollapsingHeader("3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_AREA_3D) : 0);
-			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_MVOLUME_3D) : 0);
-			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_BBVOLUME_3D) : 0);
-			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
-			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
+			ImGui::Text("Surface Area: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_AREA_3D)) : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_MVOLUME_3D)) : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_BBVOLUME_3D)) : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D)) : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_COMPACTNESS_3D)) : 0);
 			if (ImGui::Button("Compute##Mesh")) {
 				if(m_mesh){
-					m_mesh->computeFeatures(Descriptors::descriptor_area | Descriptors::descriptor_meshVolume | Descriptors::descriptor_boundingBoxVolume | Descriptors::descriptor_compactness | Descriptors::descriptor_eccentricity);
+					m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 				}
 			}
 		}
 
 		if (ImGui::CollapsingHeader("Convex Hull 3D Descriptors")) {
-			ImGui::Text("Surface Area: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_AREA_3D) : 0);
-			ImGui::Text("Mesh Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_MVOLUME_3D) : 0);
-			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_BBVOLUME_3D) : 0);
-			ImGui::Text("Diameter: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D) : 0);
-			ImGui::Text("Eccentricity: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_ECCENTRICITY_3D) : 0);
-			ImGui::Text("Compactness: %f", (m_mesh) ? m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D) : 0);
+			ImGui::Text("Surface Area: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_AREA_3D)) : 0);
+			ImGui::Text("Mesh Volume: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_MVOLUME_3D)) : 0);
+			ImGui::Text("Bounding Box Volume: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_BBVOLUME_3D)) : 0);
+			ImGui::Text("Diameter: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) : 0);
+			ImGui::Text("Eccentricity: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_ECCENTRICITY_3D)) : 0);
+			ImGui::Text("Compactness: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D)) : 0);
 			if (ImGui::Button("Compute##ConvexHull")) {
 				if(m_mesh){
 					m_mesh->getConvexHull()->computeFeatures();

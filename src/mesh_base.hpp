@@ -35,7 +35,7 @@ class MeshBase {
 		void flipMirrorTest();
 		void undoLastOperation();
 
-		float getDescriptor(Features f);
+		DescriptorType getDescriptor(Features f);
 		void computeFeatures(unsigned int desc = Descriptors::descriptor_all);
 		void getCentroid(Eigen::Vector3f &c);
 
@@ -63,7 +63,7 @@ class MeshBase {
 		glm::mat4 m_modelMatrix;
 		bool m_prepared = false;
 
-		std::unordered_map<Features, float> features;
+		std::unordered_map<Features, DescriptorType> features;
 
 		void init();
 		void dataToOpenGL();

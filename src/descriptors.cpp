@@ -9,13 +9,111 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, float> &feats) {
+void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, DescriptorType> &feats) {
 	if (flags & descriptor_area) feats[FEAT_AREA_3D] = computeArea(V, F);
 	if (flags & descriptor_meshVolume) feats[FEAT_MVOLUME_3D] = computeMeshVolume(V, F);
 	if (flags & descriptor_boundingBoxVolume) feats[FEAT_BBVOLUME_3D] = computeBoundingBoxVolume(V, F);
-	if (flags & descriptor_compactness) feats[FEAT_COMPACTNESS_3D] = computeCompactness(feats[FEAT_AREA_3D], feats[FEAT_MVOLUME_3D]);
+	if (flags & descriptor_compactness) feats[FEAT_COMPACTNESS_3D] = computeCompactness(std::get<float>(feats[FEAT_AREA_3D]), std::get<float>(feats[FEAT_MVOLUME_3D]));
 	if (flags & descriptor_eccentricity) feats[FEAT_ECCENTRICITY_3D] = computeEccentricity(V, F);
 	if (flags & descriptor_diameter) feats[FEAT_DIAMETER_3D] = computeDiameter(V, F);
+	if (flags & descriptor_a3) feats[FEAT_A3_3D] = computeA3Histogram(V, F, 10);
+	if (flags & descriptor_d1) feats[FEAT_D1_3D] = computeD1Histogram(V, F, 10);
+	if (flags & descriptor_d2) feats[FEAT_D2_3D] = computeD2Histogram(V, F, 10);
+	if (flags & descriptor_d3) feats[FEAT_D3_3D] = computeD3Histogram(V, F, 10);
+	if (flags & descriptor_d4) feats[FEAT_D4_3D] = computeD4Histogram(V, F, 10);
+}
+
+HistogramMap Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	HistogramMap histogram;
+	std::vector<float> values;
+	const int nSamples = 2000;
+	Eigen::Vector3f centroid;
+	igl::centroid(V, F, centroid);
+	for(int i = 0; i < nSamples; i++){
+		values.push_back(distanceBetweenBarycenterAndRandomVertex(V, centroid));
+	}
+	std::sort(values.begin(), values.end());
+	float range = values[values.size() - 1] - values[0];
+	float binStep = range/(float) bins;
+	float bin = values[0];
+	for(auto a : values){
+		if(a > bin + binStep) bin += binStep;
+		++histogram[bin];
+	}
+	return histogram;
+}
+
+HistogramMap Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	HistogramMap histogram;
+	std::vector<float> values;
+	const int nSamples = 2000;
+
+	for(int i = 0; i < nSamples; i++){
+		values.push_back(distanceBetween2RandomVeritces(V));
+	}
+	std::sort(values.begin(), values.end());
+	float range = values[values.size() - 1] - values[0];
+	float binStep = range/(float) bins;
+	float bin = values[0];
+	for(auto a : values){
+		if(a > bin + binStep) bin += binStep;
+		++histogram[bin];
+	}
+	return histogram;
+}
+
+HistogramMap Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	HistogramMap histogram;
+	std::vector<float> values;
+	const int nSamples = 2000;
+	for(int i = 0; i < nSamples; i++){
+		values.push_back(sqrtAreaOfTriange3RandomVertices(V));
+	}
+	std::sort(values.begin(), values.end());
+	float range = values[values.size() - 1] - values[0];
+	float binStep = range/(float) bins;
+	float bin = values[0];
+	for(auto a : values){
+		if(a > bin + binStep) bin += binStep;
+		++histogram[bin];
+	}
+	return histogram;
+}
+
+HistogramMap Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	HistogramMap histogram;
+	std::vector<float> values;
+	const int nSamples = 2000;
+	for(int i = 0; i < nSamples; i++){
+		values.push_back(cubeRootVolumeTetrahedron4RandomVertices(V));
+	}
+	std::sort(values.begin(), values.end());
+	float range = values[values.size() - 1] - values[0];
+	float binStep = range/(float) bins;
+	float bin = values[0];
+	for(auto a : values){
+		if(a > bin + binStep) bin += binStep;
+		++histogram[bin];
+	}
+	return histogram;
+}
+
+HistogramMap Descriptors::computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	HistogramMap histogram;
+	std::vector<float> values;
+	const int nSamples = 2000;
+	for(int i = 0; i < nSamples; i++){
+		values.push_back(computeAngle3RandomVertices(V));
+	}
+	std::sort(values.begin(), values.end());
+	float range = values[values.size() - 1] - values[0];
+	float binStep = range/(float) bins;
+	float bin = values[0];
+	for(auto a : values){
+		if(a > bin + binStep) bin += binStep;
+		++histogram[bin];
+	}
+	return histogram;
 }
 
 float Descriptors::computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F) {
@@ -192,6 +290,16 @@ std::vector<int> Descriptors::generateNUniqueRandomNumbers(int N, int upperBound
 	}
 	
 	return randomNumbers;
+}
+
+std::string Descriptors::toString(HistogramMap map) {
+	std::ostringstream s;
+	s << "[";
+	for(const auto &a : map){
+		s << "(" << a.first << ":" << a.second << ")";
+	}
+	s << "]";
+	return s.str();
 }
 
 #pragma warning( pop )
