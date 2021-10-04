@@ -1,4 +1,5 @@
 #include "normalization.hpp"
+#include "glm/trigonometric.hpp"
 
 namespace Normalization {
 	void scale(Eigen::MatrixXf& V) {
@@ -102,5 +103,10 @@ namespace Normalization {
 		for (int index = 0; index < V.rows(); index++) {
 			V.row(index) *= flipMatrix;
 		}
+	}
+
+	float angleBetween(const Eigen::Vector3f& vec1, const Eigen::Vector3f& vec2) {
+		const auto theta = acos(vec1.dot(vec2) / (vec1.norm() * vec2.norm()));
+		return glm::degrees(theta);
 	}
 }

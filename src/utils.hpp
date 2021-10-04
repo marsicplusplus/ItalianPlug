@@ -30,6 +30,8 @@ struct ModelStatistics {
 	float longestEdge;
 	glm::vec3 minBoundingBox;
 	glm::vec3 maxBoundingBox;
+	float angleMajorToX;
+	float angleMinorToY;
 };
 
 namespace Importer {
@@ -66,6 +68,7 @@ enum Features{
 	FEAT_AREA_2D,
 	FEAT_PERIMETER_2D,
 	FEAT_COMPACTNESS_2D,
+	FEAT_EIGEN_ANGLE_3D
 };
 
 enum DrawMode {

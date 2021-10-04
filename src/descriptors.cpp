@@ -130,10 +130,7 @@ float Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& V) {
 	const Eigen::Vector3f AB = pointB - pointA;
 	const Eigen::Vector3f BC = pointC - pointB;
 
-	const auto dotProduct = AB.dot(BC);
-	const auto theta = acos(dotProduct / (AB.norm() * BC.norm()));
-
-	return theta;
+	return Normalization::angleBetween(AB, BC);
 }
 
 float Descriptors::distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB) {
