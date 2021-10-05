@@ -25,6 +25,8 @@ namespace Normalization {
 
 	void alignPrincipalAxes(Eigen::MatrixXf& V, const Eigen::Vector3f& centroid, const Eigen::Vector3f& majorEigenVector, const Eigen::Vector3f& minorEigenVector);
 
+	float angleBetween(const Eigen::Vector3f& vec1, const Eigen::Vector3f& vec2);
+
 };
 
 #endif

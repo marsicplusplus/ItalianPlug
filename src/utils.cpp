@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "normalization.hpp"
 #include "glm/geometric.hpp"
 #include <filesystem>
 #include "assimp/Importer.hpp"
@@ -120,6 +121,15 @@ namespace Stats {
 		glm::vec3 bbMin(paiMesh->mAABB.mMin.x, paiMesh->mAABB.mMin.y, paiMesh->mAABB.mMin.z);
 		glm::vec3 bbMax(paiMesh->mAABB.mMax.x, paiMesh->mAABB.mMax.y, paiMesh->mAABB.mMax.z);
 		glm::vec3 res = bbMax - bbMin;
+
+		const auto covarianceMatirx = Normalization::calculateCovarianceMatrix(mesh.getVertices(), c);
+		const auto eigenResults = Normalization::calculateEigen(covarianceMatirx);
+		const auto majorEigenVector = eigenResults[2].first;
+		const auto minorEigenVector = eigenResults[1].first;
+
+		const auto majorToX = Normalization::angleBetween(majorEigenVector, Eigen::Vector3f(1, 0, 0));
+		const auto minorToY = Normalization::angleBetween(minorEigenVector, Eigen::Vector3f(0, 1, 0));
+
 		ModelStatistics modelStats = ModelStatistics{
 			classType,
 			paiMesh->mNumVertices,
@@ -128,7 +138,9 @@ namespace Stats {
 			c.norm(),
 			fmaxf(fmaxf(res.x, res.y), res.z),
 			bbMin,
-			bbMax
+			bbMax,
+			majorToX,
+			minorToY
 		};
 
 		return modelStats;
@@ -152,7 +164,9 @@ namespace Stats {
 			"Min Bounding Box: Z" << "," <<
 			"Max Bounding Box: X" << "," <<
 			"Max Bounding Box: Y" << "," <<
-			"Max Bounding Box: Z" << std::endl;
+			"Max Bounding Box: Z" << "," <<
+			"Angle Major Eigen To X" << "," <<
+			"Angle Major Eigen To Y" << std::endl;
 
 		std::string offExt(".off");
 		std::string plyExt(".ply");
@@ -160,6 +174,7 @@ namespace Stats {
 			std::string extension = p.path().extension().string();
 			if (extension == offExt || extension == plyExt) {
 				ModelStatistics modelStats = getModelStatistics(p.path().string());
+				//std::cout << "Extracting " << p.path().string() << std::endl << std::flush;
 				myfile <<
 					p.path().string() << "," << 
 					modelStats.classType << "," <<
@@ -173,7 +188,9 @@ namespace Stats {
 					modelStats.minBoundingBox.z << "," <<
 					modelStats.maxBoundingBox.x << "," <<
 					modelStats.maxBoundingBox.y << "," <<
-					modelStats.maxBoundingBox.z << std::endl;
+					modelStats.maxBoundingBox.z << "," <<
+					modelStats.angleMajorToX << "," <<
+					modelStats.angleMinorToY << std::endl;
 			}
 		}
 		myfile.close();

@@ -27,6 +27,8 @@ struct ModelStatistics {
 	float longestEdge;
 	glm::vec3 minBoundingBox;
 	glm::vec3 maxBoundingBox;
+	float angleMajorToX;
+	float angleMinorToY;
 };
 
 namespace Importer {

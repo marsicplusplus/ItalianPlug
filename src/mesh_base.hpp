@@ -17,6 +17,9 @@ class MeshBase {
 		inline int countVertices() const {return m_vertices.rows();}
 		inline int countFaces() const {return m_faces.rows();}
 
+		inline Eigen::MatrixXf getVertices() const { return m_vertices; }
+		inline Eigen::MatrixXi getFaces() const { return m_faces; }
+
 		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
 
