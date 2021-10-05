@@ -165,8 +165,8 @@ namespace Stats {
 			"Max Bounding Box: X" << "," <<
 			"Max Bounding Box: Y" << "," <<
 			"Max Bounding Box: Z" << "," <<
-			"Angle Major Eigen To X" << "," <<
-			"Angle Major Eigen To Y" << std::endl;
+			"Angle First Eigenvector To X" << "," <<
+			"Angle Second Eigenvector To Y" << std::endl;
 
 		std::string offExt(".off");
 		std::string plyExt(".ply");
@@ -189,8 +189,8 @@ namespace Stats {
 					modelStats.maxBoundingBox.x << "," <<
 					modelStats.maxBoundingBox.y << "," <<
 					modelStats.maxBoundingBox.z << "," <<
-					modelStats.angleMajorToX << "," <<
-					modelStats.angleMinorToY << std::endl;
+					modelStats.angleFirstToX << "," <<
+					modelStats.angleSecondToY << std::endl;
 			}
 		}
 		myfile.close();
