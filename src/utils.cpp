@@ -165,6 +165,7 @@ namespace Stats {
 			"Max Bounding Box: X" << "," <<
 			"Max Bounding Box: Y" << "," <<
 			"Max Bounding Box: Z" << "," <<
+			"AABB Volume" << "," <<
 			"Angle First Eigenvector To X" << "," <<
 			"Angle Second Eigenvector To Y" << std::endl;
 
@@ -175,6 +176,7 @@ namespace Stats {
 			if (extension == offExt || extension == plyExt) {
 				ModelStatistics modelStats = getModelStatistics(p.path().string());
 				//std::cout << "Extracting " << p.path().string() << std::endl << std::flush;
+				glm::vec3 tmp = glm::abs((modelStats.maxBoundingBox - modelStats.minBoundingBox));
 				myfile <<
 					p.path().string() << "," << 
 					modelStats.classType << "," <<
@@ -189,6 +191,7 @@ namespace Stats {
 					modelStats.maxBoundingBox.x << "," <<
 					modelStats.maxBoundingBox.y << "," <<
 					modelStats.maxBoundingBox.z << "," <<
+					tmp.x * tmp.y * tmp.z << "," <<
 					modelStats.angleFirstToX << "," <<
 					modelStats.angleSecondToY << std::endl;
 			}
