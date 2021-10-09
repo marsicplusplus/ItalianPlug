@@ -25,13 +25,11 @@ void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::Matr
 
 HistogramMap Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
 	HistogramMap histogram;
-	std::vector<float> values;
 	const int nSamples = 2000;
 	Eigen::Vector3f centroid;
 	igl::centroid(V, F, centroid);
-	for(int i = 0; i < nSamples; i++){
-		values.push_back(distanceBetweenBarycenterAndRandomVertex(V, centroid));
-	}
+	std::vector<float> values = distanceBetweenBarycenterAndRandomVertex(V, centroid, nSamples);
+
 	std::sort(values.begin(), values.end());
 	float range = values[values.size() - 1] - values[0];
 	float binStep = range/(float) bins;
@@ -45,12 +43,10 @@ HistogramMap Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eig
 
 HistogramMap Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
 	HistogramMap histogram;
-	std::vector<float> values;
-	const int nSamples = 2000;
 
-	for(int i = 0; i < nSamples; i++){
-		values.push_back(distanceBetween2RandomVeritces(V));
-	}
+	const int nSamples = 2000;
+	std::vector<float> values = distanceBetween2RandomVeritces(V, nSamples);
+
 	std::sort(values.begin(), values.end());
 	float range = values[values.size() - 1] - values[0];
 	float binStep = range/(float) bins;
@@ -64,11 +60,9 @@ HistogramMap Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eig
 
 HistogramMap Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
 	HistogramMap histogram;
-	std::vector<float> values;
 	const int nSamples = 2000;
-	for(int i = 0; i < nSamples; i++){
-		values.push_back(sqrtAreaOfTriange3RandomVertices(V));
-	}
+	std::vector<float> values = sqrtAreaOfTriange3RandomVertices(V, nSamples);
+
 	std::sort(values.begin(), values.end());
 	float range = values[values.size() - 1] - values[0];
 	float binStep = range/(float) bins;
@@ -82,11 +76,9 @@ HistogramMap Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eig
 
 HistogramMap Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
 	HistogramMap histogram;
-	std::vector<float> values;
 	const int nSamples = 2000;
-	for(int i = 0; i < nSamples; i++){
-		values.push_back(cubeRootVolumeTetrahedron4RandomVertices(V));
-	}
+	std::vector<float> values = cubeRootVolumeTetrahedron4RandomVertices(V, nSamples);
+
 	std::sort(values.begin(), values.end());
 	float range = values[values.size() - 1] - values[0];
 	float binStep = range/(float) bins;
@@ -100,11 +92,8 @@ HistogramMap Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eig
 
 HistogramMap Descriptors::computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
 	HistogramMap histogram;
-	std::vector<float> values;
 	const int nSamples = 2000;
-	for(int i = 0; i < nSamples; i++){
-		values.push_back(computeAngle3RandomVertices(V));
-	}
+	std::vector<float> values = computeAngle3RandomVertices(V, 2000);
 	std::sort(values.begin(), values.end());
 	float range = values[values.size() - 1] - values[0];
 	float binStep = range/(float) bins;
@@ -191,7 +180,7 @@ float Descriptors::computeDiameter(const Eigen::MatrixXf& V, const Eigen::Matrix
 	return max_distance;
 }
 
-float Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& V) {
+std::vector<float> Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples) {
 
 	// -->    -->   --->   --->
 	// AB dot BC = ||AB|| ||BC|| cos(theta)
@@ -202,22 +191,42 @@ float Descriptors::computeAngle3RandomVertices(const Eigen::MatrixXf& V) {
 	//               (  --->   ---> )}
 	//               || AB|| ||BC || )
 
-	const auto randomNumbers = generateNUniqueRandomNumbers(3, V.rows());
-	const auto v1 = randomNumbers[0];
-	const auto v2 = randomNumbers[1];
-	const auto v3 = randomNumbers[2];
+	std::vector<float> angleResults;
+	const auto cubeRootOfSamples = std::cbrt(numberOfSamples);
 
-	const Eigen::Vector3f pointA = V.row(v1);
-	const Eigen::Vector3f pointB = V.row(v2);
-	const Eigen::Vector3f pointC = V.row(v3);
+	for (int firstLoop = 0; firstLoop < cubeRootOfSamples; firstLoop++) {
+		const auto v1 = rand() % Vertices.rows();
+		const Eigen::Vector3f pointA = Vertices.row(v1);
 
-	const Eigen::Vector3f AB = pointB - pointA;
-	const Eigen::Vector3f BC = pointC - pointB;
+		for (int secondLoop = 0; secondLoop < cubeRootOfSamples; secondLoop++) {
+			auto v2 = rand() % Vertices.rows();
 
-	const auto dotProduct = AB.dot(BC);
-	const auto theta = acos(dotProduct / (AB.norm() * BC.norm()));
+			while (v2 == v1) {
+				v2 = rand() % Vertices.rows();
+			}
 
-	return theta;
+			const Eigen::Vector3f pointB = Vertices.row(v2);
+
+			for (int thirdLoop = 0; thirdLoop < cubeRootOfSamples; thirdLoop++) {
+				auto v3 = rand() % Vertices.rows();
+
+				while (v3 == v1 || v3 == v2) {
+					v3 = rand() % Vertices.rows();
+				}
+
+				const Eigen::Vector3f pointC = Vertices.row(v3);
+
+				const Eigen::Vector3f AB = pointB - pointA;
+				const Eigen::Vector3f BC = pointC - pointB;
+
+				const auto dotProduct = AB.dot(BC);
+				const auto theta = acos(dotProduct / (AB.norm() * BC.norm()));
+				angleResults.push_back(theta);
+			}
+		}
+	}
+
+	return angleResults;
 }
 
 float Descriptors::distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB) {
@@ -225,71 +234,125 @@ float Descriptors::distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const
 	return sqrt(pow(pointB.x() - pointA.x(), 2) + pow(pointB.y() - pointA.y(), 2) + pow(pointB.z() - pointA.z(), 2));
 }
 
-float Descriptors::distanceBetween2RandomVeritces(const Eigen::MatrixXf& V) {
-	const auto randomNumbers = generateNUniqueRandomNumbers(2, V.rows());
-	const auto v1 = randomNumbers[0];
-	const auto v2 = randomNumbers[1];
+std::vector<float> Descriptors::distanceBetween2RandomVeritces(const Eigen::MatrixXf& Vertices, int numberOfSamples) {
 
-	const Eigen::Vector3f pointA = V.row(v1);
-	const Eigen::Vector3f pointB = V.row(v2);
-	return distanceBetweenTwoPoints(pointA, pointB);
+	std::vector<float> distanceResults;
+	const auto squareRootOfSamples = std::sqrt(numberOfSamples);
+
+	for (int firstLoop = 0; firstLoop < squareRootOfSamples; firstLoop++) {
+		const auto v1 = rand() % Vertices.rows();
+		const Eigen::Vector3f pointA = Vertices.row(v1);
+
+		for (int secondLoop = 0; secondLoop < squareRootOfSamples; secondLoop++) {
+			auto v2 = rand() % Vertices.rows();
+
+			while (v2 == v1) {
+				v2 = rand() % Vertices.rows();
+			}
+
+			const Eigen::Vector3f pointB = Vertices.row(v2);
+			distanceResults.push_back(distanceBetweenTwoPoints(pointA, pointB));
+		}
+	}
+
+	return distanceResults;
 }
 
-float Descriptors::distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid) {
-	const auto v1 = rand() % V.rows();
-	const Eigen::Vector3f pointA = V.row(v1);
+std::vector<float> Descriptors::distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid, int numberOfSamples) {
 
-	return distanceBetweenTwoPoints(centroid, pointA);
+	std::vector<float> distanceResults;
+	for (int i = 0; i < numberOfSamples; i++) {
+		const auto v1 = rand() % V.rows();
+		const Eigen::Vector3f pointA = V.row(v1);
+
+		distanceResults.push_back(distanceBetweenTwoPoints(centroid, pointA));
+	}
+
+	return distanceResults;
 }
 
-float Descriptors::sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V) {
-	const auto randomNumbers = generateNUniqueRandomNumbers(3, V.rows());
-	const auto v1 = randomNumbers[0];
-	const auto v2 = randomNumbers[1];
-	const auto v3 = randomNumbers[2];
+std::vector<float> Descriptors::sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples) {
 
-	const Eigen::Vector3f pointA = V.row(v1);
-	const Eigen::Vector3f pointB = V.row(v2);
-	const Eigen::Vector3f pointC = V.row(v3);
+	std::vector<float> areaResults;
+	const auto cubeRootOfSamples = std::cbrt(numberOfSamples);
 
-	Eigen::Vector3f BA = pointA - pointB;
-	Eigen::Vector3f CA = pointA - pointC;
-	float triangleArea = (BA.cross(CA)).norm() / 2;
+	for (int firstLoop = 0; firstLoop < cubeRootOfSamples; firstLoop++) {
+		const auto v1 = rand() % Vertices.rows();
+		const Eigen::Vector3f pointA = Vertices.row(v1);
 
-	return sqrt(triangleArea);
+		for (int secondLoop = 0; secondLoop < cubeRootOfSamples; secondLoop++) {
+			auto v2 = rand() % Vertices.rows();
+
+			while (v2 == v1) {
+				v2 = rand() % Vertices.rows();
+			}
+
+			const Eigen::Vector3f pointB = Vertices.row(v2);
+
+			for (int thirdLoop = 0; thirdLoop < cubeRootOfSamples; thirdLoop++) {
+				auto v3 = rand() % Vertices.rows();
+
+				while (v3 == v1 || v3 == v2) {
+					v3 = rand() % Vertices.rows();
+				}
+
+				const Eigen::Vector3f pointC = Vertices.row(v3);
+
+				Eigen::Vector3f BA = pointA - pointB;
+				Eigen::Vector3f CA = pointA - pointC;
+				float triangleArea = (BA.cross(CA)).norm() / 2;
+				areaResults.push_back(sqrt(triangleArea));
+			}
+		}
+	}
+
+	return areaResults;
 }
 
-float Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V) {
+std::vector<float> Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples) {
 
 	//  V=1/6|(a×b)⋅c|
-	const auto randomNumbers = generateNUniqueRandomNumbers(4, V.rows());
-	const auto v1 = randomNumbers[0];
-	const auto v2 = randomNumbers[1];
-	const auto v3 = randomNumbers[2];
-	const auto v4 = randomNumbers[3];
+	std::vector<float> volumeResults;
+	const auto fourthRootOfSamples = std::pow(numberOfSamples, 1.0 / 4);
+	for (int firstLoop = 0; firstLoop < fourthRootOfSamples; firstLoop++) {
+		const auto v1 = rand() % Vertices.rows();
+		const Eigen::Vector3f pointA = Vertices.row(v1);
 
-	const Eigen::Vector3f pointA = V.row(v1);
-	const Eigen::Vector3f pointB = V.row(v2);
-	const Eigen::Vector3f pointC = V.row(v3);
-	const Eigen::Vector3f pointD = V.row(v3);
+		for (int secondLoop = 0; secondLoop < fourthRootOfSamples; secondLoop++) {
+			auto v2 = rand() % Vertices.rows();
 
-	return abs((pointA - pointD).dot((pointB - pointD).cross(pointC - pointD))) / 6;
-}
+			while (v2 == v1) {
+				v2 = rand() % Vertices.rows();
+			}
 
-std::vector<int> Descriptors::generateNUniqueRandomNumbers(int N, int upperBound) {
+			const Eigen::Vector3f pointB = Vertices.row(v2);
 
-	std::vector<int> randomNumbers;
-	for (int i = 0; i < N; i++) {
-		auto random = rand() % upperBound;
-		auto it = std::find(randomNumbers.begin(), randomNumbers.end(), random);
-		while (it != randomNumbers.end()) {
-			random = rand() % upperBound;
-			it = std::find(randomNumbers.begin(), randomNumbers.end(), random);
+			for (int thirdLoop = 0; thirdLoop < fourthRootOfSamples; thirdLoop++) {
+				auto v3 = rand() % Vertices.rows();
+
+				while (v3 == v1 || v3 == v2) {
+					v3 = rand() % Vertices.rows();
+				}
+
+				const Eigen::Vector3f pointC = Vertices.row(v3);
+
+				for (int fourthLoop = 0; fourthLoop < fourthRootOfSamples; fourthLoop++) {
+					auto v4 = rand() % Vertices.rows();
+
+					while (v4 == v1 || v4 == v2 || v4 == v3) {
+						v4 = rand() % Vertices.rows();
+					}
+
+					const Eigen::Vector3f pointD = Vertices.row(v4);
+
+					auto cubeRootVolume = abs((pointA - pointD).dot((pointB - pointD).cross(pointC - pointD))) / 6;
+					volumeResults.push_back(cubeRootVolume);
+				}
+			}
 		}
-		randomNumbers.push_back(random);
 	}
-	
-	return randomNumbers;
+
+	return volumeResults;
 }
 
 std::string Descriptors::toString(HistogramMap map) {

@@ -57,6 +57,7 @@ set( SRC
      src/normalization.cpp
      src/descriptors.cpp
      src/input_handler.cpp
+     src/mesh_repair.cpp
      src/shader_map.cpp
      src/camera.cpp
      src/mesh_map.cpp

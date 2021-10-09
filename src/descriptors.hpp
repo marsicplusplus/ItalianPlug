@@ -19,19 +19,20 @@ namespace Descriptors {
 		float computeEccentricity(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeDiameter(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 
-		float computeAngle3RandomVertices(const Eigen::MatrixXf& V);
-		float distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB);
-		float distanceBetween2RandomVeritces(const Eigen::MatrixXf& V);
-		float distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid);
+		std::vector<float> computeAngle3RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples);
+		std::vector<float> distanceBetween2RandomVeritces(const Eigen::MatrixXf& Vertices, int numberOfSamples);
+		std::vector<float> distanceBetweenBarycenterAndRandomVertex(const Eigen::MatrixXf& V, const Eigen::Vector3f& centroid, int numberOfSamples);
+		std::vector<float> sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples);
+		std::vector<float> cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples);
+
+
 		HistogramMap computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 		HistogramMap computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 		HistogramMap computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 		HistogramMap computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 		HistogramMap computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
-		float sqrtAreaOfTriange3RandomVertices(const Eigen::MatrixXf& V);
-		float cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& V);
 
-		std::vector<int> generateNUniqueRandomNumbers(int N, int upperBound);
+		float distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB);
 
 		std::string toString(HistogramMap map);
 

@@ -1,6 +1,7 @@
 #include "mesh_base.hpp"
 #include "shader_map.hpp"
 #include "normalization.hpp"
+#include "mesh_repair.hpp"
 #include "glad/glad.h"
 #include "glm/gtx/transform.hpp"
 #include "GLFW/glfw3.h"
@@ -37,6 +38,18 @@ void MeshBase::upsample(int n){
 	saveState();
 
 	igl::upsample(m_vertices, m_faces, n);
+	recomputeAndRender();
+}
+
+void MeshBase::repair() {
+	saveState();
+
+	Eigen::MatrixXd finalV;
+	Eigen::MatrixXi finalF;
+
+	MeshRepairer::repairMesh(m_vertices.cast<double>(), m_faces, finalV, finalF);
+	m_vertices = finalV.cast<float>();
+	m_faces = finalF;
 	recomputeAndRender();
 }
 

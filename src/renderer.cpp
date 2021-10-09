@@ -276,11 +276,11 @@ void Renderer::renderGUI(){
 					}
 				}
 
-
-			// Add button for loop subdivision (smoothed as it's refined)
-			if (ImGui::Button("Loop Subdivision")) {
-				if (m_mesh) {
-					m_mesh->loopSubdivide();
+				// Add button for loop subdivision (smoothed as it's refined)
+				if (ImGui::Button("Loop Subdivision")) {
+					if (m_mesh) {
+						m_mesh->loopSubdivide();
+					}
 				}
 			}
 		}
@@ -305,6 +305,14 @@ void Renderer::renderGUI(){
 				}
 			}
 		}
+
+		if (ImGui::CollapsingHeader("Repair")) {
+
+			if (ImGui::Button("Repair Holes")) {
+				if (m_mesh) {
+					m_mesh->repair();
+				}
+			}
 		}
 
 		if (ImGui::CollapsingHeader("Normalization")) {

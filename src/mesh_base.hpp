@@ -25,6 +25,7 @@ class MeshBase {
 
 		// Subdivision
 		void upsample(int n = 1);
+		void repair();
 		void loopSubdivide(int n = 1);
 
 		// Decimation
