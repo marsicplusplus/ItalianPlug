@@ -23,85 +23,64 @@ void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::Matr
 	if (flags & descriptor_d4) feats[FEAT_D4_3D] = computeD4Histogram(V, F, 10);
 }
 
-HistogramMap Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
-	HistogramMap histogram;
-	const int nSamples = 2000;
+Histogram Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	const int nSamples = 500000;
 	Eigen::Vector3f centroid;
 	igl::centroid(V, F, centroid);
 	std::vector<float> values = distanceBetweenBarycenterAndRandomVertex(V, centroid, nSamples);
 
 	std::sort(values.begin(), values.end());
-	float range = values[values.size() - 1] - values[0];
-	float binStep = range/(float) bins;
-	float bin = values[0];
-	for(auto a : values){
-		if(a > bin + binStep) bin += binStep;
-		++histogram[bin];
-	}
+	
+	Histogram histogram(bins);
+	histogram.populate(values);
+	histogram.normalize();
 	return histogram;
 }
 
-HistogramMap Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
-	HistogramMap histogram;
-
-	const int nSamples = 2000;
+Histogram Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	const int nSamples = 500000;
 	std::vector<float> values = distanceBetween2RandomVeritces(V, nSamples);
 
 	std::sort(values.begin(), values.end());
-	float range = values[values.size() - 1] - values[0];
-	float binStep = range/(float) bins;
-	float bin = values[0];
-	for(auto a : values){
-		if(a > bin + binStep) bin += binStep;
-		++histogram[bin];
-	}
+
+	Histogram histogram(bins);
+	histogram.populate(values);
+	histogram.normalize();
 	return histogram;
 }
 
-HistogramMap Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
-	HistogramMap histogram;
-	const int nSamples = 2000;
+Histogram Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	const int nSamples = 500000;
 	std::vector<float> values = sqrtAreaOfTriange3RandomVertices(V, nSamples);
 
 	std::sort(values.begin(), values.end());
-	float range = values[values.size() - 1] - values[0];
-	float binStep = range/(float) bins;
-	float bin = values[0];
-	for(auto a : values){
-		if(a > bin + binStep) bin += binStep;
-		++histogram[bin];
-	}
+	
+	Histogram histogram(bins);
+	histogram.populate(values);
+	histogram.normalize();
 	return histogram;
 }
 
-HistogramMap Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
-	HistogramMap histogram;
-	const int nSamples = 2000;
+Histogram Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	const int nSamples = 500000;
 	std::vector<float> values = cubeRootVolumeTetrahedron4RandomVertices(V, nSamples);
 
 	std::sort(values.begin(), values.end());
-	float range = values[values.size() - 1] - values[0];
-	float binStep = range/(float) bins;
-	float bin = values[0];
-	for(auto a : values){
-		if(a > bin + binStep) bin += binStep;
-		++histogram[bin];
-	}
+
+	Histogram histogram(bins);
+	histogram.populate(values);
+	histogram.normalize();
 	return histogram;
 }
 
-HistogramMap Descriptors::computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
-	HistogramMap histogram;
-	const int nSamples = 2000;
-	std::vector<float> values = computeAngle3RandomVertices(V, 2000);
+Histogram Descriptors::computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins) {
+	const int nSamples = 500000;
+	std::vector<float> values = computeAngle3RandomVertices(V, nSamples);
 	std::sort(values.begin(), values.end());
-	float range = values[values.size() - 1] - values[0];
-	float binStep = range/(float) bins;
-	float bin = values[0];
-	for(auto a : values){
-		if(a > bin + binStep) bin += binStep;
-		++histogram[bin];
-	}
+
+	Histogram histogram(bins);
+	histogram.populate(values);
+	histogram.normalize();
 	return histogram;
 }
 
@@ -353,16 +332,6 @@ std::vector<float> Descriptors::cubeRootVolumeTetrahedron4RandomVertices(const E
 	}
 
 	return volumeResults;
-}
-
-std::string Descriptors::toString(HistogramMap map) {
-	std::ostringstream s;
-	s << "[";
-	for(const auto &a : map){
-		s << "(" << a.first << ":" << a.second << ")";
-	}
-	s << "]";
-	return s.str();
 }
 
 #pragma warning( pop )

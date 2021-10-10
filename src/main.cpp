@@ -80,11 +80,11 @@ int main(int argc, char* args[]) {
 						std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
 						std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
 						std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
-						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_A3_3D))) << "," <<
-						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D1_3D))) << "," <<
-						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D2_3D))) << "," <<
-						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D3_3D))) << "," <<
-						Descriptors::toString(std::get<HistogramMap>(mesh.getDescriptor(FEAT_D4_3D))) <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_A3_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D1_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D2_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D3_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D4_3D))).toString() <<
 					std::endl;
 				} catch(std::bad_variant_access e){
 					std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();

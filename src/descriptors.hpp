@@ -3,12 +3,12 @@
 
 #include "Eigen/Dense"
 #include "utils.hpp"
+#include "histogram.hpp"
 #include <variant>
 #include <vector>
 #include <map>
 
-typedef std::map<float, int> HistogramMap;
-typedef std::variant<int, float, HistogramMap> DescriptorType;
+typedef std::variant<int, float, Histogram> DescriptorType;
 
 namespace Descriptors {
 		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, DescriptorType> &feats);
@@ -26,15 +26,13 @@ namespace Descriptors {
 		std::vector<float> cubeRootVolumeTetrahedron4RandomVertices(const Eigen::MatrixXf& Vertices, int numberOfSamples);
 
 
-		HistogramMap computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
-		HistogramMap computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
-		HistogramMap computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
-		HistogramMap computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
-		HistogramMap computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		Histogram computeA3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		Histogram computeD1Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		Histogram computeD2Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		Histogram computeD3Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
+		Histogram computeD4Histogram(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, int bins);
 
 		float distanceBetweenTwoPoints(const Eigen::Vector3f& pointA, const Eigen::Vector3f& pointB);
-
-		std::string toString(HistogramMap map);
 
 		enum descriptors3D : uint16_t
 		{
