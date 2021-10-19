@@ -16,7 +16,7 @@ class Renderer {
 
 
 	public:
-		Renderer(int w, int h, std::string title) : m_wWidth(w), m_wHeight(h), m_title(title), m_mesh(nullptr), m_camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0) {}
+		Renderer(int w, int h, std::string title) : m_wWidth(w), m_wHeight(h), m_title(title), m_mesh(nullptr), m_camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0), m_gui(true) {}
 		~Renderer();
 		bool initSystems();
 		void start();
@@ -45,6 +45,7 @@ private:
 	bool m_renderMesh;
 	bool m_renderConvexHull;
 	bool m_renderUnitCube;
+	bool m_gui;
 };
 
 #endif

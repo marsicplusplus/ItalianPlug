@@ -160,6 +160,13 @@ void Renderer::start() {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, m_wWidth, m_wHeight);
 
+		if(InputHandler::Instance()->isKeyDown(KEYBOARD_T)){
+			m_gui = true;
+		}
+		if(InputHandler::Instance()->isKeyDown(KEYBOARD_N)){
+			m_gui = false;
+		}
+
 		float currentTime = glfwGetTime();
 		float deltaTime = ( currentTime - lastTime ) / 1000.0f;
 		if ( deltaTime < LOW_LIMIT )
@@ -193,7 +200,9 @@ void Renderer::start() {
 				m_mesh->getConvexHull()->draw(projView, m_convexHullMaterialDiffuse, m_camera.getPosition());
 			}
 		}
-		renderGUI();
+		if(m_gui){
+			renderGUI();
+		}
 		glfwSwapBuffers(m_window);
 	}
 }
@@ -207,7 +216,7 @@ void Renderer::renderGUI(){
 	{
 		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		// render your GUI
-    	if (ImGui::CollapsingHeader("File")){
+		if (ImGui::CollapsingHeader("File")){
 			if(ImGui::Button("Load Mesh")){
 				m_fileDialog.Open();
 			}
@@ -228,9 +237,8 @@ void Renderer::renderGUI(){
 			}
 		}
     	if (ImGui::CollapsingHeader("Mesh")){
-
 			// Display some basic mesh info
-			ImGui::Text((m_mesh) ? m_mesh->getPath().string().c_str() : "Load a mesh!");
+			ImGui::TextWrapped((m_mesh) ? m_mesh->getPath().string().c_str() : "Load a mesh!");
 			ImGui::Text("# of vertices: %d", (m_mesh) ? m_mesh->countVertices() : 0);
 			ImGui::Text("# of faces: %d", (m_mesh) ? m_mesh->countFaces() : 0);
 			ImGui::Separator();
@@ -408,6 +416,9 @@ void Renderer::keyboardCallback(GLFWwindow* window, int key, int scancode, int a
 		inputHandler->setKeyValue(KEYBOARD_D, (action == GLFW_PRESS) ? true : false);
 	if (key == GLFW_KEY_T)
 		inputHandler->setKeyValue(KEYBOARD_T, (action == GLFW_PRESS) ? true : false);
+	if (key == GLFW_KEY_N)
+		inputHandler->setKeyValue(KEYBOARD_N, (action == GLFW_PRESS) ? true : false);
+
 }
 
 void Renderer::mouseCallback(GLFWwindow* window, int button, int action, int mods) {
