@@ -30,6 +30,11 @@ Histogram Descriptors::computeD1Histogram(const Eigen::MatrixXf& V, const Eigen:
 	std::vector<float> values = distanceBetweenBarycenterAndRandomVertex(V, centroid, nSamples);
 
 	std::sort(values.begin(), values.end());
+	float min = values[0];
+	float max = values[values.size() - 1];
+	for(auto &a : values){
+		a = (float)(a - min)/(float)(max - min);
+	}
 	
 	Histogram histogram(bins);
 	histogram.populate(values);
@@ -42,6 +47,11 @@ Histogram Descriptors::computeD2Histogram(const Eigen::MatrixXf& V, const Eigen:
 	std::vector<float> values = distanceBetween2RandomVeritces(V, nSamples);
 
 	std::sort(values.begin(), values.end());
+	float min = values[0];
+	float max = values[values.size() - 1];
+	for(auto &a : values){
+		a = (float)(a - min)/(float)(max - min);
+	}
 
 	Histogram histogram(bins);
 	histogram.populate(values);
@@ -54,6 +64,11 @@ Histogram Descriptors::computeD3Histogram(const Eigen::MatrixXf& V, const Eigen:
 	std::vector<float> values = sqrtAreaOfTriange3RandomVertices(V, nSamples);
 
 	std::sort(values.begin(), values.end());
+	float min = values[0];
+	float max = values[values.size() - 1];
+	for(auto &a : values){
+		a = (float)(a - min)/(float)(max - min);
+	}
 	
 	Histogram histogram(bins);
 	histogram.populate(values);
@@ -66,6 +81,11 @@ Histogram Descriptors::computeD4Histogram(const Eigen::MatrixXf& V, const Eigen:
 	std::vector<float> values = cubeRootVolumeTetrahedron4RandomVertices(V, nSamples);
 
 	std::sort(values.begin(), values.end());
+	float min = values[0];
+	float max = values[values.size() - 1];
+	for(auto &a : values){
+		a = (float)(a - min)/(float)(max - min);
+	}
 
 	Histogram histogram(bins);
 	histogram.populate(values);
@@ -77,6 +97,11 @@ Histogram Descriptors::computeA3Histogram(const Eigen::MatrixXf& V, const Eigen:
 	const int nSamples = 500000;
 	std::vector<float> values = computeAngle3RandomVertices(V, nSamples);
 	std::sort(values.begin(), values.end());
+	float min = values[0];
+	float max = values[values.size() - 1];
+	for(auto &a : values){
+		a = (float)(a - min)/(float)(max - min);
+	}
 
 	Histogram histogram(bins);
 	histogram.populate(values);
