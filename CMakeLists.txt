@@ -84,9 +84,17 @@ add_executable( ItalianPlug WIN32 src/italianplug.cpp)
 target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
 
-add_executable( FeatureExtractor WIN32 src/ExtractFeatures.cpp)
+add_executable( FeatureExtractor WIN32 src/features_extractor.cpp)
 target_link_libraries( FeatureExtractor ${LIBS})
 target_compile_options( FeatureExtractor PRIVATE ${CXX_OPTIONS})
+
+add_executable( StatsExtractor WIN32 src/stats_extractor.cpp)
+target_link_libraries( StatsExtractor ${LIBS})
+target_compile_options( StatsExtractor PRIVATE ${CXX_OPTIONS})
+
+add_executable( Normalizer WIN32 src/normalizer.cpp)
+target_link_libraries( Normalizer ${LIBS})
+target_compile_options( Normalizer PRIVATE ${CXX_OPTIONS})
 
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
