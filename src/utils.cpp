@@ -127,8 +127,8 @@ namespace Stats {
 		const auto majorEigenVector = eigenResults[2].first;
 		const auto minorEigenVector = eigenResults[1].first;
 
-		const auto majorToX = Normalization::angleBetween(majorEigenVector, Eigen::Vector3f(1, 0, 0));
-		const auto minorToY = Normalization::angleBetween(minorEigenVector, Eigen::Vector3f(0, 1, 0));
+		const auto majorToX = std::abs(Normalization::angleBetween(majorEigenVector, Eigen::Vector3f(1, 0, 0)));
+		const auto minorToY = std::abs(Normalization::angleBetween(minorEigenVector, Eigen::Vector3f(0, 1, 0)));
 
 		ModelStatistics modelStats = ModelStatistics{
 			classType,
@@ -139,8 +139,8 @@ namespace Stats {
 			fmaxf(fmaxf(res.x, res.y), res.z),
 			bbMin,
 			bbMax,
-			majorToX,
-			minorToY
+			static_cast<float>(fmod(majorToX, 180.0f)),
+			static_cast<float>(fmod(minorToY, 180.0f)),
 		};
 
 		return modelStats;
@@ -197,6 +197,46 @@ namespace Stats {
 			}
 		}
 		myfile.close();
+	}
+
+	void getDatabaseFeatures(std::string dbPath){
+		std::ofstream featsFile;
+		std::filesystem::path fp = dbPath;
+		std::filesystem::path currPath = std::filesystem::current_path();
+		std::filesystem::current_path(fp);
+		featsFile.open("feats.csv");
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,3D_A3,3D_D1,3D_D2,3D_D3,3D_D4\n";
+		std::string offExt(".off");
+		std::string plyExt(".ply");
+		for (auto& p : std::filesystem::recursive_directory_iterator(".")) {
+			std::string extension = p.path().extension().string();
+			if (extension == offExt || extension == plyExt) {
+				std::cout << "Compute features for " << p.path().string() << std::endl;
+				Mesh mesh(p.path().string());
+				mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+				mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+				try{
+					featsFile << std::filesystem::absolute(p).string() << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_AREA_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_MVOLUME_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_BBVOLUME_3D)) << "," <<
+						std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
+						std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_A3_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D1_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D2_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D3_3D))).toString() << "," <<
+						(std::get<Histogram>(mesh.getDescriptor(FEAT_D4_3D))).toString() <<
+					std::endl;
+				} catch(std::bad_variant_access e){
+					std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();
+					featsFile << p.path().string() << ",-" << std::endl;
+				}
+			}
+		}
+		featsFile.close();
+		std::filesystem::current_path(currPath);
 	}
 }
 OptionsMap* OptionsMap::instance = nullptr;

@@ -47,7 +47,6 @@ set( SRC
      external/imgui/backends/imgui_impl_glfw.cpp
      external/imgui/backends/imgui_impl_opengl3.cpp
      external/quickhull/QuickHull.cpp
-     src/main.cpp
      src/renderer.cpp
      src/mesh.cpp
      src/mesh_base.cpp
@@ -61,24 +60,34 @@ set( SRC
      src/shader_map.cpp
      src/camera.cpp
      src/mesh_map.cpp
-     src/unit_cube.cpp)
+     src/unit_cube.cpp
+)
+
+add_library( ItalianPlugLib ${SRC})
 
 if (UNIX) 
 	set (LIBS 
 		dl
 		pthread
 		glfw
+		ItalianPlugLib
 		assimp)
 else()
 	set (LIBS 
 		glfw
+		ItalianPlugLib
 		assimp)
 endif()
 
 set(CXX_OPTIONS -g )
-add_executable( ItalianPlug WIN32 ${SRC})
+add_executable( ItalianPlug WIN32 src/italianplug.cpp)
 target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
+
+add_executable( FeatureExtractor WIN32 src/ExtractFeatures.cpp)
+target_link_libraries( FeatureExtractor ${LIBS})
+target_compile_options( FeatureExtractor PRIVATE ${CXX_OPTIONS})
+
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
     add_custom_command(
