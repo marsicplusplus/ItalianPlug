@@ -10,6 +10,8 @@
 #include "igl/readOFF.h"
 #include "igl/readPLY.h"
 #include "mesh.hpp"
+#include <future>
+#include <mutex>
 
 
 namespace Importer {
@@ -59,10 +61,10 @@ namespace Importer {
 			const aiFace& Face = paiMesh->mFaces[faceIndex];
 			assert(Face.mNumIndices == 3);
 			F.row(faceIndex) = Eigen::Vector3i(
-				Face.mIndices[0],
-				Face.mIndices[1],
-				Face.mIndices[2]
-			);
+					Face.mIndices[0],
+					Face.mIndices[1],
+					Face.mIndices[2]
+					);
 		}
 
 		return true;
@@ -132,15 +134,15 @@ namespace Stats {
 
 		ModelStatistics modelStats = ModelStatistics{
 			classType,
-			paiMesh->mNumVertices,
-			paiMesh->mNumFaces,
-			faceType,
-			c.norm(),
-			fmaxf(fmaxf(res.x, res.y), res.z),
-			bbMin,
-			bbMax,
-			static_cast<float>(fmod(majorToX, 180.0f)),
-			static_cast<float>(fmod(minorToY, 180.0f)),
+				paiMesh->mNumVertices,
+				paiMesh->mNumFaces,
+				faceType,
+				c.norm(),
+				fmaxf(fmaxf(res.x, res.y), res.z),
+				bbMin,
+				bbMax,
+				static_cast<float>(fmod(majorToX, 180.0f)),
+				static_cast<float>(fmod(minorToY, 180.0f)),
 		};
 
 		return modelStats;
@@ -205,38 +207,55 @@ namespace Stats {
 		std::filesystem::path currPath = std::filesystem::current_path();
 		std::filesystem::current_path(fp);
 		featsFile.open("feats.csv");
+		std::mutex fileMutex;
 		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,3D_A3,3D_D1,3D_D2,3D_D3,3D_D4\n";
-		std::string offExt(".off");
-		std::string plyExt(".ply");
+		std::vector<std::future<void>> futures;
+		std::vector<std::filesystem::path> classPaths;
 		for (auto& p : std::filesystem::recursive_directory_iterator(".")) {
-			std::string extension = p.path().extension().string();
-			if (extension == offExt || extension == plyExt) {
-				std::cout << "Compute features for " << p.path().string() << std::endl;
-				Mesh mesh(p.path().string());
-				mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-				mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-				try{
-					featsFile << std::filesystem::absolute(p).string() << "," <<
-						std::get<float>(mesh.getDescriptor(FEAT_AREA_3D)) << "," <<
-						std::get<float>(mesh.getDescriptor(FEAT_MVOLUME_3D)) << "," <<
-						std::get<float>(mesh.getDescriptor(FEAT_BBVOLUME_3D)) << "," <<
-						std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
-						std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
-						std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
-						(std::get<Histogram>(mesh.getDescriptor(FEAT_A3_3D))).toString() << "," <<
-						(std::get<Histogram>(mesh.getDescriptor(FEAT_D1_3D))).toString() << "," <<
-						(std::get<Histogram>(mesh.getDescriptor(FEAT_D2_3D))).toString() << "," <<
-						(std::get<Histogram>(mesh.getDescriptor(FEAT_D3_3D))).toString() << "," <<
-						(std::get<Histogram>(mesh.getDescriptor(FEAT_D4_3D))).toString() <<
-					std::endl;
-				} catch(std::bad_variant_access e){
-					std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();
-					featsFile << p.path().string() << ",-" << std::endl;
-				}
+			if(p.is_directory()){
+				classPaths.push_back(p.path());
 			}
+		}
+		for(auto& cp : classPaths){
+			futures.push_back(std::async(std::launch::async, [&cp, &featsFile, &fileMutex]{
+				for(auto &p : std::filesystem::recursive_directory_iterator(cp)){
+					std::string extension = p.path().extension().string();
+					std::string offExt(".off");
+					std::string plyExt(".ply");
+					if (extension == offExt || extension == plyExt) {
+						std::cout << "Compute features for " << p.path().string() << std::endl;
+						Mesh mesh(p.path().string());
+						mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+						mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+						try{
+							const std::lock_guard<std::mutex> lock(fileMutex);
+							featsFile << p.path().string() << "," <<
+							std::get<float>(mesh.getDescriptor(FEAT_AREA_3D)) << "," <<
+							std::get<float>(mesh.getDescriptor(FEAT_MVOLUME_3D)) << "," <<
+							std::get<float>(mesh.getDescriptor(FEAT_BBVOLUME_3D)) << "," <<
+							std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
+							std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
+							std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
+							(std::get<Histogram>(mesh.getDescriptor(FEAT_A3_3D))).toString() << "," <<
+							(std::get<Histogram>(mesh.getDescriptor(FEAT_D1_3D))).toString() << "," <<
+							(std::get<Histogram>(mesh.getDescriptor(FEAT_D2_3D))).toString() << "," <<
+							(std::get<Histogram>(mesh.getDescriptor(FEAT_D3_3D))).toString() << "," <<
+							(std::get<Histogram>(mesh.getDescriptor(FEAT_D4_3D))).toString() <<
+							std::endl;
+						} catch(std::bad_variant_access e){
+							std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();
+							featsFile << p.path().string() << ",-" << std::endl;
+						}
+					}
+				}
+			}));
+		}
+		for(auto &a : futures){
+			a.get();
 		}
 		featsFile.close();
 		std::filesystem::current_path(currPath);
 	}
 }
+
 OptionsMap* OptionsMap::instance = nullptr;
