@@ -63,40 +63,39 @@ set( SRC
      src/unit_cube.cpp
 )
 
-add_library( ItalianPlugLib ${SRC})
-
 if (UNIX) 
 	set (LIBS 
 		dl
 		pthread
 		glfw
-		ItalianPlugLib
 		assimp)
 else()
 	set (LIBS 
 		glfw
-		ItalianPlugLib
 		assimp)
 endif()
 
 set(CXX_OPTIONS -g )
-add_executable( ItalianPlug WIN32 src/italianplug.cpp)
+add_executable( ItalianPlug WIN32 ${SRC} src/italianplug.cpp)
 target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
+set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 
-add_executable( FeatureExtractor WIN32 src/features_extractor.cpp)
+add_executable( FeatureExtractor WIN32 ${SRC} src/features_extractor.cpp)
 target_link_libraries( FeatureExtractor ${LIBS})
 target_compile_options( FeatureExtractor PRIVATE ${CXX_OPTIONS})
+set_property(TARGET FeatureExtractor PROPERTY CXX_STANDARD 17)
 
-add_executable( StatsExtractor WIN32 src/stats_extractor.cpp)
+add_executable( StatsExtractor WIN32 ${SRC} src/stats_extractor.cpp)
 target_link_libraries( StatsExtractor ${LIBS})
 target_compile_options( StatsExtractor PRIVATE ${CXX_OPTIONS})
+set_property(TARGET StatsExtractor PROPERTY CXX_STANDARD 17)
 
-add_executable( Normalizer WIN32 src/normalizer.cpp)
+add_executable( Normalizer WIN32 ${SRC} src/normalizer.cpp)
 target_link_libraries( Normalizer ${LIBS})
 target_compile_options( Normalizer PRIVATE ${CXX_OPTIONS})
+set_property(TARGET Normalizer PROPERTY CXX_STANDARD 17)
 
-set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 if( UNIX )
     add_custom_command(
         TARGET ItalianPlug
