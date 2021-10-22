@@ -36,8 +36,8 @@ with open(sys.argv[1]) as csvfile:
                 for j in range(i+1, i+hist['n_bins']+1):
                     hist['values'].append(float(feat[j]))
                 plt.title("Class: {}".format(className),fontdict={'fontsize': 12, 'fontweight': 'medium'})
-                plt.ylim(0, 0.5)
-                plt.xlim(0,2.5)
+                # plt.ylim(0, 0.5)
+                plt.xlim(0,1.0)
                 plt.plot(hist['bins'], hist['values'])
 
 fig.suptitle(feature)

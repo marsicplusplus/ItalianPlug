@@ -39,7 +39,7 @@ with open(sys.argv[1]) as csvfile:
                 for j in range(i+1, i+hist['n_bins']+1):
                     hist['values'].append(float(feat[j]))
                 plt.ylim(0, 0.5)
-                plt.xlim(0, 0.8)
+                plt.xlim(0, 1.0)
                 plt.plot(hist['bins'], hist['values'], label = row[0])
 
 plt.title(sys.argv[2])

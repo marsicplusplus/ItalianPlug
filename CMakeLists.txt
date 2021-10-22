@@ -81,10 +81,10 @@ target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
 set_property(TARGET ItalianPlug PROPERTY CXX_STANDARD 17)
 
-add_executable( FeatureExtractor WIN32 ${SRC} src/features_extractor.cpp)
-target_link_libraries( FeatureExtractor ${LIBS})
-target_compile_options( FeatureExtractor PRIVATE ${CXX_OPTIONS})
-set_property(TARGET FeatureExtractor PROPERTY CXX_STANDARD 17)
+add_executable( FeaturesExtractor WIN32 ${SRC} src/features_extractor.cpp)
+target_link_libraries( FeaturesExtractor ${LIBS})
+target_compile_options( FeaturesExtractor PRIVATE ${CXX_OPTIONS})
+set_property(TARGET FeaturesExtractor PROPERTY CXX_STANDARD 17)
 
 add_executable( StatsExtractor WIN32 ${SRC} src/stats_extractor.cpp)
 target_link_libraries( StatsExtractor ${LIBS})
@@ -95,6 +95,11 @@ add_executable( Normalizer WIN32 ${SRC} src/normalizer.cpp)
 target_link_libraries( Normalizer ${LIBS})
 target_compile_options( Normalizer PRIVATE ${CXX_OPTIONS})
 set_property(TARGET Normalizer PROPERTY CXX_STANDARD 17)
+
+add_executable( Retrieval WIN32 ${SRC} src/retrieval.cpp)
+target_link_libraries( Retrieval ${LIBS})
+target_compile_options( Retrieval PRIVATE ${CXX_OPTIONS})
+set_property(TARGET Retrieval PROPERTY CXX_STANDARD 17)
 
 if( UNIX )
     add_custom_command(

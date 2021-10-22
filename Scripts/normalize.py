@@ -19,7 +19,7 @@ for dirName, subdirList, fileList in os.walk(sys.argv[2]):
 
 def normalize(mesh):
     print("Normalizing", mesh)
-    subprocess.call([sys.argv[1], "--normalize-mesh ", mesh, sys.argv[3]])
+    subprocess.call([sys.argv[1], mesh, sys.argv[3]])
     print("Done with", mesh)
 
 with Pool(processes=8) as pool:
