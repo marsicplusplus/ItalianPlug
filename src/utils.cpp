@@ -202,22 +202,21 @@ namespace Stats {
 	}
 
 	void getDatabaseFeatures(std::string dbPath){
-		std::ofstream featsFile;
 		std::filesystem::path fp = dbPath;
 		std::filesystem::path currPath = std::filesystem::current_path();
 		std::filesystem::current_path(fp);
-		featsFile.open("feats.csv");
 		std::mutex fileMutex;
-		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,3D_A3,3D_D1,3D_D2,3D_D3,3D_D4\n";
 		std::vector<std::future<void>> futures;
 		std::vector<std::filesystem::path> classPaths;
+		std::vector<DescriptorMap> features;
+		std::vector<std::string> names;
 		for (auto& p : std::filesystem::recursive_directory_iterator(".")) {
 			if(p.is_directory()){
 				classPaths.push_back(p.path());
 			}
 		}
 		for(auto& cp : classPaths){
-			futures.push_back(std::async(std::launch::async, [&cp, &featsFile, &fileMutex]{
+			futures.push_back(std::async(std::launch::async, [&cp, &names, &features, &fileMutex]{
 				for(auto &p : std::filesystem::recursive_directory_iterator(cp)){
 					std::string extension = p.path().extension().string();
 					std::string offExt(".off");
@@ -225,26 +224,17 @@ namespace Stats {
 					if (extension == offExt || extension == plyExt) {
 						std::cout << "Compute features for " << p.path().string() << std::endl;
 						Mesh mesh(p.path().string());
-						mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+						mesh.computeFeatures(Descriptors::descriptor_all & 
+								~Descriptors::descriptor_diameter);
 						mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 						try{
 							const std::lock_guard<std::mutex> lock(fileMutex);
-							featsFile << p.path().string() << "," <<
-							std::get<float>(mesh.getDescriptor(FEAT_AREA_3D)) << "," <<
-							std::get<float>(mesh.getDescriptor(FEAT_MVOLUME_3D)) << "," <<
-							std::get<float>(mesh.getDescriptor(FEAT_BBVOLUME_3D)) << "," <<
-							std::get<float>(mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D)) << "," <<
-							std::get<float>(mesh.getDescriptor(FEAT_COMPACTNESS_3D)) << "," <<
-							std::get<float>(mesh.getDescriptor(FEAT_ECCENTRICITY_3D)) << "," << 
-							(std::get<Histogram>(mesh.getDescriptor(FEAT_A3_3D))).toString() << "," <<
-							(std::get<Histogram>(mesh.getDescriptor(FEAT_D1_3D))).toString() << "," <<
-							(std::get<Histogram>(mesh.getDescriptor(FEAT_D2_3D))).toString() << "," <<
-							(std::get<Histogram>(mesh.getDescriptor(FEAT_D3_3D))).toString() << "," <<
-							(std::get<Histogram>(mesh.getDescriptor(FEAT_D4_3D))).toString() <<
-							std::endl;
+							names.push_back(p.path().string());
+							DescriptorMap dm = mesh.getDescriptorMap();
+							dm[FEAT_DIAMETER_3D] = mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D);
+							features.push_back(dm);
 						} catch(std::bad_variant_access e){
 							std::cout << "Error retrieving features for " << p.path().string() << ": " << e.what();
-							featsFile << p.path().string() << ",-" << std::endl;
 						}
 					}
 				}
@@ -253,7 +243,91 @@ namespace Stats {
 		for(auto &a : futures){
 			a.get();
 		}
+
+		std::cout << "Normalization..." << std::endl;
+		DescriptorMap avgs;
+		DescriptorMap deviations;
+		avgs[FEAT_AREA_3D] = 0.0f;
+		avgs[FEAT_MVOLUME_3D] = 0.0f;
+		avgs[FEAT_BBVOLUME_3D] = 0.0f;
+		avgs[FEAT_DIAMETER_3D] = 0.0f;
+		avgs[FEAT_COMPACTNESS_3D] = 0.0f; 
+		avgs[FEAT_ECCENTRICITY_3D] = 0.0f;
+		deviations[FEAT_AREA_3D] = 0.0f;
+		deviations[FEAT_MVOLUME_3D] = 0.0f;
+		deviations[FEAT_BBVOLUME_3D] = 0.0f;
+		deviations[FEAT_DIAMETER_3D] = 0.0f;
+		deviations[FEAT_COMPACTNESS_3D] = 0.0f; 
+		deviations[FEAT_ECCENTRICITY_3D] = 0.0f;
+		for(auto& a : features){
+			avgs[FEAT_AREA_3D] = std::get<float>(avgs[FEAT_AREA_3D]) + std::get<float>(a[FEAT_AREA_3D]);
+			avgs[FEAT_MVOLUME_3D] = std::get<float>(avgs[FEAT_MVOLUME_3D]) + std::get<float>(a[FEAT_MVOLUME_3D]);
+			avgs[FEAT_BBVOLUME_3D] = std::get<float>(avgs[FEAT_BBVOLUME_3D]) + std::get<float>(a[FEAT_BBVOLUME_3D]);
+			avgs[FEAT_DIAMETER_3D] = std::get<float>(avgs[FEAT_DIAMETER_3D]) + std::get<float>(a[FEAT_DIAMETER_3D]);
+			avgs[FEAT_COMPACTNESS_3D] = std::get<float>(avgs[FEAT_COMPACTNESS_3D]) + std::get<float>(a[FEAT_COMPACTNESS_3D]);
+			avgs[FEAT_ECCENTRICITY_3D] = std::get<float>(avgs[FEAT_ECCENTRICITY_3D]) + std::get<float>(a[FEAT_ECCENTRICITY_3D]);
+		}
+		avgs[FEAT_AREA_3D] = std::get<float>(avgs[FEAT_AREA_3D]) / features.size();
+		avgs[FEAT_MVOLUME_3D] = std::get<float>(avgs[FEAT_MVOLUME_3D]) / features.size();
+		avgs[FEAT_BBVOLUME_3D] = std::get<float>(avgs[FEAT_BBVOLUME_3D]) / features.size();
+		avgs[FEAT_DIAMETER_3D] = std::get<float>(avgs[FEAT_DIAMETER_3D]) / features.size();
+		avgs[FEAT_COMPACTNESS_3D] = std::get<float>(avgs[FEAT_COMPACTNESS_3D]) / features.size();
+		avgs[FEAT_ECCENTRICITY_3D] = std::get<float>(avgs[FEAT_ECCENTRICITY_3D]) / features.size();
+
+		for(auto& a : features){
+			deviations[FEAT_AREA_3D] = std::get<float>(deviations[FEAT_AREA_3D]) + std::pow(std::get<float>(a[FEAT_AREA_3D]) - std::get<float>(avgs[FEAT_AREA_3D]), 2.0f);
+			deviations[FEAT_MVOLUME_3D] = std::get<float>(deviations[FEAT_MVOLUME_3D]) + std::pow(std::get<float>(a[FEAT_MVOLUME_3D]) - std::get<float>(avgs[FEAT_MVOLUME_3D]), 2.0f);
+			deviations[FEAT_BBVOLUME_3D] = std::get<float>(deviations[FEAT_BBVOLUME_3D]) + std::pow(std::get<float>(a[FEAT_BBVOLUME_3D]) - std::get<float>(avgs[FEAT_BBVOLUME_3D]), 2.0f);
+			deviations[FEAT_DIAMETER_3D] = std::get<float>(deviations[FEAT_DIAMETER_3D]) + std::pow(std::get<float>(a[FEAT_DIAMETER_3D]) - std::get<float>(avgs[FEAT_DIAMETER_3D]), 2.0f);
+			deviations[FEAT_COMPACTNESS_3D] = std::get<float>(deviations[FEAT_COMPACTNESS_3D]) + std::pow(std::get<float>(a[FEAT_COMPACTNESS_3D]) - std::get<float>(avgs[FEAT_COMPACTNESS_3D]), 2.0f);
+			deviations[FEAT_ECCENTRICITY_3D] = std::get<float>(deviations[FEAT_ECCENTRICITY_3D]) + std::pow(std::get<float>(a[FEAT_ECCENTRICITY_3D]) - std::get<float>(avgs[FEAT_ECCENTRICITY_3D]), 2.0f);
+		}
+		deviations[FEAT_AREA_3D] = std::sqrt(std::get<float>(deviations[FEAT_AREA_3D])/features.size());
+		deviations[FEAT_MVOLUME_3D] = std::sqrt(std::get<float>(deviations[FEAT_MVOLUME_3D])/features.size());
+		deviations[FEAT_BBVOLUME_3D] = std::sqrt(std::get<float>(deviations[FEAT_BBVOLUME_3D])/features.size());
+		deviations[FEAT_DIAMETER_3D] = std::sqrt(std::get<float>(deviations[FEAT_DIAMETER_3D])/features.size());
+		deviations[FEAT_COMPACTNESS_3D] = std::sqrt(std::get<float>(deviations[FEAT_COMPACTNESS_3D])/features.size());
+		deviations[FEAT_ECCENTRICITY_3D] = std::sqrt(std::get<float>(deviations[FEAT_ECCENTRICITY_3D])/features.size());
+
+	
+		std::ofstream featsFile;
+		featsFile.open("feats.csv");
+		featsFile << "Path,3D_Area,3D_MVolume,3D_BBVolume,3D_Diameter,3D_Compactness,3D_Eccentricity,3D_A3,3D_D1,3D_D2,3D_D3,3D_D4\n";
+		for(int i = 0; i < names.size(); i++){
+			featsFile << names[i] << "," <<
+				(std::get<float>(features[i][FEAT_AREA_3D]) - std::get<float>(avgs[FEAT_AREA_3D])) / std::get<float>(deviations[FEAT_AREA_3D]) << "," <<
+				(std::get<float>(features[i][FEAT_MVOLUME_3D]) - std::get<float>(avgs[FEAT_MVOLUME_3D])) / std::get<float>(deviations[FEAT_MVOLUME_3D]) << "," <<
+				(std::get<float>(features[i][FEAT_BBVOLUME_3D]) - std::get<float>(avgs[FEAT_BBVOLUME_3D])) / std::get<float>(deviations[FEAT_BBVOLUME_3D]) << "," <<
+				(std::get<float>(features[i][FEAT_DIAMETER_3D]) - std::get<float>(avgs[FEAT_DIAMETER_3D])) / std::get<float>(deviations[FEAT_DIAMETER_3D]) << "," <<
+				(std::get<float>(features[i][FEAT_COMPACTNESS_3D]) - std::get<float>(avgs[FEAT_COMPACTNESS_3D])) / std::get<float>(deviations[FEAT_COMPACTNESS_3D]) << "," << 
+				(std::get<float>(features[i][FEAT_ECCENTRICITY_3D]) - std::get<float>(avgs[FEAT_ECCENTRICITY_3D])) / std::get<float>(deviations[FEAT_AREA_3D]) << "," << 
+				(std::get<Histogram>(features[i][FEAT_A3_3D])).toString() << "," <<
+				(std::get<Histogram>(features[i][FEAT_D1_3D])).toString() << "," <<
+				(std::get<Histogram>(features[i][FEAT_D2_3D])).toString() << "," <<
+				(std::get<Histogram>(features[i][FEAT_D3_3D])).toString() << "," <<
+				(std::get<Histogram>(features[i][FEAT_D4_3D])).toString() <<
+				std::endl;
+		}
 		featsFile.close();
+		std::ofstream featsStatsFile;
+		featsStatsFile.open("feats_avg.csv");
+		featsStatsFile << "3D_Area_AVG, 3D_Area_STD,3D_MVolume_AVG,3D_MVolume_STD,3D_BBVolume_AVG,3D_BBVolume_STD,3D_Diameter_AVG,3D_Diameter_STD,3D_Compactness_AVG,3D_Compactness_STD,3D_Eccentricity_AVG,3D_Eccentricity_STD,3D_Eccentricity_STD\n";
+		featsStatsFile << 
+			std::get<float>(avgs[FEAT_AREA_3D]) << "," <<
+			std::get<float>(deviations[FEAT_AREA_3D]) << "," <<
+			std::get<float>(avgs[FEAT_MVOLUME_3D]) << "," <<
+			std::get<float>(deviations[FEAT_MVOLUME_3D]) << "," <<
+			std::get<float>(avgs[FEAT_BBVOLUME_3D]) << "," <<
+			std::get<float>(deviations[FEAT_BBVOLUME_3D]) << "," <<
+			std::get<float>(avgs[FEAT_DIAMETER_3D]) << "," <<
+			std::get<float>(deviations[FEAT_DIAMETER_3D]) << "," <<
+			std::get<float>(avgs[FEAT_COMPACTNESS_3D]) << "," <<
+			std::get<float>(deviations[FEAT_COMPACTNESS_3D]) << "," <<
+			std::get<float>(avgs[FEAT_ECCENTRICITY_3D]) << "," <<
+			std::get<float>(deviations[FEAT_ECCENTRICITY_3D]) <<
+			std::endl;
+		featsStatsFile.close();
+	
 		std::filesystem::current_path(currPath);
 	}
 }

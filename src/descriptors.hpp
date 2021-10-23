@@ -9,9 +9,10 @@
 #include <map>
 
 typedef std::variant<int, float, Histogram> DescriptorType;
+typedef std::unordered_map<Features, DescriptorType> DescriptorMap;
 
 namespace Descriptors {
-		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, DescriptorType> &feats);
+		void computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, DescriptorMap &feats);
 		float computeArea(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeMeshVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);
 		float computeBoundingBoxVolume(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F);

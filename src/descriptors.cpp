@@ -9,7 +9,7 @@
 #pragma warning( disable : 4244)
 #pragma warning( disable : 4996)
 
-void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, std::unordered_map<Features, DescriptorType> &feats) {
+void Descriptors::computeDescriptors(const Eigen::MatrixXf& V, const Eigen::MatrixXi& F, unsigned int flags, DescriptorMap &feats) {
 	if (flags & descriptor_area) feats[FEAT_AREA_3D] = computeArea(V, F);
 	if (flags & descriptor_meshVolume) feats[FEAT_MVOLUME_3D] = computeMeshVolume(V, F);
 	if (flags & descriptor_boundingBoxVolume) feats[FEAT_BBVOLUME_3D] = computeBoundingBoxVolume(V, F);

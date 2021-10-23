@@ -42,6 +42,7 @@ class MeshBase {
 		DescriptorType getDescriptor(Features f);
 		void computeFeatures(unsigned int desc = Descriptors::descriptor_all);
 		void getCentroid(Eigen::Vector3f &c);
+		inline DescriptorMap getDescriptorMap() { return features; }
 
 		virtual void recomputeAndRender();
 		virtual void draw(const glm::mat4& projView, const glm::vec3& matterialDiffuse, const glm::vec3& cameraPos);
@@ -67,7 +68,7 @@ class MeshBase {
 		glm::mat4 m_modelMatrix;
 		bool m_prepared = false;
 
-		std::unordered_map<Features, DescriptorType> features;
+		DescriptorMap features;
 
 		void init();
 		void dataToOpenGL();
