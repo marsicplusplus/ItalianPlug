@@ -311,7 +311,7 @@ namespace Stats {
 		featsFile.close();
 		std::ofstream featsStatsFile;
 		featsStatsFile.open("feats_avg.csv");
-		featsStatsFile << "3D_Area_AVG, 3D_Area_STD,3D_MVolume_AVG,3D_MVolume_STD,3D_BBVolume_AVG,3D_BBVolume_STD,3D_Diameter_AVG,3D_Diameter_STD,3D_Compactness_AVG,3D_Compactness_STD,3D_Eccentricity_AVG,3D_Eccentricity_STD,3D_Eccentricity_STD\n";
+		featsStatsFile << "3D_Area_AVG, 3D_Area_STD,3D_MVolume_AVG,3D_MVolume_STD,3D_BBVolume_AVG,3D_BBVolume_STD,3D_Diameter_AVG,3D_Diameter_STD,3D_Compactness_AVG,3D_Compactness_STD,3D_Eccentricity_AVG,3D_Eccentricity_STD\n";
 		featsStatsFile << 
 			std::get<float>(avgs[FEAT_AREA_3D]) << "," <<
 			std::get<float>(deviations[FEAT_AREA_3D]) << "," <<
