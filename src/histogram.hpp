@@ -21,6 +21,14 @@ class Histogram{
 			return ret;
 		}
 
+		inline std::vector<float> getFrequency() {
+			std::vector<float> frequency;
+			for (const auto& a : histogram) {
+				frequency.push_back(a.second);
+			}
+			return frequency;
+		}
+
 		inline void normalize(){
 			float sum = 0;
 			for(auto &a : histogram){
