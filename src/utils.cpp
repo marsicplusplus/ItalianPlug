@@ -300,7 +300,7 @@ namespace Stats {
 				(std::get<float>(features[i][FEAT_BBVOLUME_3D]) - std::get<float>(avgs[FEAT_BBVOLUME_3D])) / std::get<float>(deviations[FEAT_BBVOLUME_3D]) << "," <<
 				(std::get<float>(features[i][FEAT_DIAMETER_3D]) - std::get<float>(avgs[FEAT_DIAMETER_3D])) / std::get<float>(deviations[FEAT_DIAMETER_3D]) << "," <<
 				(std::get<float>(features[i][FEAT_COMPACTNESS_3D]) - std::get<float>(avgs[FEAT_COMPACTNESS_3D])) / std::get<float>(deviations[FEAT_COMPACTNESS_3D]) << "," << 
-				(std::get<float>(features[i][FEAT_ECCENTRICITY_3D]) - std::get<float>(avgs[FEAT_ECCENTRICITY_3D])) / std::get<float>(deviations[FEAT_AREA_3D]) << "," << 
+				(std::get<float>(features[i][FEAT_ECCENTRICITY_3D]) - std::get<float>(avgs[FEAT_ECCENTRICITY_3D])) / std::get<float>(deviations[FEAT_ECCENTRICITY_3D]) << "," <<
 				(std::get<Histogram>(features[i][FEAT_A3_3D])).toString() << "," <<
 				(std::get<Histogram>(features[i][FEAT_D1_3D])).toString() << "," <<
 				(std::get<Histogram>(features[i][FEAT_D2_3D])).toString() << "," <<
