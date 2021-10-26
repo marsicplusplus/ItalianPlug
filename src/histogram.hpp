@@ -13,10 +13,6 @@ class Histogram{
 
 		inline std::string toString(){
 			std::ostringstream s;
-			s << histogram.size() << ":" << m_width << ":";
-			for(const auto &a : histogram){
-				s << a.first << ":";
-			}
 			for(const auto &a : histogram){
 				s << a.second << ":";
 			}
