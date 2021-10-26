@@ -25,10 +25,6 @@ MeshBase::~MeshBase(){
 	}
 }
 
-void MeshBase::writeMesh(std::filesystem::path filePath) {
-	Exporter::exportModel(filePath, m_vertices, m_faces);
-}
-
 void MeshBase::prepare(){
 	init();
 	m_prepared = true;

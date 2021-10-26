@@ -20,7 +20,6 @@ class MeshBase {
 		inline Eigen::MatrixXf getVertices() const { return m_vertices; }
 		inline Eigen::MatrixXi getFaces() const { return m_faces; }
 
-		void writeMesh(std::filesystem::path filePath);
 		void normalize(int targetVerts);
 
 		// Subdivision

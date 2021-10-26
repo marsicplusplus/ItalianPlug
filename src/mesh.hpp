@@ -12,6 +12,7 @@ class Mesh :public MeshBase {
 		inline std::shared_ptr<ConvexHull> getConvexHull() { return (m_convexHull) ? m_convexHull : (m_convexHull = std::make_shared<ConvexHull>(m_vertices)); }
 
 		void writeMesh();
+		void writeMesh(std::filesystem::path filePath);
 		void prepare() override;
 		void update(float dt) override;
 		void recomputeAndRender() override;

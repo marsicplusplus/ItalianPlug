@@ -8,8 +8,13 @@ Mesh::Mesh(std::filesystem::path path) : m_meshPath(path) {
 }
 
 void Mesh::writeMesh() {
-	Exporter::exportModel(m_meshPath, m_vertices, m_faces);
+	writeMesh(m_meshPath);
 }
+
+void Mesh::writeMesh(std::filesystem::path filePath) {
+	Exporter::exportModel(filePath, m_vertices, m_faces);
+}
+
 
 void Mesh::prepare() {
 	MeshBase::prepare();
