@@ -72,15 +72,9 @@ int main(int argc, char* args[]) {
 	DescriptorMap descriptorMap = mesh.getDescriptorMap();
 	descriptorMap[FEAT_DIAMETER_3D] = mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D);
 
-
-	std::vector<float> featureVector;
-
-	//featureVector.push_back(descriptorMap[FEAT_DIAMETER_3D]
-	//std::get<float>(descriptorMap[FEAT_AREA_3D])
-
 	rapidcsv::Document feats_avg(featsAvgPath.string(), rapidcsv::LabelParams(0, -1));
 	rapidcsv::Document feats(featsPath.string(), rapidcsv::LabelParams(0, -1));
-	//
+	
 	const auto avgArea = feats_avg.GetColumn<float>("3D_Area_AVG")[0];
 	const auto stdArea = feats_avg.GetColumn<float>("3D_Area_STD")[0];
 	const auto avgMVolume = feats_avg.GetColumn<float>("3D_MVolume_AVG")[0];
@@ -94,6 +88,7 @@ int main(int argc, char* args[]) {
 	const auto avgEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_AVG")[0];
 	const auto stdEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_STD")[0];
 
+	std::vector<float> featureVector;
 	featureVector.push_back((std::get<float>(descriptorMap[FEAT_AREA_3D]) - avgArea) / stdArea);
 	featureVector.push_back((std::get<float>(descriptorMap[FEAT_MVOLUME_3D]) - avgMVolume) / stdMVolume);
 	featureVector.push_back((std::get<float>(descriptorMap[FEAT_BBVOLUME_3D]) - avgBBVolume) / stdBBVolume);
