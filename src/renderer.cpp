@@ -487,8 +487,6 @@ void Renderer::renderGUI(){
 			ImGui::InputInt("# of Shapes to retrieve", &m_numShapes);
 			if (ImGui::Button("Find Similiar Shapes")) {
 				if (m_mesh) {
-					ImGui::OpenPopup("Similar Shapes");
-
 					if (!m_retrieved) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
 							m_retrieval_text = "Computing descriptors for the query shape...";
