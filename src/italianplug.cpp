@@ -19,7 +19,7 @@ int main(int argc, char* args[]) {
 
 	Renderer rend(1024, 720, "RendererGL");
 	rend.initSystems();
-	if(std::filesystem::exists(args[1])){
+	if(argc > 1 && std::filesystem::exists(args[1])){
 		rend.setMesh(args[1]);
 	}
 	rend.start();

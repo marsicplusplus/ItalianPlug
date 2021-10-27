@@ -331,6 +331,7 @@ namespace Stats {
 		std::filesystem::current_path(currPath);
 	}
 
+
 }
 
 OptionsMap* OptionsMap::instance = nullptr;

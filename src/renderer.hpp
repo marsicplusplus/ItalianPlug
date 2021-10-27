@@ -24,6 +24,8 @@ class Renderer {
 		void setMesh(std::string path);
 		void renderGUI();
 		void setupImGuiStyle();
+		void takeScreenshots(std::filesystem::path dbPath);
+		void loadScreenshots(std::filesystem::path dbPath);
 
 		static void windowSizeCallback(GLFWwindow* window, int width, int height);
 		static void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -38,6 +40,8 @@ public:
 private:
 	GLFWwindow* m_window;
 	ImGui::FileBrowser m_fileDialog;
+	ImGui::FileBrowser m_folderDialog;
+
 	MeshPtr m_mesh;
 	Camera m_camera;
 	glm::vec3 m_meshMaterialDiffuse;
@@ -46,6 +50,8 @@ private:
 	bool m_renderConvexHull;
 	bool m_renderUnitCube;
 	bool m_gui;
+	bool m_takeScrenshot;
+	std::unordered_map<std::string, std::tuple<GLuint, int, int>> meshToTexture;
 };
 
 #endif

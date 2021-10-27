@@ -11,10 +11,52 @@
 #include "camera.hpp"
 #include <memory>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #define CHECK_ERROR(COND, MESSAGE, RET) if(!(COND)){\
 	std::cerr << (MESSAGE);\
 	return (RET);\
 }
+
+// Simple helper function to load an image into a OpenGL texture with common settings
+bool LoadTextureFromFile(const char* filename, GLuint * out_texture, int* out_width, int* out_height)
+{
+	// Load from file
+	int image_width = 0;
+	int image_height = 0;
+	unsigned char* image_data = stbi_load(filename, &image_width, &image_height, NULL, 4);
+	if (image_data == NULL)
+		return false;
+
+	// Create a OpenGL texture identifier
+	GLuint image_texture;
+	glGenTextures(1, &image_texture);
+	glBindTexture(GL_TEXTURE_2D, image_texture);
+
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+	// Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+	stbi_image_free(image_data);
+
+	*out_texture = image_texture;
+	*out_width = image_width;
+	*out_height = image_height;
+
+	return true;
+}
+
 
 Renderer::~Renderer() {
 	ImGui_ImplOpenGL3_Shutdown();
@@ -110,6 +152,10 @@ bool Renderer::initSystems(){
 	// (optional) set browser properties
 	m_fileDialog.SetTitle("Choose a Mesh");
 	m_fileDialog.SetTypeFilters({ ".off", ".ply" });
+
+	m_folderDialog = ImGui::FileBrowser(ImGuiFileBrowserFlags_SelectDirectory);
+	m_folderDialog.SetTitle("Choose database folder");
+
 
 	OptionsMap::Instance()->setOption(DRAW_MODE, SHADED_MESH);
 	glPointSize(3.0f);
@@ -385,6 +431,44 @@ void Renderer::renderGUI(){
 			}
 		}
 
+		//if (ImGui::Button("Take Screenshots")) {
+		//	m_folderDialog.Open();
+		//}
+
+		//m_folderDialog.Display();
+		//if (m_folderDialog.HasSelected()) {
+		//	takeScreenshots(m_folderDialog.GetSelected());
+		//	m_folderDialog.ClearSelected();
+		//}
+
+		if (ImGui::Button("Load Screenshots")) {
+			m_folderDialog.Open();
+		}
+
+		m_folderDialog.Display();
+		if (m_folderDialog.HasSelected()) {
+			loadScreenshots(m_folderDialog.GetSelected());
+			m_folderDialog.ClearSelected();
+		}
+
+		if (ImGui::Button("Load Mesh Via Thumbnail")) {
+			ImGui::OpenPopup("Some Popup");
+		}
+
+		if (ImGui::BeginPopup("Some Popup"))
+		{
+			for (auto & it: meshToTexture) {
+				ImGui::Text("Some Distance: X");
+				if (ImGui::ImageButton((void*)(intptr_t)std::get<0>(it.second), ImVec2(std::get<1>(it.second) / 5, std::get<2>(it.second) / 5))) {
+					m_mesh = MeshMap::Instance()->getMesh(it.first);
+					m_mesh->prepare();
+					m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+				}
+			}
+
+			ImGui::EndPopup();
+		}
+
 		ImGui::End();
 	}
 	// Render dear imgui into screen
@@ -490,3 +574,64 @@ void Renderer::setupImGuiStyle()
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 }
+
+void Renderer::takeScreenshots(std::filesystem::path dbPath) {
+	for (auto& shape : std::filesystem::recursive_directory_iterator(dbPath)) {
+		std::string extension = shape.path().extension().string();
+		std::string offExt(".off");
+		std::string plyExt(".ply");
+		if (extension == offExt || extension == plyExt) {
+			m_mesh = MeshMap::Instance()->getMesh(shape.path().string());
+			m_mesh->prepare();
+			m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+			glm::mat4 proj = glm::perspective(m_camera.getFOV(), (float)m_wWidth / (float)m_wHeight, 0.1f, 100.0f);
+			glm::mat4 projView = proj * m_camera.getViewMatrix();
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glViewport(0, 0, m_wWidth, m_wHeight);
+
+			m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
+
+			// Make the BYTE array, factor of 3 because it's RBG.
+			BYTE* pixels = new BYTE[3 * m_wWidth * m_wHeight];
+
+			glReadPixels(0, 0, m_wWidth, m_wHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+			auto shapePath = shape.path();
+			shapePath.replace_extension(".png");
+
+			// Convert to FreeImage format & save to file
+			stbi_write_png(shapePath.string().c_str(), m_wWidth, m_wHeight, 3, pixels, m_wWidth * 3);
+
+			delete[] pixels;
+			glfwSwapBuffers(m_window);
+		}
+	}
+}
+
+void Renderer::loadScreenshots(std::filesystem::path dbPath) {
+	int i = 0;
+
+	for (auto& shape : std::filesystem::recursive_directory_iterator(dbPath)) {
+
+		if (i > 5) {
+			break;
+		}
+
+		std::string extension = shape.path().extension().string();
+		std::string offExt(".off");
+		std::string plyExt(".ply");
+		if (extension == offExt || extension == plyExt) {
+			auto shapePath = shape.path();
+			shapePath.replace_extension(".png");
+
+			int my_image_width = 0;
+			int my_image_height = 0;
+			GLuint my_image_texture = 0;
+			LoadTextureFromFile(shapePath.string().c_str(), &my_image_texture, &my_image_width, &my_image_height);
+			meshToTexture.emplace(shape.path().string(), std::make_tuple(my_image_texture, my_image_width, my_image_height));
+			i++;
+		}
+	}
+}
+
