@@ -46,6 +46,17 @@ namespace Exporter {
 		const Eigen::MatrixXi& F
 	);
 }
+
+template<class Iter_T, class Iter2_T>
+inline double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2) {
+	double ret = 0.0;
+	while (first != last) {
+		double dist = (*first++) - (*first2++);
+		ret += dist * dist;
+	}
+	return ret > 0.0 ? sqrt(ret) : 0.0;
+}
+
 namespace Stats {
 	ModelStatistics getModelStatistics(std::string modelFilePath);
 	void getDatabaseStatistics(std::string databasePath, std::string fp = "stats.csv");

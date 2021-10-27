@@ -11,6 +11,8 @@
 #include "camera.hpp"
 #include "mesh_map.hpp"
 #include "unit_cube.hpp"
+#include <future>
+#include <thread>
 
 class Renderer {
 
@@ -25,7 +27,7 @@ class Renderer {
 		void renderGUI();
 		void setupImGuiStyle();
 		void takeScreenshots(std::filesystem::path dbPath);
-		void loadScreenshots(std::filesystem::path dbPath);
+		void loadScreenshot(std::filesystem::path shapePath);
 
 		static void windowSizeCallback(GLFWwindow* window, int width, int height);
 		static void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -41,6 +43,7 @@ private:
 	GLFWwindow* m_window;
 	ImGui::FileBrowser m_fileDialog;
 	ImGui::FileBrowser m_folderDialog;
+	std::filesystem::path m_dbPath;
 
 	MeshPtr m_mesh;
 	Camera m_camera;
@@ -52,6 +55,12 @@ private:
 	bool m_gui;
 	bool m_takeScrenshot;
 	std::unordered_map<std::string, std::tuple<GLuint, int, int>> meshToTexture;
+	std::future<MeshPtr> m_normalizing_future;
+	bool m_normalized = false;
+	std::future<void> m_retrieval_future;
+	bool m_retrieved = false;
+	std::string m_retrieval_text;
+	int m_numShapes = 0;
 };
 
 #endif

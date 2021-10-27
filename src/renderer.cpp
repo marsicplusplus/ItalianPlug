@@ -8,6 +8,7 @@
 #include "input_handler.hpp"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
+#include "shape_retriever.hpp"
 #include "camera.hpp"
 #include <memory>
 
@@ -276,6 +277,9 @@ void Renderer::renderGUI(){
 			}
 			m_fileDialog.Display();
 			if(m_fileDialog.HasSelected()) {
+				m_retrieved = false;
+				m_normalized = false;
+				m_retrieval_text = "";
 				m_mesh = MeshMap::Instance()->getMesh(m_fileDialog.GetSelected().string());
 				m_mesh->prepare();
 				m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
@@ -431,45 +435,126 @@ void Renderer::renderGUI(){
 			}
 		}
 
-		//if (ImGui::Button("Take Screenshots")) {
-		//	m_folderDialog.Open();
-		//}
 
-		//m_folderDialog.Display();
-		//if (m_folderDialog.HasSelected()) {
-		//	takeScreenshots(m_folderDialog.GetSelected());
-		//	m_folderDialog.ClearSelected();
-		//}
+		if (ImGui::CollapsingHeader("Shape Retrieval")) {
 
-		if (ImGui::Button("Load Screenshots")) {
-			m_folderDialog.Open();
-		}
+			if (ImGui::Button("Choose Shape Database")) {
+				m_folderDialog.Open();
+			}
 
-		m_folderDialog.Display();
-		if (m_folderDialog.HasSelected()) {
-			loadScreenshots(m_folderDialog.GetSelected());
-			m_folderDialog.ClearSelected();
-		}
+			m_folderDialog.Display();
+			if (m_folderDialog.HasSelected()) {
+				m_dbPath = m_folderDialog.GetSelected();
+				m_folderDialog.ClearSelected();
+			}
 
-		if (ImGui::Button("Load Mesh Via Thumbnail")) {
-			ImGui::OpenPopup("Some Popup");
-		}
+			if (ImGui::Button("Generate Screenshots")) {
+				takeScreenshots(m_dbPath);
+			}
 
-		if (ImGui::BeginPopup("Some Popup"))
-		{
-			for (auto & it: meshToTexture) {
-				ImGui::Text("Some Distance: X");
-				if (ImGui::ImageButton((void*)(intptr_t)std::get<0>(it.second), ImVec2(std::get<1>(it.second) / 5, std::get<2>(it.second) / 5))) {
-					m_mesh = MeshMap::Instance()->getMesh(it.first);
-					m_mesh->prepare();
-					m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+			if (ImGui::Button("Normalize Shape")) {
+				if (m_mesh) {
+					m_normalizing_future = std::async(std::launch::async, [&] {
+						Mesh mesh_copy = *m_mesh;
+						mesh_copy.unprepare();
+						mesh_copy.normalize(3000);
+						return std::make_shared<Mesh>(mesh_copy);
+						}
+					);
 				}
 			}
 
-			ImGui::EndPopup();
+			if (m_normalizing_future.valid()) {
+				auto status = m_normalizing_future.wait_for(std::chrono::seconds(0));
+				if (status == std::future_status::timeout) {
+					ImGui::Text("Normalizing...");
+				}
+				else if (status == std::future_status::ready) {
+					m_mesh = m_normalizing_future.get();
+					m_mesh->prepare();
+					m_normalizing_future = std::future<MeshPtr>();
+					m_normalized = true;
+					ImGui::Text("Normalization Complete!");
+				}
+			}
+			else {
+				if (m_normalized) {
+					ImGui::Text("Normalization Complete!");
+				}
+			}
+
+
+			ImGui::InputInt("# of Shapes to retrieve", &m_numShapes);
+			if (ImGui::Button("Find Similiar Shapes")) {
+				if (m_mesh) {
+					ImGui::OpenPopup("Similar Shapes");
+
+					if (!m_retrieved) {
+						m_retrieval_future = std::async(std::launch::async, [&] {
+							m_retrieval_text = "Computing descriptors for the query shape...";
+							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+							m_retrieval_text = "Searching for the most similar shapes...";
+							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
+						});
+					}
+				}
+			}
+
+			ImGui::Text(m_retrieval_text.c_str());
+
+			if (m_retrieval_future.valid()) {
+				auto status = m_retrieval_future.wait_for(std::chrono::seconds(0));
+				if (status == std::future_status::ready) {
+					m_retrieval_future = std::future<void>();
+					m_retrieved = true;
+					m_retrieval_text = "Search Complete!";
+				}
+			}
 		}
 
 		ImGui::End();
+	}
+
+	{
+		if (m_retrieved) {
+			ImGui::SetNextWindowPos(ImVec2(m_wWidth - (m_wWidth / 3), .0f));
+			ImGui::SetNextWindowSize(ImVec2(m_wWidth / 3, m_wHeight));
+			ImGui::Begin("Similar Shapes", NULL, ImGuiWindowFlags_NoResize);
+
+			ImGui::Columns(3);
+			ImGui::SetColumnWidth(-1, m_wWidth / 9);
+			const auto similarShapes = m_mesh->getSimilarShapes();
+			for (int i = 0; i < m_numShapes && i < similarShapes.size(); i++) {
+
+				loadScreenshot(similarShapes.at(i).first);
+				auto filepath = std::filesystem::path(similarShapes.at(i).first);
+				ImGui::Text("Mesh Name: %s", filepath.filename().string().c_str());
+				ImGui::Text("Distance: %f", similarShapes.at(i).second);
+
+				if (meshToTexture.find(similarShapes.at(i).first) != meshToTexture.end()) {
+					const auto meshTextureInfo = meshToTexture.at(similarShapes.at(i).first);
+					const auto meshTexture = std::get<0>(meshTextureInfo);
+					auto textureWidth = std::get<1>(meshTextureInfo);
+					auto textureHeight = std::get<2>(meshTextureInfo);
+					auto scale = textureWidth / textureHeight;
+
+					if (ImGui::ImageButton((void*)(intptr_t)meshTexture, ImVec2(m_wWidth / 9, (m_wWidth / 9) / scale))) {
+						m_retrieved = false;
+						m_normalized = false;
+						m_retrieval_text = "";
+						m_mesh = MeshMap::Instance()->getMesh(similarShapes.at(i).first);
+						m_mesh->prepare();
+						m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
+					}
+
+				} else {
+					ImGui::Button("Visualise Shape");
+				}
+				ImGui::NextColumn();
+			}
+			ImGui::End();
+		}
 	}
 	// Render dear imgui into screen
 	ImGui::Render();
@@ -609,28 +694,17 @@ void Renderer::takeScreenshots(std::filesystem::path dbPath) {
 	}
 }
 
-void Renderer::loadScreenshots(std::filesystem::path dbPath) {
-	int i = 0;
+void Renderer::loadScreenshot(std::filesystem::path shapePath) {
+	if (meshToTexture.find(shapePath.string()) == meshToTexture.end()) {
+		auto pngPath = shapePath;
+		pngPath.replace_extension(".png");
 
-	for (auto& shape : std::filesystem::recursive_directory_iterator(dbPath)) {
-
-		if (i > 5) {
-			break;
-		}
-
-		std::string extension = shape.path().extension().string();
-		std::string offExt(".off");
-		std::string plyExt(".ply");
-		if (extension == offExt || extension == plyExt) {
-			auto shapePath = shape.path();
-			shapePath.replace_extension(".png");
-
-			int my_image_width = 0;
-			int my_image_height = 0;
-			GLuint my_image_texture = 0;
-			LoadTextureFromFile(shapePath.string().c_str(), &my_image_texture, &my_image_width, &my_image_height);
-			meshToTexture.emplace(shape.path().string(), std::make_tuple(my_image_texture, my_image_width, my_image_height));
-			i++;
+		int my_image_width = 0;
+		int my_image_height = 0;
+		GLuint my_image_texture = 0;
+		bool ret = LoadTextureFromFile(pngPath.string().c_str(), &my_image_texture, &my_image_width, &my_image_height);
+		if (ret) {
+			meshToTexture.emplace(shapePath.string(), std::make_tuple(my_image_texture, my_image_width, my_image_height));
 		}
 	}
 }

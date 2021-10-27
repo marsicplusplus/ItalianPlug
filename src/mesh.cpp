@@ -21,6 +21,11 @@ void Mesh::prepare() {
 	m_convexHull->prepare();
 }
 
+void Mesh::unprepare() {
+	MeshBase::unprepare();
+	m_convexHull->unprepare();
+}
+
 void Mesh::update(float dt) {
 	MeshBase::update(dt);
 	m_convexHull->update(dt);

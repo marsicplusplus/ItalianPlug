@@ -47,6 +47,7 @@ class MeshBase {
 		virtual void draw(const glm::mat4& projView, const glm::vec3& matterialDiffuse, const glm::vec3& cameraPos);
 		virtual void update(float dt);
 		virtual void prepare();
+		virtual void unprepare();
 		virtual void resetTransformations();
 
 	protected:

@@ -11,6 +11,20 @@ class Histogram{
 	public:
 		Histogram(int b) :  m_bins{b}{};
 
+		inline static std::vector<float> parseHistogram(std::string histogramString) {
+			std::vector<float> frequency;
+			std::string delimiter = ":";
+			size_t pos = 0;
+			std::string token;
+			while ((pos = histogramString.find(delimiter)) != std::string::npos) {
+				token = histogramString.substr(0, pos);
+				frequency.push_back(std::stof(token));
+				histogramString.erase(0, pos + delimiter.length());
+			}
+			frequency.push_back(std::stof(histogramString));
+			return frequency;
+		}
+
 		inline std::string toString(){
 			std::ostringstream s;
 			for(const auto &a : histogram){

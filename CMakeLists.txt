@@ -61,6 +61,7 @@ set( SRC
      src/camera.cpp
      src/mesh_map.cpp
      src/unit_cube.cpp
+     src/shape_retriever.cpp
 )
 
 if (UNIX) 

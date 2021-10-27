@@ -30,6 +30,10 @@ void MeshBase::prepare(){
 	m_prepared = true;
 }
 
+void MeshBase::unprepare() {
+	m_prepared = false;
+}
+
 void MeshBase::upsample(int n){
 	saveState();
 
