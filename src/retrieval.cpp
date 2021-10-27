@@ -5,39 +5,6 @@
 #include "descriptors.hpp"
 #include "earth_movers_distance.hpp"
 
-template<class Iter_T, class Iter2_T>
-double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2) {
-	double ret = 0.0;
-	while (first != last) {
-		double dist = (*first++) - (*first2++);
-		ret += dist * dist;
-	}
-	return ret > 0.0 ? sqrt(ret) : 0.0;
-}
-
-bool sortbysec(const std::pair<std::string, float>& a, const std::pair<std::string, float>& b)
-{
-	return (a.second < b.second);
-}
-
-std::vector<float> parseHistogram(std::string histogramString) {
-
-	std::vector<float> frequency;
-
-	std::string delimiter = ":";
-
-	size_t pos = 0;
-	std::string token;
-	while ((pos = histogramString.find(delimiter)) != std::string::npos) {
-		token = histogramString.substr(0, pos);
-		frequency.push_back(std::stof(token));
-		histogramString.erase(0, pos + delimiter.length());
-	}
-	frequency.push_back(std::stof(histogramString));
-	return frequency;
-}
-
-
 int main(int argc, char* args[]) {
 	if (argc < 3) {
 		std::cout << "USAGE:" << std::endl << args[0] << " query-mesh db-path" << std::endl;
@@ -119,11 +86,11 @@ int main(int argc, char* args[]) {
 		const auto d2 = feats.GetCell<std::string>("3D_D2", i);
 		const auto d3 = feats.GetCell<std::string>("3D_D3", i);
 		const auto d4 = feats.GetCell<std::string>("3D_D4", i);
-		const auto a3Histogram = parseHistogram(a3);
-		const auto d1Histogram = parseHistogram(d1);
-		const auto d2Histogram = parseHistogram(d2);
-		const auto d3Histogram = parseHistogram(d3);
-		const auto d4Histogram = parseHistogram(d4);
+		const auto a3Histogram = Histogram::parseHistogram(a3);
+		const auto d1Histogram = Histogram::parseHistogram(d1);
+		const auto d2Histogram = Histogram::parseHistogram(d2);
+		const auto d3Histogram = Histogram::parseHistogram(d3);
+		const auto d4Histogram = Histogram::parseHistogram(d4);
 
 		const auto dba3Histogram = std::get<Histogram>(descriptorMap[FEAT_A3_3D]).getFrequency();
 		const auto dbd1Histogram = std::get<Histogram>(descriptorMap[FEAT_D1_3D]).getFrequency();
@@ -140,7 +107,10 @@ int main(int argc, char* args[]) {
 		meshDistance.push_back(std::make_pair(feats.GetCell<std::string>("Path", i), singleValueDistance + a3distance + d1distance + d2distance + d3distance + d4distance));
 	}
 
-	std::sort(meshDistance.begin(), meshDistance.end(), sortbysec);
+	std::sort(meshDistance.begin(), meshDistance.end(), []
+			(const std::pair<std::string, float>& a, const std::pair<std::string, float>& b) { 
+				return a.second < b.second;
+			});
 
 	std::cout << "Most similar shapes are... " << std::endl;
 	std::cout << meshDistance[0].first << ":" << meshDistance[0].second << std::endl;
