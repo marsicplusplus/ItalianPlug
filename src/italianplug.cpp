@@ -14,12 +14,14 @@ int main(int argc, char* args[]) {
 			std::cout << "- Normalizer \t\t Normalize a single shape to a target number of vertices" << std::endl;
 			std::cout << "- ItalianPlug \t\t Mesh Visualizer and UI. Can be launched with a mesh preloaded by using:\n\t\t\t\t ./ItalianPlug path-to-mesh" << std::endl;
 			return 0;
+		} else {
+			meshPath = args[1];
 		}
 	}
 
 	Renderer rend(1024, 720, "RendererGL");
 	rend.initSystems();
-	if(std::filesystem::exists(args[1])){
+	if(!meshPath.empty() && std::filesystem::exists(meshPath)){
 		rend.setMesh(args[1]);
 	}
 	rend.start();
