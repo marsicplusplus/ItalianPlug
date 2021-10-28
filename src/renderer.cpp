@@ -182,6 +182,8 @@ bool Renderer::initSystems(){
 	s->loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
 	s->compileShaders();
 
+	stbi_set_flip_vertically_on_load(true);
+
 	return true;
 }
 
