@@ -441,6 +441,7 @@ void Renderer::renderGUI(){
 			if (ImGui::Button("Choose Shape Database")) {
 				m_folderDialog.Open();
 			}
+			ImGui::TextWrapped(m_dbPath.c_str());
 
 			m_folderDialog.Display();
 			if (m_folderDialog.HasSelected()) {
@@ -676,7 +677,7 @@ void Renderer::takeScreenshots(std::filesystem::path dbPath) {
 			m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
 
 			// Make the BYTE array, factor of 3 because it's RBG.
-			BYTE* pixels = new BYTE[3 * m_wWidth * m_wHeight];
+			BYTE *pixels = new BYTE[3 * m_wWidth * m_wHeight];
 
 			glReadPixels(0, 0, m_wWidth, m_wHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 

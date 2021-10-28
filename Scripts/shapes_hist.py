@@ -25,22 +25,19 @@ shapes = []
 for i in range(3, len(sys.argv)):
     shapes.append(sys.argv[i])
 
+bins = np.arange(0.0,1.0,0.1)
 with open(sys.argv[1]) as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
     for row in reader:
         for shape in shapes:
             if(shape in row[0]):
-                hist = {'n_bins':0,'bin_width':0,'bins':[], 'values':[]}
+                values = []
                 feat = row[featureIdx].split(":")
-                hist['n_bins'] = int(feat[0])
-                hist['bin_width'] = float(feat[1])
-                for i in range(2, hist['n_bins']+2):
-                    hist['bins'].append(float(feat[i]))
-                for j in range(i+1, i+hist['n_bins']+1):
-                    hist['values'].append(float(feat[j]))
+                for j in range(0, 10):
+                    values.append(float(feat[j]))
                 plt.ylim(0, 0.5)
                 plt.xlim(0, 1.0)
-                plt.plot(hist['bins'], hist['values'], label = row[0])
+                plt.plot(bins, values, label = row[0])
 
 plt.title(sys.argv[2])
 

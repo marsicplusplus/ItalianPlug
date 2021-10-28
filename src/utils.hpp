@@ -31,6 +31,8 @@ struct ModelStatistics {
 	float angleSecondToY;
 };
 
+typedef unsigned char BYTE;
+
 namespace Importer {
 	bool importModel(
 		const std::filesystem::path& filePath, 
