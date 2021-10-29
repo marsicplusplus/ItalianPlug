@@ -558,8 +558,8 @@ void Renderer::renderGUI(){
 				ImGui::Text("Mesh Name: %s", filepath.filename().string().c_str());
 				ImGui::Text("Distance: %f", similarShapes.at(i).second);
 
-				if (meshToTexture.find(similarShapes.at(i).first) != meshToTexture.end()) {
-					const auto meshTextureInfo = meshToTexture.at(similarShapes.at(i).first);
+				if (meshToTexture.find(m_dbPath / filepath) != meshToTexture.end()) {
+					const auto meshTextureInfo = meshToTexture.at(m_dbPath / filepath);
 					const auto meshTexture = std::get<0>(meshTextureInfo);
 					auto textureWidth = std::get<1>(meshTextureInfo);
 					auto textureHeight = std::get<2>(meshTextureInfo);
