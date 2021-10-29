@@ -6,6 +6,9 @@
 #include "rapidcsv.h"
 
 namespace Retriever {
+	namespace {
+
+	}
 	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes) {
 		std::filesystem::path featsAvgPath = dbPath;
 		featsAvgPath /= "feats_avg.csv";
@@ -91,10 +94,11 @@ namespace Retriever {
 		result.reserve(shapes);
 		std::vector<float> distances;
 		distances.reserve(shapes);
-		idx.get_nns_by_item(i, shapes + 2, -1, &result, &distances);
+		// shapes + 2 to ignore the newly added one
+		idx.get_nns_by_item(i, shapes + 1, -1, &result, &distances);
 		idx.unload();
 		std::vector<std::pair<std::string, float>> similarShapes;
-		for(i = 2; i < result.size(); i++){
+		for(i = 1; i < result.size(); i++){
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", result[i]), distances[i]));
 		}
 		mesh->setSimilarShapes(similarShapes);
