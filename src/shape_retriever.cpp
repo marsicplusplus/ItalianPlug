@@ -95,10 +95,10 @@ namespace Retriever {
 		std::vector<float> distances;
 		distances.reserve(shapes);
 		// shapes + 2 to ignore the newly added one
-		idx.get_nns_by_item(i, shapes + 1, -1, &result, &distances);
+		idx.get_nns_by_item(i, shapes + 2, -1, &result, &distances);
 		idx.unload();
 		std::vector<std::pair<std::string, float>> similarShapes;
-		for(i = 1; i < result.size(); i++){
+		for(i = 2; i < result.size(); i++){
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", result[i]), distances[i]));
 		}
 		mesh->setSimilarShapes(similarShapes);

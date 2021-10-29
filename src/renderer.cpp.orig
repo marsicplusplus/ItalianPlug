@@ -9,6 +9,9 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
 #include "shape_retriever.hpp"
+#include "annoylib.h"
+#include "kissrandom.h"
+#include "rapidcsv.h"
 #include "camera.hpp"
 #include <memory>
 
@@ -181,6 +184,8 @@ bool Renderer::initSystems(){
 	s->loadShader("shaders/basic_vertex.glsl", GL_VERTEX_SHADER);
 	s->loadShader("shaders/edge_fragment.glsl", GL_FRAGMENT_SHADER);
 	s->compileShaders();
+
+	stbi_set_flip_vertically_on_load(true);
 
 	return true;
 }
@@ -441,8 +446,11 @@ void Renderer::renderGUI(){
 			if (ImGui::Button("Choose Shape Database")) {
 				m_folderDialog.Open();
 			}
+<<<<<<< HEAD
+=======
 			ImGui::SameLine();
 			HelpMarker("Choose the root folder of your database");
+>>>>>>> feature/knn
 			ImGui::TextWrapped(m_dbPath.c_str());
 
 			m_folderDialog.Display();
@@ -450,10 +458,11 @@ void Renderer::renderGUI(){
 				m_dbPath = m_folderDialog.GetSelected();
 				m_folderDialog.ClearSelected();
 				m_featuresPresent = (std::filesystem::exists(m_dbPath/"feats.csv") && std::filesystem::exists(m_dbPath/"feats_avg.csv")) ? true : false;
+				m_annPresent = (std::filesystem::exists(m_dbPath/"knn.ann")) ? true : false;
 			}
-			if(!m_featuresPresent && !m_dbPath.empty()){
+			if(!m_featuresPresent){
 				if(ImGui::Button("Compute DB Features")){
-					Stats::getDatabaseFeatures(m_dbPath);
+					//TODO
 					m_featuresPresent = true;
 				}
 				ImGui::SameLine();
@@ -500,13 +509,15 @@ void Renderer::renderGUI(){
 				ImGui::InputInt("# of Shapes", &m_numShapes);
 				if (ImGui::Button("Find Similiar ANN")) {
 					if (m_mesh) {
-						m_retrieval_future = std::async(std::launch::async, [&] {
-								m_retrieval_text = "Computing descriptors for the query shape...";
-								m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-								m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-								m_retrieval_text = "Searching for the most similar shapes...";
-								Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
-								});
+						//if (!m_retrieved) {
+							m_retrieval_future = std::async(std::launch::async, [&] {
+									m_retrieval_text = "Computing descriptors for the query shape...";
+									m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+									m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+									m_retrieval_text = "Searching for the most similar shapes...";
+									Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
+							});
+						//}
 					}
 				}
 				ImGui::SameLine();
@@ -514,13 +525,15 @@ void Renderer::renderGUI(){
 
 				if (ImGui::Button("Find Similiar Shapes")) {
 					if (m_mesh) {
-						m_retrieval_future = std::async(std::launch::async, [&] {
-								m_retrieval_text = "Computing descriptors for the query shape...";
-								m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-								m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-								m_retrieval_text = "Searching for the most similar shapes...";
-								Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
-								});
+						//if (!m_retrieved) {
+							m_retrieval_future = std::async(std::launch::async, [&] {
+									m_retrieval_text = "Computing descriptors for the query shape...";
+									m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+									m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+									m_retrieval_text = "Searching for the most similar shapes...";
+									Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
+							});
+						//}
 					}
 				}
 				ImGui::SameLine();
@@ -537,11 +550,10 @@ void Renderer::renderGUI(){
 					}
 				}
 			}
-		}
 
+		}
 		ImGui::End();
 	}
-
 	{
 		if (m_retrieved) {
 			ImGui::SetNextWindowPos(ImVec2(m_wWidth - (m_wWidth / 3), .0f));
@@ -703,7 +715,7 @@ void Renderer::takeScreenshots(std::filesystem::path dbPath) {
 			m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
 
 			// Make the BYTE array, factor of 3 because it's RBG.
-			BYTE* pixels = new BYTE[3 * m_wWidth * m_wHeight];
+			BYTE *pixels = new BYTE[3 * m_wWidth * m_wHeight];
 
 			glReadPixels(0, 0, m_wWidth, m_wHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
