@@ -13,6 +13,9 @@
 #include <filesystem>
 #include <Eigen/Core>
 
+#define DESCRIPTORS_NUM 56
+typedef unsigned char BYTE;
+
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 normal;
