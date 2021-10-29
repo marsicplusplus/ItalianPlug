@@ -553,8 +553,8 @@ void Renderer::renderGUI(){
 			const auto similarShapes = m_mesh->getSimilarShapes();
 			for (int i = 0; i < m_numShapes && i < similarShapes.size(); i++) {
 
-				loadScreenshot(similarShapes.at(i).first);
 				auto filepath = std::filesystem::path(similarShapes.at(i).first);
+				loadScreenshot(m_dbPath / filepath);
 				ImGui::Text("Mesh Name: %s", filepath.filename().string().c_str());
 				ImGui::Text("Distance: %f", similarShapes.at(i).second);
 
@@ -569,7 +569,7 @@ void Renderer::renderGUI(){
 						m_retrieved = false;
 						m_normalized = false;
 						m_retrieval_text = "";
-						m_mesh = MeshMap::Instance()->getMesh(similarShapes.at(i).first);
+						m_mesh = MeshMap::Instance()->getMesh(m_dbPath / filepath);
 						m_mesh->prepare();
 						m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 					}
