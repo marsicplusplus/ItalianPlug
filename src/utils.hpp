@@ -35,6 +35,8 @@ struct ModelStatistics {
 };
 
 typedef unsigned char BYTE;
+typedef std::pair<int, std::string> IndexNamePair;
+typedef std::unordered_map<std::string, std::vector<IndexNamePair>> ClassToMeshIndexNameMap;
 
 namespace Importer {
 	bool importModel(
@@ -66,6 +68,11 @@ namespace Stats {
 	ModelStatistics getModelStatistics(std::string modelFilePath);
 	void getDatabaseStatistics(std::string databasePath, std::string fp = "stats.csv");
 	void getDatabaseFeatures(std::string dbPath);
+};
+
+namespace FeatureVector {
+	void getFeatureVectorClassToIndicesName(std::filesystem::path dbPath, Eigen::VectorXd& dbFeatureVector, ClassToMeshIndexNameMap& classTypeToIndicesNames, int& origDimensionality, int& numOfDataPoints);
+	void formatReducedFeatureVector(std::vector<double> flatFeatureVectors, int numOfDataPoints, Eigen::MatrixXd& reducedFeatureVectors);
 };
 
 enum Options{

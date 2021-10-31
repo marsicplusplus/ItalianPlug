@@ -10,6 +10,7 @@
 #include "igl/readOFF.h"
 #include "igl/readPLY.h"
 #include "mesh.hpp"
+#include "rapidcsv.h"
 #include <future>
 #include <mutex>
 
@@ -329,6 +330,75 @@ namespace Stats {
 		featsStatsFile.close();
 	
 		std::filesystem::current_path(currPath);
+	}
+}
+
+namespace FeatureVector {
+	void getFeatureVectorClassToIndicesName(std::filesystem::path dbPath, Eigen::VectorXd& dbFeatureVector, ClassToMeshIndexNameMap& classTypeToIndicesNames, int& origDimensionality, int& numOfDataPoints) {
+		std::filesystem::path featsPath = dbPath;
+		featsPath /= "feats.csv";
+		rapidcsv::Document feats(featsPath.string(), rapidcsv::LabelParams(0, -1));
+		numOfDataPoints = feats.GetRowCount();
+
+		std::vector<float> tempFeatureVector;
+		for (int i = 0; i < numOfDataPoints; i++) {
+
+			const auto meshPath = std::filesystem::path(feats.GetCell<std::string>("Path", i));
+			const auto meshName = meshPath.filename().string();
+			const auto classType = meshPath.parent_path().filename().string();
+			if (classTypeToIndicesNames.find(classType) == classTypeToIndicesNames.end()) {
+				std::vector<IndexNamePair> indexNamePairs;
+				indexNamePairs.push_back(std::make_pair(i, meshName));
+				classTypeToIndicesNames.emplace(meshPath.parent_path().filename().string(), indexNamePairs);
+			}
+			else {
+				classTypeToIndicesNames.at(classType).push_back(std::make_pair(i, meshName));
+			}
+
+			// Compute the single-value distance (euclidean)
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_Area", i));
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_BBVolume", i));
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_Diameter", i));
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_Eccentricity", i));
+
+			// Compute earth mover's distance
+			const auto a3 = feats.GetCell<std::string>("3D_A3", i);
+			const auto d1 = feats.GetCell<std::string>("3D_D1", i);
+			const auto d2 = feats.GetCell<std::string>("3D_D2", i);
+			const auto d3 = feats.GetCell<std::string>("3D_D3", i);
+			const auto d4 = feats.GetCell<std::string>("3D_D4", i);
+			const auto a3Histogram = Histogram::parseHistogram(a3);
+			const auto d1Histogram = Histogram::parseHistogram(d1);
+			const auto d2Histogram = Histogram::parseHistogram(d2);
+			const auto d3Histogram = Histogram::parseHistogram(d3);
+			const auto d4Histogram = Histogram::parseHistogram(d4);
+
+			tempFeatureVector.insert(tempFeatureVector.end(), a3Histogram.begin(), a3Histogram.end());
+			tempFeatureVector.insert(tempFeatureVector.end(), d1Histogram.begin(), d1Histogram.end());
+			tempFeatureVector.insert(tempFeatureVector.end(), d2Histogram.begin(), d2Histogram.end());
+			tempFeatureVector.insert(tempFeatureVector.end(), d3Histogram.begin(), d3Histogram.end());
+			tempFeatureVector.insert(tempFeatureVector.end(), d4Histogram.begin(), d4Histogram.end());
+			if (!origDimensionality) {
+				origDimensionality = tempFeatureVector.size();
+			}
+		}
+
+		std::vector<double> doubleFeatureVector(tempFeatureVector.begin(), tempFeatureVector.end());
+		dbFeatureVector = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(doubleFeatureVector.data(), doubleFeatureVector.size());
+	}
+
+	void formatReducedFeatureVector(std::vector<double> flatFeatureVectors, int numOfDataPoints, Eigen::MatrixXd& reducedFeatureVectors) {
+		Eigen::VectorXd normalizedData = Eigen::Map<Eigen::VectorXd, Eigen::Unaligned>(flatFeatureVectors.data(), flatFeatureVectors.size());
+		auto minVal = normalizedData.minCoeff();
+		if (minVal < 0) {
+			normalizedData.array() += abs(minVal);
+		}
+
+		normalizedData.normalize();
+
+		typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> RowMatrixXd;
+		reducedFeatureVectors = RowMatrixXd::Map(normalizedData.data(), numOfDataPoints, 2);
 	}
 }
 
