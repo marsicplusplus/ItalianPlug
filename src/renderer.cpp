@@ -444,7 +444,7 @@ void Renderer::renderGUI(){
 		}
 		ImGui::SameLine();
 		HelpMarker("Choose the root folder of your database");
-		ImGui::TextWrapped(m_dbPath.c_str());
+		ImGui::TextWrapped(m_dbPath.string().c_str());
 
 		m_folderDialog.Display();
 		if (m_folderDialog.HasSelected()) {
@@ -454,7 +454,7 @@ void Renderer::renderGUI(){
 		}
 		if(!m_featuresPresent && !m_dbPath.empty()){
 			if(ImGui::Button("Compute DB Features")){
-				Stats::getDatabaseFeatures(m_dbPath);
+				Stats::getDatabaseFeatures(m_dbPath.string());
 				m_featuresPresent = true;
 			}
 			ImGui::SameLine();
@@ -505,12 +505,12 @@ void Renderer::renderGUI(){
 				if (ImGui::Button("Find Similiar ANN")) {
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
-								m_retrieval_text = "Computing descriptors for the query shape...";
-								m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-								m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-								m_retrieval_text = "Searching for the most similar shapes...";
-								Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
-								});
+							m_retrieval_text = "Computing descriptors for the query shape...";
+							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+							m_retrieval_text = "Searching for the most similar shapes...";
+							Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
+						});
 					}
 				}
 				ImGui::SameLine();
@@ -519,12 +519,12 @@ void Renderer::renderGUI(){
 				if (ImGui::Button("Find Similiar Shapes")) {
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
-								m_retrieval_text = "Computing descriptors for the query shape...";
-								m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-								m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-								m_retrieval_text = "Searching for the most similar shapes...";
-								Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
-								});
+							m_retrieval_text = "Computing descriptors for the query shape...";
+							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+							m_retrieval_text = "Searching for the most similar shapes...";
+							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
+						});
 					}
 				}
 				ImGui::SameLine();
@@ -567,6 +567,7 @@ void Renderer::renderGUI(){
 
 			ImGui::InputInt("Number of Iterations", &m_maxIterations);
 			ImGui::Checkbox("Visualise Iterations", &m_visualiseIterations);
+			ImGui::Checkbox("Display Plot", &m_plotTSE);
 			if (m_visualiseIterations) {
 				ImGui::SliderInt("Iterations", &m_iteration, 1, m_tsneIterations.size());
 
@@ -582,6 +583,8 @@ void Renderer::renderGUI(){
 			} else {
 				plotTSNE(m_reducedFeatureVectors);
 			}
+		} else {
+			m_plotTSE = false;
 		}
 		ImGui::End();
 	}
@@ -598,12 +601,12 @@ void Renderer::renderGUI(){
 			for (int i = 0; i < m_numShapes && i < similarShapes.size(); i++) {
 
 				auto filepath = std::filesystem::path(similarShapes.at(i).first);
-				loadScreenshot(m_dbPath / filepath);
+				loadScreenshot((m_dbPath / filepath).string());
 				ImGui::Text("Mesh Name: %s", filepath.filename().string().c_str());
 				ImGui::Text("Distance: %f", similarShapes.at(i).second);
 
-				if (meshToTexture.find(m_dbPath / filepath) != meshToTexture.end()) {
-					const auto meshTextureInfo = meshToTexture.at(m_dbPath / filepath);
+				if (meshToTexture.find((m_dbPath / filepath).string()) != meshToTexture.end()) {
+					const auto meshTextureInfo = meshToTexture.at((m_dbPath / filepath).string());
 					const auto meshTexture = std::get<0>(meshTextureInfo);
 					auto textureWidth = std::get<1>(meshTextureInfo);
 					auto textureHeight = std::get<2>(meshTextureInfo);
@@ -613,7 +616,7 @@ void Renderer::renderGUI(){
 						m_retrieved = false;
 						m_normalized = false;
 						m_retrieval_text = "";
-						m_mesh = MeshMap::Instance()->getMesh(m_dbPath / filepath);
+						m_mesh = MeshMap::Instance()->getMesh((m_dbPath / filepath).string());
 						m_mesh->prepare();
 						m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 					}
