@@ -24,8 +24,7 @@
 }
 
 // Simple helper function to load an image into a OpenGL texture with common settings
-bool LoadTextureFromFile(const char* filename, GLuint * out_texture, int* out_width, int* out_height)
-{
+bool LoadTextureFromFile(const char* filename, GLuint * out_texture, int* out_width, int* out_height){
 	// Load from file
 	int image_width = 0;
 	int image_height = 0;
@@ -451,18 +450,21 @@ void Renderer::renderGUI(){
 				m_folderDialog.ClearSelected();
 				m_featuresPresent = (std::filesystem::exists(m_dbPath/"feats.csv") && std::filesystem::exists(m_dbPath/"feats_avg.csv")) ? true : false;
 			}
-			if(!m_featuresPresent && !m_dbPath.empty()){
-				if(ImGui::Button("Compute DB Features")){
-					Stats::getDatabaseFeatures(m_dbPath);
-					m_featuresPresent = true;
+			if(!m_dbPath.empty()){
+				if (ImGui::Button("Generate Screenshots")) {
+					takeScreenshots(m_dbPath);
 				}
 				ImGui::SameLine();
-				HelpMarker("Compute the file feats.avg in the DB root");
+				HelpMarker("Populate the DB with screenshots for every mesh\nto use when cycling through found shapes");
+				if(!m_featuresPresent){
+					if(ImGui::Button("Compute DB Features")){
+						Stats::getDatabaseFeatures(m_dbPath);
+						m_featuresPresent = true;
+					}
+					ImGui::SameLine();
+					HelpMarker("Compute the file feats.avg in the DB root");
+				}
 			}
-
-			//if (ImGui::Button("Generate Screenshots")) {
-				//takeScreenshots(m_dbPath);
-			//}
 
 			ImGui::Separator();
 			if (ImGui::Button("Normalize Shape")) {
