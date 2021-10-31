@@ -233,7 +233,7 @@ void Renderer::start() {
 		}
 
 		if(m_mesh != nullptr){
-			if(!m_fileDialog.IsOpened()){
+			if(!m_fileDialog.IsOpened() && !m_plotTSE){
 				m_camera.update(deltaTime);
 				m_mesh->update(deltaTime);
 			}
@@ -431,7 +431,6 @@ void Renderer::renderGUI(){
 			}
 
 		}
-		ImGui::Separator();
 		// Add button for undo
 		if (ImGui::Button("Undo Last Operation")) {
 			if (m_mesh) {
@@ -439,35 +438,36 @@ void Renderer::renderGUI(){
 			}
 		}
 
+		ImGui::Separator();
+		if (ImGui::Button("Choose Shape Database")) {
+			m_folderDialog.Open();
+		}
+		ImGui::SameLine();
+		HelpMarker("Choose the root folder of your database");
+		ImGui::TextWrapped(m_dbPath.c_str());
 
-		if (ImGui::CollapsingHeader("Shape Retrieval")) {
-
-			if (ImGui::Button("Choose Shape Database")) {
-				m_folderDialog.Open();
+		m_folderDialog.Display();
+		if (m_folderDialog.HasSelected()) {
+			m_dbPath = m_folderDialog.GetSelected();
+			m_folderDialog.ClearSelected();
+			m_featuresPresent = (std::filesystem::exists(m_dbPath/"feats.csv") && std::filesystem::exists(m_dbPath/"feats_avg.csv")) ? true : false;
+		}
+		if(!m_featuresPresent && !m_dbPath.empty()){
+			if(ImGui::Button("Compute DB Features")){
+				Stats::getDatabaseFeatures(m_dbPath);
+				m_featuresPresent = true;
 			}
 			ImGui::SameLine();
-			HelpMarker("Choose the root folder of your database");
-			ImGui::TextWrapped(m_dbPath.c_str());
+			HelpMarker("Compute the file feats.avg in the DB root");
+		}
 
-			m_folderDialog.Display();
-			if (m_folderDialog.HasSelected()) {
-				m_dbPath = m_folderDialog.GetSelected();
-				m_folderDialog.ClearSelected();
-				m_featuresPresent = (std::filesystem::exists(m_dbPath/"feats.csv") && std::filesystem::exists(m_dbPath/"feats_avg.csv")) ? true : false;
+		if(!m_dbPath.empty()){
+			if (ImGui::Button("Generate Screenshots")) {
+				takeScreenshots(m_dbPath);
 			}
-			if(!m_featuresPresent && !m_dbPath.empty()){
-				if(ImGui::Button("Compute DB Features")){
-					Stats::getDatabaseFeatures(m_dbPath);
-					m_featuresPresent = true;
-				}
-				ImGui::SameLine();
-				HelpMarker("Compute the file feats.avg in the DB root");
-			}
+		}
 
-			//if (ImGui::Button("Generate Screenshots")) {
-				//takeScreenshots(m_dbPath);
-			//}
-
+		if (ImGui::CollapsingHeader("Shape Retrieval")) {
 			ImGui::Separator();
 			if (ImGui::Button("Normalize Shape")) {
 				if (m_mesh) {
@@ -556,6 +556,7 @@ void Renderer::renderGUI(){
 					}
 					runTSE(m_origFeatureVectors, m_numDataPoints, m_origDimensionality, m_maxIterations, m_reducedFeatureVectors, m_tsneIterations);
 					m_iteration = m_tsneIterations.size();
+					m_plotTSE = true;
 				}
 			}
 
@@ -811,32 +812,37 @@ void Renderer::plotTSNE(Eigen::MatrixXd reducedFeatureVectors) {
 		datasets.push_back(std::make_tuple(classType, meshNames, xVals, yVals));
 	}
 
-	if (!datasets.empty()) {
-		ImGui::Begin("2D Feature Space");
+	if (!datasets.empty() && m_plotTSE) {
+		ImGui::SetNextWindowPos(ImVec2(m_wWidth/5.0f, 0));
+		ImGui::SetNextWindowSize(ImVec2(4*m_wWidth/5.0f, m_wHeight));
+		ImGui::Begin("2D Feature Space", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
 		if (ImGui::Button("Auto Fit")) {
 			ImPlot::SetNextAxesToFit();
 		}
+		ImGui::SameLine();
+		if (ImGui::Button("Close")) {
+			m_plotTSE = false;
+		}
 
 		if (ImPlot::BeginPlot("2D Feature Space", ImVec2(-1,-1))) {
-
 			ImPlot::SetupAxis(ImAxis_X1, NULL, ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels);
 			ImPlot::SetupAxis(ImAxis_Y1, NULL, ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels);
 			ImPlot::SetupAxisLimits(ImAxis_X1, 0, 0.1);
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.1);
 			ImPlot::SetupLegend(ImPlotLocation_SouthEast, ImPlotLegendFlags_Outside);
-
+			std::set<std::string> classes;
 			int plotColor = 0;
 			for (auto& dataset : datasets) {
 				std::string classType = std::get<0>(dataset);
-				ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.5f);
-				ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 6, ImPlot::GetColormapColor(plotColor), IMPLOT_AUTO, ImPlot::GetColormapColor(plotColor));
+				classes.insert(classType);
+				ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.7f);
+				ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6, ImPlot::GetColormapColor(plotColor), IMPLOT_AUTO, ImPlot::GetColormapColor(plotColor));
 				const auto xVals = std::get<2>(dataset);
 				const auto yVals = std::get<3>(dataset);
 				ImPlot::PlotScatter(classType.c_str(), &xVals[0], &yVals[0], xVals.size());
 				plotColor++;
 			}
-
 			if (ImPlot::IsPlotHovered()) {
 				// get ImGui window DrawList
 				ImPlotPoint mouse = ImPlot::GetPlotMousePos();
@@ -854,7 +860,6 @@ void Renderer::plotTSNE(Eigen::MatrixXd reducedFeatureVectors) {
 					const auto meshNames = std::get<1>(dataset);
 					const auto xVals = std::get<2>(dataset);
 					const auto yVals = std::get<3>(dataset);
-
 					bool hoveringOnPoint = false;
 					for (int idx = 0; idx < xVals.size(); idx++) {
 						if (abs(xVals[idx] - mouse.x) < (xPerPixel * 6)) {

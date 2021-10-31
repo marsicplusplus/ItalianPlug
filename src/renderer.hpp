@@ -74,7 +74,7 @@ private:
 	std::vector<std::vector<double>> m_tsneIterations;
 	int m_origDimensionality = 0;
 	int m_numDataPoints = 0;
-	bool m_plotIterations = false;
+	bool m_plotTSE = false;
 	int m_iteration = 1;
 	int m_maxIterations = 1000;
 
