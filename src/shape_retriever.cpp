@@ -71,17 +71,17 @@ namespace Retriever {
 			const auto d2 = feats.GetCell<std::string>("3D_D2", i);
 			const auto d3 = feats.GetCell<std::string>("3D_D3", i);
 			const auto d4 = feats.GetCell<std::string>("3D_D4", i);
-			const auto a3Histogram = Histogram::parseHistogram(a3);
-			const auto d1Histogram = Histogram::parseHistogram(d1);
-			const auto d2Histogram = Histogram::parseHistogram(d2);
-			const auto d3Histogram = Histogram::parseHistogram(d3);
-			const auto d4Histogram = Histogram::parseHistogram(d4);
+			const auto dba3Histogram = Histogram::parseHistogram(a3);
+			const auto dbd1Histogram = Histogram::parseHistogram(d1);
+			const auto dbd2Histogram = Histogram::parseHistogram(d2);
+			const auto dbd3Histogram = Histogram::parseHistogram(d3);
+			const auto dbd4Histogram = Histogram::parseHistogram(d4);
 
-			const auto dba3Histogram = std::get<Histogram>(descriptorMap[FEAT_A3_3D]).getFrequency();
-			const auto dbd1Histogram = std::get<Histogram>(descriptorMap[FEAT_D1_3D]).getFrequency();
-			const auto dbd2Histogram = std::get<Histogram>(descriptorMap[FEAT_D2_3D]).getFrequency();
-			const auto dbd3Histogram = std::get<Histogram>(descriptorMap[FEAT_D3_3D]).getFrequency();
-			const auto dbd4Histogram = std::get<Histogram>(descriptorMap[FEAT_D4_3D]).getFrequency();
+			const auto a3Histogram = std::get<Histogram>(descriptorMap[FEAT_A3_3D]).getFrequency();
+			const auto d1Histogram = std::get<Histogram>(descriptorMap[FEAT_D1_3D]).getFrequency();
+			const auto d2Histogram = std::get<Histogram>(descriptorMap[FEAT_D2_3D]).getFrequency();
+			const auto d3Histogram = std::get<Histogram>(descriptorMap[FEAT_D3_3D]).getFrequency();
+			const auto d4Histogram = std::get<Histogram>(descriptorMap[FEAT_D4_3D]).getFrequency();
 
 			std::vector<float> values = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
 			const auto a3distance = std::earthMoversDistance(values, a3Histogram, values, dba3Histogram);

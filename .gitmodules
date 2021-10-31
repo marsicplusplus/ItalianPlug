@@ -19,3 +19,6 @@
 [submodule "external/quickhull"]
 	path = external/quickhull
 	url = https://github.com/akuukka/quickhull/
+[submodule "external/bhtsne"]
+	path = external/bhtsne
+	url = https://github.com/lvdmaaten/bhtsne/

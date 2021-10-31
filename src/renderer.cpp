@@ -8,8 +8,10 @@
 #include "input_handler.hpp"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_glfw.h"
+#include "implot.h"
 #include "shape_retriever.hpp"
 #include "camera.hpp"
+#include "tsne_runner.hpp"
 #include <memory>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -62,6 +64,7 @@ bool LoadTextureFromFile(const char* filename, GLuint * out_texture, int* out_wi
 Renderer::~Renderer() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
+	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
@@ -141,6 +144,7 @@ bool Renderer::initSystems(){
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 	ImGuiIO &io = ImGui::GetIO();
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForOpenGL(m_window, true);
@@ -263,20 +267,20 @@ void Renderer::renderGUI(){
 	{
 		ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
 		// render your GUI
-		if (ImGui::CollapsingHeader("File")){
-			if(ImGui::Button("Load Mesh")){
+		if (ImGui::CollapsingHeader("File")) {
+			if (ImGui::Button("Load Mesh")) {
 				m_fileDialog.Open();
 			}
-			if(ImGui::Button("Save Mesh")){
-				if(m_mesh){
+			if (ImGui::Button("Save Mesh")) {
+				if (m_mesh) {
 					m_mesh->writeMesh();
 				}
 			}
-			if(ImGui::Button("Exit")){
+			if (ImGui::Button("Exit")) {
 				glfwSetWindowShouldClose(m_window, true);
 			}
 			m_fileDialog.Display();
-			if(m_fileDialog.HasSelected()) {
+			if (m_fileDialog.HasSelected()) {
 				m_retrieved = false;
 				m_normalized = false;
 				m_retrieval_text = "";
@@ -286,7 +290,7 @@ void Renderer::renderGUI(){
 				m_fileDialog.ClearSelected();
 			}
 		}
-    	if (ImGui::CollapsingHeader("Mesh")){
+		if (ImGui::CollapsingHeader("Mesh")) {
 			// Display some basic mesh info
 			ImGui::TextWrapped((m_mesh) ? m_mesh->getPath().string().c_str() : "Load a mesh!");
 			ImGui::Text("# of vertices: %d", (m_mesh) ? m_mesh->countVertices() : 0);
@@ -294,13 +298,13 @@ void Renderer::renderGUI(){
 			ImGui::Separator();
 
 			// Create a combo box to allow user to select different draw options
-			const char* items[] = {"Wireframe", "Point Cloud", "Shaded Mesh", "Shaded Mesh + Wireframe"};
+			const char* items[] = { "Wireframe", "Point Cloud", "Shaded Mesh", "Shaded Mesh + Wireframe" };
 			static int currentIdx = OptionsMap::Instance()->getOption(DRAW_MODE);
 			const char* preview = items[currentIdx];
 			if (ImGui::BeginCombo("## empty", preview, 0)) {
 				for (int n = 0; n < IM_ARRAYSIZE(items); n++) {
 					const bool isSelected = (currentIdx == n);
-					if (ImGui::Selectable(items[n], isSelected)){
+					if (ImGui::Selectable(items[n], isSelected)) {
 						currentIdx = n;
 						OptionsMap::Instance()->setOption(DRAW_MODE, n);
 					}
@@ -311,7 +315,7 @@ void Renderer::renderGUI(){
 			}
 
 			// Add button to reset the position of the camera
-			if(ImGui::Button("Reset View")){
+			if (ImGui::Button("Reset View")) {
 				m_mesh->resetTransformations();
 				m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 			}
@@ -407,7 +411,7 @@ void Renderer::renderGUI(){
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_ECCENTRICITY_3D)) : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? std::get<float>(m_mesh->getDescriptor(FEAT_COMPACTNESS_3D)) : 0);
 			if (ImGui::Button("Compute##Mesh")) {
-				if(m_mesh){
+				if (m_mesh) {
 					m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 				}
 			}
@@ -421,36 +425,22 @@ void Renderer::renderGUI(){
 			ImGui::Text("Eccentricity: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_ECCENTRICITY_3D)) : 0);
 			ImGui::Text("Compactness: %f", (m_mesh) ? std::get<float>(m_mesh->getConvexHull()->getDescriptor(FEAT_COMPACTNESS_3D)) : 0);
 			if (ImGui::Button("Compute##ConvexHull")) {
-				if(m_mesh){
+				if (m_mesh) {
 					m_mesh->getConvexHull()->computeFeatures();
 				}
 			}
 
 		}
-		ImGui::Separator();
-		// Add button for undo
-		if (ImGui::Button("Undo Last Operation")) {
-			if (m_mesh) {
-				m_mesh->undoLastOperation();
-			}
-		}
-
 
 		if (ImGui::CollapsingHeader("Shape Retrieval")) {
 
-			if (ImGui::Button("Choose Shape Database")) {
-				m_folderDialog.Open();
-			}
-			ImGui::TextWrapped(m_dbPath.c_str());
-
-			m_folderDialog.Display();
-			if (m_folderDialog.HasSelected()) {
-				m_dbPath = m_folderDialog.GetSelected();
-				m_folderDialog.ClearSelected();
-			}
-
 			if (ImGui::Button("Generate Screenshots")) {
-				takeScreenshots(m_dbPath);
+				if (m_dbPath.empty()) {
+					ImGui::OpenPopup("Error No Database");
+				}
+				else {
+					takeScreenshots(m_dbPath);
+				}
 			}
 
 			if (ImGui::Button("Normalize Shape")) {
@@ -495,7 +485,7 @@ void Renderer::renderGUI(){
 							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 							m_retrieval_text = "Searching for the most similar shapes...";
 							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
-						});
+							});
 					}
 				}
 			}
@@ -510,6 +500,65 @@ void Renderer::renderGUI(){
 					m_retrieval_text = "Search Complete!";
 				}
 			}
+		}
+
+		// Allow user to run DR on the feature vector
+		// Plot the results of the DR
+		if (ImGui::CollapsingHeader("Dimensionality Reduction")) {
+			
+			if (ImGui::Button("Run t-SNE")) {
+				if (m_dbPath.empty()) {
+					ImGui::OpenPopup("Error No Database");
+				} else {
+					if (m_origFeatureVectors.count() == 0 && m_classTypeToIndicesNames.empty()) {
+						FeatureVector::getFeatureVectorClassToIndicesName(m_dbPath, m_origFeatureVectors, m_classTypeToIndicesNames, m_origDimensionality, m_numDataPoints);
+					}
+					runTSE(m_origFeatureVectors, m_numDataPoints, m_origDimensionality, m_maxIterations, m_reducedFeatureVectors, m_tsneIterations);
+					m_iteration = m_tsneIterations.size();
+				}
+			}
+
+			if (ImGui::BeginPopup("Error No Database")) {
+				ImGui::Text("Load the shape database!");
+				ImGui::EndPopup();
+			}
+
+			ImGui::InputInt("Number of Iterations", &m_maxIterations);
+			ImGui::Checkbox("Visualise Iterations", &m_visualiseIterations);
+			if (m_visualiseIterations) {
+				ImGui::SliderInt("Iterations", &m_iteration, 1, m_tsneIterations.size());
+
+				if (!m_tsneIterations.empty()) {
+					if (m_iteration > m_tsneIterations.size()) {
+						m_iteration = m_tsneIterations.size();
+					}
+					const auto tsneIteration = m_tsneIterations[m_iteration - 1];
+					Eigen::MatrixXd reducedFeatureVector;
+					FeatureVector::formatReducedFeatureVector(tsneIteration, m_numDataPoints, reducedFeatureVector);
+					plotTSNE(reducedFeatureVector);
+				}
+			} else {
+				plotTSNE(m_reducedFeatureVectors);
+			}
+		}
+
+		ImGui::Separator();
+		// Add button for undo
+		if (ImGui::Button("Undo Last Operation")) {
+			if (m_mesh) {
+				m_mesh->undoLastOperation();
+			}
+		}
+
+		if (ImGui::Button("Choose Shape Database")) {
+			m_folderDialog.Open();
+		}
+		ImGui::TextWrapped(m_dbPath.string().c_str());
+
+		m_folderDialog.Display();
+		if (m_folderDialog.HasSelected()) {
+			m_dbPath = m_folderDialog.GetSelected();
+			m_folderDialog.ClearSelected();
 		}
 
 		ImGui::End();
@@ -677,7 +726,7 @@ void Renderer::takeScreenshots(std::filesystem::path dbPath) {
 			m_mesh->draw(projView, m_meshMaterialDiffuse, m_camera.getPosition());
 
 			// Make the BYTE array, factor of 3 because it's RBG.
-			BYTE *pixels = new BYTE[3 * m_wWidth * m_wHeight];
+			BYTE* pixels = new BYTE[3 * m_wWidth * m_wHeight];
 
 			glReadPixels(0, 0, m_wWidth, m_wHeight, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 
@@ -708,3 +757,107 @@ void Renderer::loadScreenshot(std::filesystem::path shapePath) {
 	}
 }
 
+void Renderer::runTSE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations) {
+
+	// Define some variables
+	int outDimensionality = 2;
+	double perplexity = 50; 
+	double theta = 0.05;
+	int rand_seed = -1;
+	iterations.clear();
+
+	std::vector<double> outData(numOfDataPoints * outDimensionality);
+	// Now fire up the SNE implementation
+	TSNE::customRun(&dbFeatureVector[0], numOfDataPoints, origDimensionality, &outData[0], outDimensionality, perplexity, theta, rand_seed, false, max_iter, 250, 250, iterations);
+	FeatureVector::formatReducedFeatureVector(outData, numOfDataPoints, reducedFeatureVectors);
+}
+
+
+void Renderer::plotTSNE(Eigen::MatrixXd reducedFeatureVectors) {
+
+	srand(0);
+	std::vector<std::tuple<std::string, std::vector<std::string>, std::vector<double>, std::vector<double>>> datasets;
+	for (auto& class_it : m_classTypeToIndicesNames) {
+		const auto classType = class_it.first;
+		const auto indicesNamePairs = class_it.second;
+		std::vector<double> xVals;
+		std::vector<double> yVals;
+		std::vector<std::string> meshNames;
+		for (auto& indexName_it : indicesNamePairs) {
+			xVals.push_back(reducedFeatureVectors.row(indexName_it.first).x());
+			yVals.push_back(reducedFeatureVectors.row(indexName_it.first).y());
+			meshNames.push_back(indexName_it.second);
+		}
+		datasets.push_back(std::make_tuple(classType, meshNames, xVals, yVals));
+	}
+
+	if (!datasets.empty()) {
+		ImGui::Begin("2D Feature Space");
+
+		if (ImGui::Button("Auto Fit")) {
+			ImPlot::SetNextAxesToFit();
+		}
+
+		if (ImPlot::BeginPlot("2D Feature Space", ImVec2(-1,-1))) {
+
+			ImPlot::SetupAxis(ImAxis_X1, NULL, ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels);
+			ImPlot::SetupAxis(ImAxis_Y1, NULL, ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels);
+			ImPlot::SetupAxisLimits(ImAxis_X1, 0, 0.1);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.1);
+			ImPlot::SetupLegend(ImPlotLocation_SouthEast, ImPlotLegendFlags_Outside);
+
+			int plotColor = 0;
+			for (auto& dataset : datasets) {
+				std::string classType = std::get<0>(dataset);
+				ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.5f);
+				ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle, 6, ImPlot::GetColormapColor(plotColor), IMPLOT_AUTO, ImPlot::GetColormapColor(plotColor));
+				const auto xVals = std::get<2>(dataset);
+				const auto yVals = std::get<3>(dataset);
+				ImPlot::PlotScatter(classType.c_str(), &xVals[0], &yVals[0], xVals.size());
+				plotColor++;
+			}
+
+			if (ImPlot::IsPlotHovered()) {
+				// get ImGui window DrawList
+				ImPlotPoint mouse = ImPlot::GetPlotMousePos();
+				ImVec2 plotSize = ImPlot::GetPlotSize();
+				ImPlotRect plotLimits = ImPlot::GetPlotLimits();
+				auto xRange = plotLimits.X.Size();
+				auto yRange = plotLimits.Y.Size();
+
+				auto xPerPixel = xRange / plotSize.x;
+				auto yPerPixel = yRange / plotSize.y;
+
+				// find mouse location index
+				for (const auto& dataset : datasets) {
+					const auto className = std::get<0>(dataset);
+					const auto meshNames = std::get<1>(dataset);
+					const auto xVals = std::get<2>(dataset);
+					const auto yVals = std::get<3>(dataset);
+
+					bool hoveringOnPoint = false;
+					for (int idx = 0; idx < xVals.size(); idx++) {
+						if (abs(xVals[idx] - mouse.x) < (xPerPixel * 6)) {
+							if (abs(yVals[idx] - mouse.y) < (yPerPixel * 6)) {
+								hoveringOnPoint = true;
+								ImGui::BeginTooltip();
+								ImGui::Text("Mesh Name: %s", meshNames[idx].c_str());
+								ImGui::Text("Class Name: %s", className.c_str());
+								ImGui::EndTooltip();
+								break;
+							}
+						}
+					}
+
+					if (hoveringOnPoint) {
+						break;
+					}
+				}
+			}
+
+			ImPlot::EndPlot();
+		}
+
+		ImGui::End();
+	}
+}

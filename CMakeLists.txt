@@ -27,10 +27,12 @@ include_directories(
     external/glad/include
     external/imgui
     external/imgui/backends
+    external/implot
     external/libigl/include
     external/eigen
     external/quickhull
     external/quickhull/Structs
+    external/bhtsne
     )
 
 if( MSVC )
@@ -46,7 +48,10 @@ set( SRC
      external/imgui/imgui.cpp
      external/imgui/backends/imgui_impl_glfw.cpp
      external/imgui/backends/imgui_impl_opengl3.cpp
+     external/implot/implot.cpp
+     external/implot/implot_items.cpp
      external/quickhull/QuickHull.cpp
+     external/bhtsne/sptree.cpp
      src/renderer.cpp
      src/mesh.cpp
      src/mesh_base.cpp
@@ -62,6 +67,7 @@ set( SRC
      src/mesh_map.cpp
      src/unit_cube.cpp
      src/shape_retriever.cpp
+     src/tsne_runner.cpp
 )
 
 if (UNIX) 

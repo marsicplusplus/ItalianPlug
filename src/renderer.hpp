@@ -14,6 +14,7 @@
 #include <future>
 #include <thread>
 
+
 class Renderer {
 
 
@@ -28,6 +29,8 @@ class Renderer {
 		void setupImGuiStyle();
 		void takeScreenshots(std::filesystem::path dbPath);
 		void loadScreenshot(std::filesystem::path shapePath);
+		void runTSE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations);
+		void plotTSNE(Eigen::MatrixXd reducedFeatureVectors);
 
 		static void windowSizeCallback(GLFWwindow* window, int width, int height);
 		static void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -51,6 +54,7 @@ private:
 	glm::vec3 m_convexHullMaterialDiffuse;
 	bool m_renderMesh;
 	bool m_renderConvexHull;
+	bool m_visualiseIterations = false;
 	bool m_renderUnitCube;
 	bool m_gui;
 	bool m_takeScrenshot;
@@ -61,6 +65,17 @@ private:
 	bool m_retrieved = false;
 	std::string m_retrieval_text;
 	int m_numShapes = 0;
+
+	Eigen::VectorXd m_origFeatureVectors;
+	Eigen::MatrixXd m_reducedFeatureVectors;
+	ClassToMeshIndexNameMap m_classTypeToIndicesNames;
+	std::vector<std::vector<double>> m_tsneIterations;
+	int m_origDimensionality = 0;
+	int m_numDataPoints = 0;
+	bool m_plotIterations = false;
+	int m_iteration = 1;
+	int m_maxIterations = 1000;
+
 };
 
 #endif
