@@ -22,3 +22,6 @@
 [submodule "external/bhtsne"]
 	path = external/bhtsne
 	url = https://github.com/lvdmaaten/bhtsne/
+[submodule "external/implot"]
+	path = external/implot
+	url = https://github.com/epezent/implot

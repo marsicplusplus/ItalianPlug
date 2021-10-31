@@ -9,8 +9,20 @@ if len(sys.argv) < 3:
     exit()
 
 classes=['Airplane','Ant','Armadillo','Bearing','Bird','Bust','Chair','Cup','Fish','FourLeg','Glasses','Hand','Human','Mech','Octopus','Plier','Table','Teddy','Vase']
+features=["Path","3D_Area","3D_MVolume","3D_BBVolume","3D_Diameter","3D_Compactness","3D_Eccentricity","3D_A3","3D_D1","3D_D2","3D_D3","3D_D4"]
 
 feature = ""
+featureIdx = 0
+bins = np.arange(0.0,1.0,0.1)
+
+for i in range(0, len(features)):
+    if features[i] == sys.argv[2]:
+        featureIdx = i
+        feature = features[i]
+        break
+if i == -1:
+    print("Invalid feature name, use one of the following: \n{}".format(features))
+    exit()
 
 with open(sys.argv[1]) as csvfile:
     reader = csv.reader(csvfile, delimiter=',')
@@ -24,21 +36,16 @@ with open(sys.argv[1]) as csvfile:
         csvfile.seek(0)
         for row in reader:
             if not titles:
-                feature = row[int(sys.argv[2])]
                 titles = True
             if(className in row[0]):
-                hist = {'n_bins':0,'bin_width':0,'bins':[], 'values':[]}
-                feat = row[int(sys.argv[2])].split(":")
-                hist['n_bins'] = int(feat[0])
-                hist['bin_width'] = float(feat[1])
-                for i in range(2, hist['n_bins']+2):
-                    hist['bins'].append(float(feat[i]))
-                for j in range(i+1, i+hist['n_bins']+1):
-                    hist['values'].append(float(feat[j]))
+                values = []
+                feat = row[featureIdx].split(":")
+                for j in range(0, 10):
+                    values.append(float(feat[j]))
                 plt.title("Class: {}".format(className),fontdict={'fontsize': 12, 'fontweight': 'medium'})
                 # plt.ylim(0, 0.5)
                 plt.xlim(0,1.0)
-                plt.plot(hist['bins'], hist['values'])
+                plt.plot(bins, values)
 
 fig.suptitle(feature)
 fig.subplots_adjust(

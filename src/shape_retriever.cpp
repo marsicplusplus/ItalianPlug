@@ -1,9 +1,110 @@
 #include "shape_retriever.hpp"
 #include "utils.hpp"
 #include "earth_movers_distance.hpp"
+#include "annoylib.h"
+#include "kissrandom.h"
 #include "rapidcsv.h"
 
 namespace Retriever {
+	namespace {
+
+	}
+	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes) {
+		std::filesystem::path featsAvgPath = dbPath;
+		featsAvgPath /= "feats_avg.csv";
+		if (!std::filesystem::exists(featsAvgPath)) {
+			std::cout << "Could not find " << featsAvgPath << ".\nRun FeaturesExtractor on the mesh DB to generate the average feature file first" << std::endl;
+			return;
+		}
+
+		auto idx = Annoy::AnnoyIndex<int, float, Annoy::Angular, Annoy::Kiss32Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy>(DESCRIPTORS_NUM);
+		float *v = new float[DESCRIPTORS_NUM];
+		rapidcsv::Document feats((dbPath/"feats.csv").string(), rapidcsv::LabelParams(0, -1));
+		int i = 0;
+		for (i = 0; i < feats.GetRowCount(); i++) {
+			int j = 0;
+			v[j++] = (feats.GetCell<float>("3D_Area", i));
+			v[j++] = (feats.GetCell<float>("3D_MVolume", i));
+			v[j++] = (feats.GetCell<float>("3D_BBVolume", i));
+			v[j++] = (feats.GetCell<float>("3D_Diameter", i));
+			v[j++] = (feats.GetCell<float>("3D_Compactness", i));
+			v[j++] = (feats.GetCell<float>("3D_Eccentricity", i));
+			const auto a3Histogram = Histogram::parseHistogram(feats.GetCell<std::string>("3D_A3", i));
+			for(auto val : a3Histogram)
+				v[j++] = val;
+			const auto d1Histogram = Histogram::parseHistogram(feats.GetCell<std::string>("3D_D1", i));
+			for(auto val : d1Histogram)
+				v[j++] = val;
+			const auto d2Histogram = Histogram::parseHistogram(feats.GetCell<std::string>("3D_D2", i));
+			for(auto val : d2Histogram)
+				v[j++] = val;
+			const auto d3Histogram = Histogram::parseHistogram(feats.GetCell<std::string>("3D_D3", i));
+			for(auto val : d3Histogram)
+				v[j++] = val;
+			const auto d4Histogram = Histogram::parseHistogram(feats.GetCell<std::string>("3D_D4", i));
+			for(auto val : d4Histogram)
+				v[j++] = val;
+			idx.add_item(i, v);
+		}
+
+		DescriptorMap descriptorMap = mesh->getDescriptorMap();
+		descriptorMap[FEAT_DIAMETER_3D] = mesh->getConvexHull()->getDescriptor(FEAT_DIAMETER_3D);
+
+		rapidcsv::Document feats_avg(featsAvgPath.string(), rapidcsv::LabelParams(0, -1));
+
+		const auto avgArea = feats_avg.GetColumn<float>("3D_Area_AVG")[0];
+		const auto stdArea = feats_avg.GetColumn<float>("3D_Area_STD")[0];
+		const auto avgMVolume = feats_avg.GetColumn<float>("3D_MVolume_AVG")[0];
+		const auto stdMVolume = feats_avg.GetColumn<float>("3D_MVolume_STD")[0];
+		const auto avgBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_AVG")[0];
+		const auto stdBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_STD")[0];
+		const auto avgDiameter = feats_avg.GetColumn<float>("3D_Diameter_AVG")[0];
+		const auto stdDiameter = feats_avg.GetColumn<float>("3D_Diameter_STD")[0];
+		const auto avgCompactness = feats_avg.GetColumn<float>("3D_Compactness_AVG")[0];
+		const auto stdCompactness = feats_avg.GetColumn<float>("3D_Compactness_STD")[0];
+		const auto avgEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_AVG")[0];
+		const auto stdEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_STD")[0];
+		int j = 0;
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_AREA_3D]) - avgArea) / stdArea);
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_MVOLUME_3D]) - avgMVolume) / stdMVolume);
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_BBVOLUME_3D]) - avgBBVolume) / stdBBVolume);
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_DIAMETER_3D]) - avgDiameter) / stdDiameter);
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_COMPACTNESS_3D]) - avgCompactness) / stdCompactness);
+		v[j++] = ((std::get<float>(descriptorMap[FEAT_ECCENTRICITY_3D]) - avgEccentricity) / stdEccentricity);
+
+		const auto a3Histogram = std::get<Histogram>(descriptorMap[FEAT_A3_3D]).getFrequency();
+		for(auto val : a3Histogram)
+			v[j++] = val;
+		const auto d1Histogram = std::get<Histogram>(descriptorMap[FEAT_D1_3D]).getFrequency();
+		for(auto val : d1Histogram)
+			v[j++] = (val);
+		const auto d2Histogram = std::get<Histogram>(descriptorMap[FEAT_D2_3D]).getFrequency();
+		for(auto val : d2Histogram)
+			v[j++] = (val);
+		const auto d3Histogram = std::get<Histogram>(descriptorMap[FEAT_D3_3D]).getFrequency();
+		for(auto val : d3Histogram)
+			v[j++] = (val);
+		const auto d4Histogram = std::get<Histogram>(descriptorMap[FEAT_D4_3D]).getFrequency();
+		for(auto val : d4Histogram)
+			v[j++] = (val);
+		
+		idx.add_item(i, v);
+		idx.build(DESCRIPTORS_NUM * 2);
+		std::vector<int> result;
+		result.reserve(shapes);
+		std::vector<float> distances;
+		distances.reserve(shapes);
+		// shapes + 2 to ignore the newly added one
+		idx.get_nns_by_item(i, shapes + 2, -1, &result, &distances);
+		idx.unload();
+		std::vector<std::pair<std::string, float>> similarShapes;
+		for(i = 2; i < result.size(); i++){
+			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", result[i]), distances[i]));
+		}
+		mesh->setSimilarShapes(similarShapes);
+		delete[] v;
+	}
+
 	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath) {
 
 		std::vector<std::pair<std::string, float>> similarShapes;
@@ -97,7 +198,7 @@ namespace Retriever {
 				return a.second < b.second;
 			}
 		);
-
+		similarShapes.erase(similarShapes.begin());
 		mesh->setSimilarShapes(similarShapes);
 	}
 }

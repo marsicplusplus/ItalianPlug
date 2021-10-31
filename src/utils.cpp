@@ -230,7 +230,7 @@ namespace Stats {
 						mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 						try{
 							const std::lock_guard<std::mutex> lock(fileMutex);
-							names.push_back(std::filesystem::absolute(p.path()).string());
+							names.push_back(p.path().string());
 							DescriptorMap dm = mesh.getDescriptorMap();
 							dm[FEAT_DIAMETER_3D] = mesh.getConvexHull()->getDescriptor(FEAT_DIAMETER_3D);
 							features.push_back(dm);

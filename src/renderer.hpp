@@ -19,7 +19,7 @@ class Renderer {
 
 
 	public:
-		Renderer(int w, int h, std::string title) : m_wWidth(w), m_wHeight(h), m_title(title), m_mesh(nullptr), m_camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0), m_gui(true) {}
+		Renderer(int w, int h, std::string title) : m_wWidth(w), m_wHeight(h), m_title(title), m_mesh(nullptr), m_camera({0.0f, 0.0f, 1.5f}, {0.0f, 1.0f, 0.0f}, 45.0f, -90, 0, 0), m_gui(true), m_featuresPresent(false), m_annPresent(false) {}
 		~Renderer();
 		bool initSystems();
 		void start();
@@ -58,6 +58,8 @@ private:
 	bool m_renderUnitCube;
 	bool m_gui;
 	bool m_takeScrenshot;
+	bool m_featuresPresent;
+	bool m_annPresent;
 	std::unordered_map<std::string, std::tuple<GLuint, int, int>> meshToTexture;
 	std::future<MeshPtr> m_normalizing_future;
 	bool m_normalized = false;
@@ -76,6 +78,17 @@ private:
 	int m_iteration = 1;
 	int m_maxIterations = 1000;
 
+	inline static void HelpMarker(const char* desc) {
+		ImGui::TextDisabled("(?)");
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+			ImGui::TextUnformatted(desc);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
+	}
 };
 
 #endif

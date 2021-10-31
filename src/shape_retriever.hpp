@@ -7,6 +7,7 @@ typedef std::shared_ptr<Mesh> MeshPtr;
 
 namespace Retriever {
 	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath);
+	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes);
 }
 
 #endif

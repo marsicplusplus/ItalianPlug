@@ -434,27 +434,29 @@ void Renderer::renderGUI(){
 
 		if (ImGui::CollapsingHeader("Shape Retrieval")) {
 
-			if (ImGui::Button("Generate Screenshots")) {
-				if (m_dbPath.empty()) {
-					ImGui::OpenPopup("Error No Database");
-				}
-				else {
-					takeScreenshots(m_dbPath);
-				}
-			}
+			//if (ImGui::Button("Generate Screenshots")) {
+			//	if (m_dbPath.empty()) {
+			//		ImGui::OpenPopup("Error No Database");
+			//	}
+			//	else {
+			//		takeScreenshots(m_dbPath);
+			//	}
+			//}
 
+			ImGui::Separator();
 			if (ImGui::Button("Normalize Shape")) {
 				if (m_mesh) {
 					m_normalizing_future = std::async(std::launch::async, [&] {
-						Mesh mesh_copy = *m_mesh;
-						mesh_copy.unprepare();
-						mesh_copy.normalize(3000);
-						return std::make_shared<Mesh>(mesh_copy);
+							Mesh mesh_copy = *m_mesh;
+							mesh_copy.unprepare();
+							mesh_copy.normalize(3000);
+							return std::make_shared<Mesh>(mesh_copy);
 						}
 					);
 				}
 			}
-
+			ImGui::SameLine();
+			HelpMarker("Normalize the shape by getting it to an average of 3000 vertices and by scaling and orientating the mesh");
 			if (m_normalizing_future.valid()) {
 				auto status = m_normalizing_future.wait_for(std::chrono::seconds(0));
 				if (status == std::future_status::timeout) {
@@ -473,31 +475,45 @@ void Renderer::renderGUI(){
 					ImGui::Text("Normalization Complete!");
 				}
 			}
+			if(m_featuresPresent){
+				ImGui::InputInt("# of Shapes", &m_numShapes);
+				if (ImGui::Button("Find Similiar ANN")) {
+					if (m_mesh) {
+						m_retrieval_future = std::async(std::launch::async, [&] {
+								m_retrieval_text = "Computing descriptors for the query shape...";
+								m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
+								m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
+								m_retrieval_text = "Searching for the most similar shapes...";
+								Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
+								});
+					}
+				}
+				ImGui::SameLine();
+				HelpMarker("Start searching for shapes using ANN.\nfeats.csv and feats_avg.csv must be present in the DB root");
 
-
-			ImGui::InputInt("# of Shapes to retrieve", &m_numShapes);
-			if (ImGui::Button("Find Similiar Shapes")) {
-				if (m_mesh) {
-					if (!m_retrieved) {
+				if (ImGui::Button("Find Similiar Shapes")) {
+					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
 							m_retrieval_text = "Computing descriptors for the query shape...";
 							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 							m_retrieval_text = "Searching for the most similar shapes...";
 							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
-							});
+						});
 					}
 				}
-			}
+				ImGui::SameLine();
+				HelpMarker("Start searching for shapes.\nfeats.csv and feats_avg.csv must be present in the DB root");
 
-			ImGui::Text(m_retrieval_text.c_str());
+				ImGui::TextWrapped(m_retrieval_text.c_str());
 
-			if (m_retrieval_future.valid()) {
-				auto status = m_retrieval_future.wait_for(std::chrono::seconds(0));
-				if (status == std::future_status::ready) {
-					m_retrieval_future = std::future<void>();
-					m_retrieved = true;
-					m_retrieval_text = "Search Complete!";
+				if (m_retrieval_future.valid()) {
+					auto status = m_retrieval_future.wait_for(std::chrono::seconds(0));
+					if (status == std::future_status::ready) {
+						m_retrieval_future = std::future<void>();
+						m_retrieved = true;
+						m_retrieval_text = "Search Complete!";
+					}
 				}
 			}
 		}
@@ -553,12 +569,15 @@ void Renderer::renderGUI(){
 		if (ImGui::Button("Choose Shape Database")) {
 			m_folderDialog.Open();
 		}
+		ImGui::SameLine();
+		HelpMarker("Choose the root folder of your database");
 		ImGui::TextWrapped(m_dbPath.string().c_str());
 
 		m_folderDialog.Display();
 		if (m_folderDialog.HasSelected()) {
 			m_dbPath = m_folderDialog.GetSelected();
 			m_folderDialog.ClearSelected();
+			m_featuresPresent = (std::filesystem::exists(m_dbPath / "feats.csv") && std::filesystem::exists(m_dbPath / "feats_avg.csv")) ? true : false;
 		}
 
 		ImGui::End();
@@ -575,13 +594,13 @@ void Renderer::renderGUI(){
 			const auto similarShapes = m_mesh->getSimilarShapes();
 			for (int i = 0; i < m_numShapes && i < similarShapes.size(); i++) {
 
-				loadScreenshot(similarShapes.at(i).first);
 				auto filepath = std::filesystem::path(similarShapes.at(i).first);
+				loadScreenshot(m_dbPath / filepath);
 				ImGui::Text("Mesh Name: %s", filepath.filename().string().c_str());
 				ImGui::Text("Distance: %f", similarShapes.at(i).second);
 
-				if (meshToTexture.find(similarShapes.at(i).first) != meshToTexture.end()) {
-					const auto meshTextureInfo = meshToTexture.at(similarShapes.at(i).first);
+				if (meshToTexture.find((m_dbPath / filepath).string()) != meshToTexture.end()) {
+					const auto meshTextureInfo = meshToTexture.at((m_dbPath / filepath).string());
 					const auto meshTexture = std::get<0>(meshTextureInfo);
 					auto textureWidth = std::get<1>(meshTextureInfo);
 					auto textureHeight = std::get<2>(meshTextureInfo);
@@ -591,7 +610,7 @@ void Renderer::renderGUI(){
 						m_retrieved = false;
 						m_normalized = false;
 						m_retrieval_text = "";
-						m_mesh = MeshMap::Instance()->getMesh(similarShapes.at(i).first);
+						m_mesh = MeshMap::Instance()->getMesh((m_dbPath / filepath).string());
 						m_mesh->prepare();
 						m_camera.setPosition(glm::vec3(0.0f, 0.0f, 1.5f));
 					}
@@ -651,8 +670,7 @@ void Renderer::scrollCallback(GLFWwindow* window, double xoffset, double yoffset
 	InputHandler::Instance()->scrollState(yoffset);
 }
 
-void Renderer::setupImGuiStyle()
-{
+void Renderer::setupImGuiStyle() {
 	ImGuiIO& imGuiIO = ImGui::GetIO();
 	ImGui::GetStyle().FrameRounding = 4.0f;
 	ImGui::GetStyle().GrabRounding = 4.0f;
