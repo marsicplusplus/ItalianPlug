@@ -739,6 +739,22 @@ void Renderer::setupImGuiStyle() {
 	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
 	colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
 	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+
+	static ImVector<ImVec4> plotColormap;
+	plotColormap.push_back(ImPlot::GetColormapColor(0, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(1, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(2, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(3, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(4, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(5, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(6, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(7, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(8, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(9, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(10, ImPlotColormap_Paired));
+	plotColormap.push_back(ImPlot::GetColormapColor(11, ImPlotColormap_Paired));
+	ImPlot::AddColormap("Custom", plotColormap.Data, plotColormap.Size, false);
+	ImPlot::PushColormap("Custom");
 }
 
 void Renderer::takeScreenshots(std::filesystem::path dbPath) {
@@ -844,12 +860,12 @@ void Renderer::plotTSNE(Eigen::MatrixXd reducedFeatureVectors) {
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.1);
 			ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside | ImPlotLegendFlags_Horizontal);
 			std::set<std::string> classes;
-			int plotColor = 0;
+			float plotColor = 0.0f;
 			for (auto& dataset : datasets) {
 				std::string classType = std::get<0>(dataset);
 				classes.insert(classType);
-				ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.7f);
-				ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6, ImPlot::GetColormapColor(plotColor), IMPLOT_AUTO, ImPlot::GetColormapColor(plotColor));
+				ImPlot::PushStyleVar(ImPlotStyleVar_FillAlpha, 0.85f);
+				ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond, 6, ImPlot::SampleColormap(plotColor / (datasets.size() - 1)), IMPLOT_AUTO, ImPlot::SampleColormap(plotColor / (datasets.size() - 1)));
 				const auto xVals = std::get<2>(dataset);
 				const auto yVals = std::get<3>(dataset);
 				ImPlot::PlotScatter(classType.c_str(), &xVals[0], &yVals[0], xVals.size());
