@@ -55,6 +55,7 @@ private:
 	bool m_renderMesh;
 	bool m_renderConvexHull;
 	bool m_visualiseIterations = false;
+	bool m_animateIterations = false;
 	bool m_renderUnitCube;
 	bool m_gui;
 	bool m_takeScrenshot;

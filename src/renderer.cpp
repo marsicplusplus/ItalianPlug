@@ -567,18 +567,27 @@ void Renderer::renderGUI(){
 
 			ImGui::InputInt("Number of Iterations", &m_maxIterations);
 			ImGui::Checkbox("Visualise Iterations", &m_visualiseIterations);
+			ImGui::Checkbox("Animate Iterations", &m_animateIterations);
 			ImGui::Checkbox("Display Plot", &m_plotTSE);
 			if (m_visualiseIterations) {
 				ImGui::SliderInt("Iterations", &m_iteration, 1, m_tsneIterations.size());
 
+
 				if (!m_tsneIterations.empty()) {
 					if (m_iteration > m_tsneIterations.size()) {
-						m_iteration = m_tsneIterations.size();
+						if (m_animateIterations) {
+							m_iteration = 1;
+						}
+						else {
+							m_iteration = m_tsneIterations.size();
+						}
 					}
+
 					const auto tsneIteration = m_tsneIterations[m_iteration - 1];
 					Eigen::MatrixXd reducedFeatureVector;
 					FeatureVector::formatReducedFeatureVector(tsneIteration, m_numDataPoints, reducedFeatureVector);
 					plotTSNE(reducedFeatureVector);
+					if (m_animateIterations) m_iteration++;
 				}
 			} else {
 				plotTSNE(m_reducedFeatureVectors);
@@ -833,7 +842,7 @@ void Renderer::plotTSNE(Eigen::MatrixXd reducedFeatureVectors) {
 			ImPlot::SetupAxis(ImAxis_Y1, NULL, ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickMarks | ImPlotAxisFlags_NoTickLabels);
 			ImPlot::SetupAxisLimits(ImAxis_X1, 0, 0.1);
 			ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.1);
-			ImPlot::SetupLegend(ImPlotLocation_SouthEast, ImPlotLegendFlags_Outside);
+			ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside | ImPlotLegendFlags_Horizontal);
 			std::set<std::string> classes;
 			int plotColor = 0;
 			for (auto& dataset : datasets) {
