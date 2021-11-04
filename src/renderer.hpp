@@ -29,7 +29,7 @@ class Renderer {
 		void setupImGuiStyle();
 		void takeScreenshots(std::filesystem::path dbPath);
 		void loadScreenshot(std::filesystem::path shapePath);
-		void runTSE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations);
+		void runTSNE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations);
 		void plotTSNE(Eigen::MatrixXd reducedFeatureVectors);
 
 		static void windowSizeCallback(GLFWwindow* window, int width, int height);

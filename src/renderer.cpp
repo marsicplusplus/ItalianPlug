@@ -554,7 +554,7 @@ void Renderer::renderGUI(){
 					if (m_origFeatureVectors.count() == 0 && m_classTypeToIndicesNames.empty()) {
 						FeatureVector::getFeatureVectorClassToIndicesName(m_dbPath, m_origFeatureVectors, m_classTypeToIndicesNames, m_origDimensionality, m_numDataPoints);
 					}
-					runTSE(m_origFeatureVectors, m_numDataPoints, m_origDimensionality, m_maxIterations, m_reducedFeatureVectors, m_tsneIterations);
+					runTSNE(m_origFeatureVectors, m_numDataPoints, m_origDimensionality, m_maxIterations, m_reducedFeatureVectors, m_tsneIterations);
 					m_iteration = m_tsneIterations.size();
 					m_plotTSE = true;
 				}
@@ -806,12 +806,12 @@ void Renderer::loadScreenshot(std::filesystem::path shapePath) {
 	}
 }
 
-void Renderer::runTSE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations) {
+void Renderer::runTSNE(Eigen::VectorXd dbFeatureVector, int numOfDataPoints, int origDimensionality, int max_iter, Eigen::MatrixXd& reducedFeatureVectors, std::vector<std::vector<double>>& iterations) {
 
 	// Define some variables
 	int outDimensionality = 2;
 	double perplexity = 50; 
-	double theta = 0.05;
+	double theta = 0.5;
 	int rand_seed = -1;
 	iterations.clear();
 

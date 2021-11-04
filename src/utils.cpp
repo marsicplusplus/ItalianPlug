@@ -357,6 +357,7 @@ namespace FeatureVector {
 
 			// Compute the single-value distance (euclidean)
 			tempFeatureVector.push_back(feats.GetCell<float>("3D_Area", i));
+			tempFeatureVector.push_back(feats.GetCell<float>("3D_MVolume", i));
 			tempFeatureVector.push_back(feats.GetCell<float>("3D_BBVolume", i));
 			tempFeatureVector.push_back(feats.GetCell<float>("3D_Diameter", i));
 			tempFeatureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
