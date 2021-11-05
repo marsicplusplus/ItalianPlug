@@ -108,6 +108,11 @@ target_link_libraries( Retrieval ${LIBS})
 target_compile_options( Retrieval PRIVATE ${CXX_OPTIONS})
 set_property(TARGET Retrieval PROPERTY CXX_STANDARD 17)
 
+add_executable( Evaluation WIN32 ${SRC} src/evaluation.cpp)
+target_link_libraries( Evaluation ${LIBS})
+target_compile_options( Evaluation PRIVATE ${CXX_OPTIONS})
+set_property(TARGET Evaluation PROPERTY CXX_STANDARD 17)
+
 if( UNIX )
     add_custom_command(
         TARGET ItalianPlug
