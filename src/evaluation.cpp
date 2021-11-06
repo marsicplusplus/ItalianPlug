@@ -43,7 +43,7 @@ int main(int argc, char* args[]){
 	evalFile.open("eval.csv");
 	evalFile << "Class,MAP,MAR,Accuracy,F1\n";
 
-	std::cout << "class,MAP,accuracy,recall,F1" << std::endl;
+	std::cout << "class,MAP,MAR,Accuracy,F1" << std::endl;
 	for (auto& dir : std::filesystem::recursive_directory_iterator(dbPath)) {
 		if(std::filesystem::is_directory(dir)){
 			float classMAP = 0.0f;
