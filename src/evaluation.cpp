@@ -4,18 +4,18 @@
 #include "shape_retriever.hpp"
 
 int main(int argc, char* args[]) {
-	//if(argc < 2) {
-	//	printf("USAGE:\n %s db-path\n", args[0]);
-	//	return 1;
-	//}
-	//std::filesystem::path dbPath = args[1];
+	if(argc < 2) {
+		printf("USAGE:\n %s db-path\n", args[0]);
+		return 1;
+	}
+	std::filesystem::path dbPath = args[1];
 
-	auto t1 = std::chrono::high_resolution_clock::now();
-	std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
+	//std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
 
 	const int meshesPerClass = 20;
 	const int totalMeshes = 380;
-	const int kMax = 20;
+	const int kMax = meshesPerClass;
+	const bool useKNN = false;
 
 	const auto extractClass = [](std::filesystem::path filePath) {
 		size_t found;
@@ -42,8 +42,11 @@ int main(int argc, char* args[]) {
 
 	std::vector<std::pair<float, float>> rocPair(kMax);
 
+	std::string evalFilename = "eval";
+	evalFilename += useKNN ? "_ANN_" : "_CUST_";
+	evalFilename += std::to_string(kMax) + ".csv";
 	std::ofstream evalFile;
-	evalFile.open("eval.csv");
+	evalFile.open(evalFilename);
 	evalFile << "Class,MAP,MAR,Accuracy,F1,Specificity\n";
 
 	std::cout << "class,MAP,MAR,Accuracy,F1,Specificity" << std::endl;
@@ -61,7 +64,11 @@ int main(int argc, char* args[]) {
 				if(isMesh(p)){
 					int TP = 0, FP = 0, TN = 0, FN = 0;
 					std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(p.path().string());
-					Retriever::retrieveSimiliarShapes(mesh, dbPath);
+					if (useKNN) {
+						Retriever::retrieveSimiliarShapesKNN(mesh, dbPath, kMax);
+					} else {
+						Retriever::retrieveSimiliarShapes(mesh, dbPath);
+					}
 					const auto similarShapes = mesh->getSimilarShapes();
 
 					if (!similarShapes.empty()) {
@@ -70,7 +77,7 @@ int main(int argc, char* args[]) {
 						float recall = 0.0f; 	// TP / c
 						float specificity = 0.0f;
 						/* MAP, MAR, Recall, Specificity*/
-						for(auto i = 0; i < similarShapes.size(); ++i){
+						for(auto i = 0; i < kMax; ++i){
 							if(extractClass(similarShapes[i].first) == meshClass) ++TP;
 							else ++FP;
 							precision = (TP / (float)(i + 1));
@@ -116,9 +123,6 @@ int main(int argc, char* args[]) {
 		}
 	}
 
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-
 	dbAccuracy /= (float)totalMeshes;
 	dbMAP /= (float)totalMeshes;
 	dbMAR /= (float)totalMeshes;
@@ -130,8 +134,11 @@ int main(int argc, char* args[]) {
 	evalFile << "Whole DB" << "," << dbMAP << "," << dbMAR << "," << dbAccuracy << "," << dbF1 << ',' << dbSpecificity << std::endl;
 	evalFile.close();
 
+	std::string rocFilename = "roc";
+	rocFilename += useKNN ? "_ANN_" : "_CUST_";
+	rocFilename += std::to_string(kMax) + ".csv";
 	std::ofstream rocFile;
-	rocFile.open("roc.csv");
+	rocFile.open(rocFilename);
 	rocFile << "Specificity,Recall\n";
 
 	for (auto& pair : rocPair) {
