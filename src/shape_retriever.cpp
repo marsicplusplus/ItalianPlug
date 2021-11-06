@@ -94,7 +94,6 @@ namespace Retriever {
 		}
 
 		if (!meshInDB) {
-			std::cout << "Computing features of query mesh..." << std::endl;
 			mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 			mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 			descriptorMap = mesh->getDescriptorMap();
@@ -137,7 +136,7 @@ namespace Retriever {
 			v[j++] = (val);
 		for(auto val : qd4Histogram)
 			v[j++] = (val);
-		
+
 		idx.add_item(i, v);
 		idx.build(DESCRIPTORS_NUM * 2);
 		std::vector<int> result;
@@ -214,10 +213,9 @@ namespace Retriever {
 					break;
 				}
 			}
-		}					  
-			
+		}
+
 		if (!meshInDB) {
-			std::cout << "Computing features of query mesh..." << std::endl;
 			mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 			mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 			descriptorMap = mesh->getDescriptorMap();
@@ -249,7 +247,6 @@ namespace Retriever {
 			featureVector.push_back((std::get<float>(descriptorMap[FEAT_ECCENTRICITY_3D]) - avgEccentricity) / stdEccentricity);
 		}
 
-		std::cout << "Computing distances... " << std::endl;
 		for (int i = 0; i < feats.GetRowCount(); i++) {
 
 			// Compute the single-value distance (euclidean)
