@@ -11,8 +11,6 @@ int main(int argc, char* args[]) {
 
 	std::filesystem::path dbPath = args[1];
 
-	std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
-
 	const int meshesPerClass = 20;
 	const int totalMeshes = 380;
 	const int kMax = 20;
