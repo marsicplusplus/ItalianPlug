@@ -8,13 +8,14 @@ int main(int argc, char* args[]) {
 		printf("USAGE:\n %s db-path [ANN=true|false]\n", args[0]);
 		return 1;
 	}
+
 	std::filesystem::path dbPath = args[1];
 
-	//std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
+	std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
 
 	const int meshesPerClass = 20;
 	const int totalMeshes = 380;
-	const int kMax = 379;
+	const int kMax = 20;
 	const bool useKNN = (argc > 2 && strncmp(args[2], "ANN=true", strlen("ANN=true")));
 
 	const auto extractClass = [](std::filesystem::path filePath) {
@@ -51,22 +52,24 @@ int main(int argc, char* args[]) {
 
 	std::cout << "class,MAP,MAR,Accuracy,F1,Specificity" << std::endl;
 	for (auto& dir : std::filesystem::recursive_directory_iterator(dbPath)) {
-		if(std::filesystem::is_directory(dir)){
+		if (std::filesystem::is_directory(dir)) {
 			float classMAP = 0.0f;
 			float classAccuracy = 0.0f;
 			float classMAR = 0.0f;
 			float classF1 = 0.0f;
 			float classSpecificity = 0.0f;
-			float MAR = 0.0f;
-			float MAP = 0.0f;
-			
+
+
 			for (auto& p : std::filesystem::recursive_directory_iterator(dir)) {
-				if(isMesh(p)){
+				if (isMesh(p)) {
 					int TP = 0, FP = 0, TN = 0, FN = 0;
+					float shapeMAP = 0.0f;
+					float shapeMAR = 0.0f;
 					std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(p.path().string());
 					if (useKNN) {
 						Retriever::retrieveSimiliarShapesKNN(mesh, dbPath, kMax);
-					} else {
+					}
+					else {
 						Retriever::retrieveSimiliarShapes(mesh, dbPath);
 					}
 					const auto similarShapes = mesh->getSimilarShapes();
@@ -77,31 +80,31 @@ int main(int argc, char* args[]) {
 						float recall = 0.0f; 	// TP / c
 						float specificity = 0.0f;
 						/* MAP, MAR, Recall, Specificity*/
-						for(auto i = 0; i < kMax; ++i){
-							if(extractClass(similarShapes[i].first) == meshClass) ++TP;
+						for (auto i = 0; i < kMax; ++i) {
+							if (extractClass(similarShapes[i].first) == meshClass) ++TP;
 							else ++FP;
 							precision = (TP / (float)(i + 1));
 							recall = (TP / (float)meshesPerClass);
-							MAP += precision;
-							MAR += recall;
+							shapeMAP += precision;
+							shapeMAR += recall;
 							TN = totalMeshes - meshesPerClass - FP;
 							specificity = TN / float(totalMeshes - meshesPerClass);
 							rocPair[i].first += specificity;
 							rocPair[i].second += recall;
 						}
 
-						MAP /= (float)kMax;
-						MAR /= (float)kMax;
+						shapeMAP /= (float)kMax;
+						shapeMAR /= (float)kMax;
 
-						classMAP += MAP;
-						classMAR += MAR;
+						classMAP += shapeMAP;
+						classMAR += shapeMAR;
 
-						dbMAP += MAP;
-						dbMAR += MAR;
+						dbMAP += shapeMAP;
+						dbMAR += shapeMAR;
 
 						/* Accuracy, F1, Specificity for k=kMax (20)*/
 						FN = meshesPerClass - TP;
-						float accuracy = ((TP + TN) / (float) totalMeshes);
+						float accuracy = ((TP + TN) / (float)totalMeshes);
 						float F1 = (precision + recall == 0) ? 0 : 2 * (float)((precision * recall) / (float)(precision + recall));
 
 						classAccuracy += accuracy;
@@ -118,6 +121,7 @@ int main(int argc, char* args[]) {
 			classAccuracy /= (float)meshesPerClass;
 			classMAR /= (float)meshesPerClass;
 			classF1 /= (float)meshesPerClass;
+			classSpecificity /= (float)meshesPerClass;
 			std::cout << dir << "," << classMAP << "," << classMAR << "," << classAccuracy << "," << classF1 << "," << classSpecificity << std::endl;
 			evalFile << dir << "," << classMAP << "," << classMAR << "," << classAccuracy << "," << classF1 << "," << classSpecificity << std::endl;
 		}
@@ -130,7 +134,7 @@ int main(int argc, char* args[]) {
 	dbSpecificity /= (float)totalMeshes;
 
 	std::cout << std::endl;
-	std::cout << "dbAccuracy,dbMAP,dbMAR,dbF1,dbSpecificity" <<std::endl << dbAccuracy << "," << dbMAP << "," << dbMAR << "," << dbF1 << ',' << dbSpecificity << std::endl;
+	std::cout << "dbAccuracy,dbMAP,dbMAR,dbF1,dbSpecificity" << std::endl << dbAccuracy << "," << dbMAP << "," << dbMAR << "," << dbF1 << ',' << dbSpecificity << std::endl;
 	evalFile << "Whole DB" << "," << dbMAP << "," << dbMAR << "," << dbAccuracy << "," << dbF1 << ',' << dbSpecificity << std::endl;
 	evalFile.close();
 

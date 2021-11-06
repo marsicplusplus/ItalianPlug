@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from scipy.interpolate import splrep, splev
-from scipy.integrate import simps
+from scipy.integrate import simpson
 import sys
 
 if len(sys.argv) < 2:
@@ -20,12 +20,13 @@ for roc in rocs:
     # poly = np.polyfit(data["Recall"],data["Specificity"],5)
     # poly_y = np.poly1d(poly)(data["Recall"])
     # plt.plot(data["Recall"], poly_y, label = roc.split("/")[-1])
+
     bspl = splrep(data["Recall"],data["Specificity"],s=5)
     bspl_y = splev(data["Recall"], bspl)
     plt.plot(data["Recall"], bspl_y, label = roc.split("/")[-1])
     plt.xlabel("Recall")
     plt.ylabel("Specificity")
-    print(f'AUROC for {roc.split("/")[-1]}: {simps(data["Specificity"])}')
+    print(f'AUROC for {roc.split("/")[-1]}: {simpson(data["Recall"], data["Specificity"])}')
     plt.legend()
 
 plt.plot([0,1],[1,0], 'y--')

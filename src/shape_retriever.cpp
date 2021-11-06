@@ -258,7 +258,8 @@ namespace Retriever {
 			dbFeatureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
 			dbFeatureVector.push_back(feats.GetCell<float>("3D_Eccentricity", i));
 
-			auto singleValueDistance = vectorDistance(featureVector.begin(), featureVector.end(), dbFeatureVector.begin());
+			std::vector<float> weights = { 2.0f / 12.0f, 3.5f / 12.0f , 0.5f / 12.0f, 2.0f / 12.0f, 2.0f / 12.0f, 2.0f / 12.0f };
+			auto singleValueDistance = vectorDistance(featureVector.begin(), featureVector.end(), dbFeatureVector.begin(), weights.begin());
 
 			// Compute earth mover's distance
 			const auto a3 = feats.GetCell<std::string>("3D_A3", i);
@@ -273,11 +274,19 @@ namespace Retriever {
 			const auto dbd4Histogram = Histogram::parseHistogram(d4);
 
 			std::vector<float> values = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
-			const auto a3distance = std::earthMoversDistance(values, qa3Histogram, values, dba3Histogram);
-			const auto d1distance = std::earthMoversDistance(values, qd1Histogram, values, dbd1Histogram);
-			const auto d2distance = std::earthMoversDistance(values, qd2Histogram, values, dbd2Histogram);
-			const auto d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
-			const auto d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
+			auto a3distance = std::earthMoversDistance(values, qa3Histogram, values, dba3Histogram);
+			auto d1distance = std::earthMoversDistance(values, qd1Histogram, values, dbd1Histogram);
+			auto d2distance = std::earthMoversDistance(values, qd2Histogram, values, dbd2Histogram);
+			auto d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
+			auto d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
+
+			singleValueDistance = singleValueDistance * 0.5f / 12.0f;
+			a3distance = a3distance * 2.3f / 12.0f;
+			d1distance = d1distance * 2.3f / 12.0f;
+			d2distance = d2distance * 2.3f / 12.0f;
+			d3distance = d3distance * 2.3f / 12.0f;
+			d4distance = d4distance * 2.3f / 12.0f;
+
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", i), singleValueDistance + a3distance + d1distance + d2distance + d3distance + d4distance));
 		}
 

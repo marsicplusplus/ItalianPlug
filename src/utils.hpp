@@ -54,12 +54,12 @@ namespace Exporter {
 	);
 }
 
-template<class Iter_T, class Iter2_T>
-inline double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2) {
+template<class Iter_T, class Iter2_T, class Iter3_T>
+inline double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2, Iter3_T weights) {
 	double ret = 0.0;
 	while (first != last) {
 		double dist = (*first++) - (*first2++);
-		ret += dist * dist;
+		ret += dist * dist * *weights++;
 	}
 	return ret > 0.0 ? sqrt(ret) : 0.0;
 }
