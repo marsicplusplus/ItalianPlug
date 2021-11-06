@@ -59,34 +59,37 @@ namespace Retriever {
 		rapidcsv::Document feats_avg(featsAvgPath.string(), rapidcsv::LabelParams(0, -1));
 
 		bool meshInDB = false;
-		for (int i = 0; i < feats.GetRowCount(); i++) {
-			auto meshPath = mesh->getPath().string();
-			if (meshPath.find(feats.GetCell<std::string>("Path", i)) != std::string::npos) {
-				meshInDB = true;
-				descriptorMap[FEAT_AREA_3D] = feats.GetCell<float>("3D_Area", i);
-				descriptorMap[FEAT_MVOLUME_3D] = feats.GetCell<float>("3D_MVolume", i);
-				descriptorMap[FEAT_BBVOLUME_3D] = feats.GetCell<float>("3D_BBVolume", i);
-				descriptorMap[FEAT_DIAMETER_3D] = feats.GetCell<float>("3D_Diameter", i);
-				descriptorMap[FEAT_COMPACTNESS_3D] = feats.GetCell<float>("3D_Compactness", i);
-				descriptorMap[FEAT_ECCENTRICITY_3D] = feats.GetCell<float>("3D_Eccentricity", i);
+		auto meshPath = mesh->getPath();
+		if (meshPath.string().find(dbPath.string()) != std::string::npos) {
+			auto meshFilename = meshPath.filename().string();
+			for (int i = 0; i < feats.GetRowCount(); i++) {
+				if (feats.GetCell<std::string>("Path", i).find(meshFilename) != std::string::npos) {
+					meshInDB = true;
+					descriptorMap[FEAT_AREA_3D] = feats.GetCell<float>("3D_Area", i);
+					descriptorMap[FEAT_MVOLUME_3D] = feats.GetCell<float>("3D_MVolume", i);
+					descriptorMap[FEAT_BBVOLUME_3D] = feats.GetCell<float>("3D_BBVolume", i);
+					descriptorMap[FEAT_DIAMETER_3D] = feats.GetCell<float>("3D_Diameter", i);
+					descriptorMap[FEAT_COMPACTNESS_3D] = feats.GetCell<float>("3D_Compactness", i);
+					descriptorMap[FEAT_ECCENTRICITY_3D] = feats.GetCell<float>("3D_Eccentricity", i);
 
-				const auto a3 = feats.GetCell<std::string>("3D_A3", i);
-				const auto d1 = feats.GetCell<std::string>("3D_D1", i);
-				const auto d2 = feats.GetCell<std::string>("3D_D2", i);
-				const auto d3 = feats.GetCell<std::string>("3D_D3", i);
-				const auto d4 = feats.GetCell<std::string>("3D_D4", i);
-				const auto dba3Histogram = Histogram::parseHistogram(a3);
-				const auto dbd1Histogram = Histogram::parseHistogram(d1);
-				const auto dbd2Histogram = Histogram::parseHistogram(d2);
-				const auto dbd3Histogram = Histogram::parseHistogram(d3);
-				const auto dbd4Histogram = Histogram::parseHistogram(d4);
+					const auto a3 = feats.GetCell<std::string>("3D_A3", i);
+					const auto d1 = feats.GetCell<std::string>("3D_D1", i);
+					const auto d2 = feats.GetCell<std::string>("3D_D2", i);
+					const auto d3 = feats.GetCell<std::string>("3D_D3", i);
+					const auto d4 = feats.GetCell<std::string>("3D_D4", i);
+					const auto dba3Histogram = Histogram::parseHistogram(a3);
+					const auto dbd1Histogram = Histogram::parseHistogram(d1);
+					const auto dbd2Histogram = Histogram::parseHistogram(d2);
+					const auto dbd3Histogram = Histogram::parseHistogram(d3);
+					const auto dbd4Histogram = Histogram::parseHistogram(d4);
 
-				qa3Histogram = dba3Histogram;
-				qd1Histogram = dbd1Histogram;
-				qd2Histogram = dbd2Histogram;
-				qd3Histogram = dbd3Histogram;
-				qd4Histogram = dbd4Histogram;
-				break;
+					qa3Histogram = dba3Histogram;
+					qd1Histogram = dbd1Histogram;
+					qd2Histogram = dbd2Histogram;
+					qd3Histogram = dbd3Histogram;
+					qd4Histogram = dbd4Histogram;
+					break;
+				}
 			}
 		}
 
@@ -182,32 +185,35 @@ namespace Retriever {
 		std::vector<float> featureVector;
 
 		bool meshInDB = false;
-		for (int i = 0; i < feats.GetRowCount(); i++) {
-			auto meshPath = mesh->getPath().string();
-			if (meshPath.find(feats.GetCell<std::string>("Path", i)) != std::string::npos) {
-				meshInDB = true;
-				// If the mesh is in the database the values have already been normalized
-				featureVector.push_back(feats.GetCell<float>("3D_Area", i));
-				featureVector.push_back(feats.GetCell<float>("3D_MVolume", i));
-				featureVector.push_back(feats.GetCell<float>("3D_BBVolume", i));
-				featureVector.push_back(feats.GetCell<float>("3D_Diameter", i));
-				featureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
-				featureVector.push_back(feats.GetCell<float>("3D_Eccentricity", i));
+		auto meshPath = mesh->getPath();
+		if (meshPath.string().find(dbPath.string()) != std::string::npos) {
+			auto meshFilename = meshPath.filename().string();
+			for (int i = 0; i < feats.GetRowCount(); i++) {
+				if (feats.GetCell<std::string>("Path", i).find(meshFilename) != std::string::npos) {
+					meshInDB = true;
+					// If the mesh is in the database the values have already been normalized
+					featureVector.push_back(feats.GetCell<float>("3D_Area", i));
+					featureVector.push_back(feats.GetCell<float>("3D_MVolume", i));
+					featureVector.push_back(feats.GetCell<float>("3D_BBVolume", i));
+					featureVector.push_back(feats.GetCell<float>("3D_Diameter", i));
+					featureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
+					featureVector.push_back(feats.GetCell<float>("3D_Eccentricity", i));
 
-				const auto a3 = feats.GetCell<std::string>("3D_A3", i);
-				const auto d1 = feats.GetCell<std::string>("3D_D1", i);
-				const auto d2 = feats.GetCell<std::string>("3D_D2", i);
-				const auto d3 = feats.GetCell<std::string>("3D_D3", i);
-				const auto d4 = feats.GetCell<std::string>("3D_D4", i);
+					const auto a3 = feats.GetCell<std::string>("3D_A3", i);
+					const auto d1 = feats.GetCell<std::string>("3D_D1", i);
+					const auto d2 = feats.GetCell<std::string>("3D_D2", i);
+					const auto d3 = feats.GetCell<std::string>("3D_D3", i);
+					const auto d4 = feats.GetCell<std::string>("3D_D4", i);
 
-				qa3Histogram = Histogram::parseHistogram(a3);
-				qd1Histogram = Histogram::parseHistogram(d1);
-				qd2Histogram = Histogram::parseHistogram(d2);
-				qd3Histogram = Histogram::parseHistogram(d3);
-				qd4Histogram = Histogram::parseHistogram(d4);
+					qa3Histogram = Histogram::parseHistogram(a3);
+					qd1Histogram = Histogram::parseHistogram(d1);
+					qd2Histogram = Histogram::parseHistogram(d2);
+					qd3Histogram = Histogram::parseHistogram(d3);
+					qd4Histogram = Histogram::parseHistogram(d4);
 
-				break;
-			}				  
+					break;
+				}
+			}
 		}					  
 			
 		if (!meshInDB) {
