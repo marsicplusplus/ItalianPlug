@@ -505,9 +505,6 @@ void Renderer::renderGUI(){
 				if (ImGui::Button("Find Similiar ANN")) {
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
-							m_retrieval_text = "Computing descriptors for the query shape...";
-							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 							m_retrieval_text = "Searching for the most similar shapes...";
 							Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
 						});
@@ -519,9 +516,6 @@ void Renderer::renderGUI(){
 				if (ImGui::Button("Find Similiar Shapes")) {
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
-							m_retrieval_text = "Computing descriptors for the query shape...";
-							m_mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-							m_mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 							m_retrieval_text = "Searching for the most similar shapes...";
 							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
 						});

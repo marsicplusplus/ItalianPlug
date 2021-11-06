@@ -44,9 +44,6 @@ int main(int argc, char* args[]){
 				if(isMesh(p)){
 					int TP = 0, FP = 0, TN = 0, FN = 0;
 					std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(p.path().string());
-					mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-					mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-
 					Retriever::retrieveSimiliarShapes(mesh, dbPath);
 					const auto similarShapes = mesh->getSimilarShapes();
 

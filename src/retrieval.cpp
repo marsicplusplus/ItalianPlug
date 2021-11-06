@@ -19,10 +19,6 @@ int main(int argc, char* args[]) {
 	}
 
 	Mesh mesh(meshPath);
-	std::cout << "Computing features of query mesh..." << std::endl;
-	mesh.computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
-	mesh.getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
-
 	const auto mesh_ptr = std::make_shared<Mesh>(mesh);
 	if(argc == 5 && strncmp(args[4], "ANN=true", strlen("ANN=true")) == 0)
 		Retriever::retrieveSimiliarShapesKNN(mesh_ptr, dbPath, nShapes);
