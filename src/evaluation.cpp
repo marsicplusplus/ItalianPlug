@@ -34,11 +34,12 @@ int main(int argc, char* args[]){
 	float dbTN = 0.0f;
 	float dbFN = 0.0f;
 
-	std::cout << "class,precision,accuracy" << std::endl;
+	std::cout << "class,MAP,accuracy,recall" << std::endl;
 	for (auto& dir : std::filesystem::recursive_directory_iterator(dbPath)) {
 		if(std::filesystem::is_directory(dir)){
 			float classMAP = 0.0f;
 			float classAccuracy = 0.0f;
+			float classRecall = 0.0f;
 			
 			for (auto& p : std::filesystem::recursive_directory_iterator(dir)) {
 				if(isMesh(p)){
@@ -50,7 +51,7 @@ int main(int argc, char* args[]){
 					if (!similarShapes.empty()) {
 						std::string meshClass = extractClass(p);
 						float precision = 0.0f; 	// TP / s
-						//float recall = 0.0f;		// TP / c
+						float recall = 0.0f;		// TP / c
 
 						/* MAP */
 						for(auto j = 1; j <= kMax; ++j){
@@ -60,15 +61,16 @@ int main(int argc, char* args[]){
 								else ++FP;
 							}
 							FN = meshesPerClass - TP;
-							TN = totalMeshes - meshesPerClass - TP;
+							TN = totalMeshes - meshesPerClass - FP;
 							precision += (TP / (float) j);
-							//recall += localTP / (float) meshesPerClass;
+							recall += TP / (float) meshesPerClass;
 						}
-						precision /= kMax;
+						precision /= (float)kMax;
+						recall /= kMax;
 						classMAP += precision;
-						//recall /= kMax;
 						float accuracy = ((TP + TN) / (float) totalMeshes);
 						classAccuracy += accuracy;
+						classRecall += recall;
 						dbAccuracy +=  accuracy;
 						dbMAP += precision;
 					}
@@ -76,7 +78,8 @@ int main(int argc, char* args[]){
 			}
 			classMAP /= meshesPerClass;
 			classAccuracy /= meshesPerClass;
-			std::cout << dir << "," << classMAP << "," << classAccuracy << std::endl;
+			classRecall /= meshesPerClass;
+			std::cout << dir << "," << classMAP << "," << classAccuracy << "," << classRecall << std::endl;
 		}
 	}
 	std::cout << std::endl;
