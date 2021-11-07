@@ -6,9 +6,7 @@
 #include "rapidcsv.h"
 
 namespace Retriever {
-	namespace {
 
-	}
 	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes) {
 
 		std::filesystem::path featsAvgPath = dbPath;
@@ -280,12 +278,12 @@ namespace Retriever {
 			auto d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
 			auto d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
 
-			singleValueDistance = singleValueDistance * 0.5f / 12.0f;
-			a3distance = a3distance * 2.3f / 12.0f;
-			d1distance = d1distance * 2.3f / 12.0f;
-			d2distance = d2distance * 2.3f / 12.0f;
-			d3distance = d3distance * 2.3f / 12.0f;
-			d4distance = d4distance * 2.3f / 12.0f;
+			singleValueDistance = singleValueDistance * 0.8f / 12.0f;
+			a3distance = a3distance * 2.1f / 12.0f;
+			d1distance = d1distance * 2.8f / 12.0f;
+			d2distance = d2distance * 2.1f / 12.0f;
+			d3distance = d3distance * 2.1f / 12.0f;
+			d4distance = d4distance * 2.1f / 12.0f;
 
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", i), singleValueDistance + a3distance + d1distance + d2distance + d3distance + d4distance));
 		}

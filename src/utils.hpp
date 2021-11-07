@@ -61,7 +61,7 @@ inline double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2, Iter3_T 
 		double dist = (*first++) - (*first2++);
 		ret += dist * dist * *weights++;
 	}
-	return ret > 0.0 ? sqrt(ret) : 0.0;
+	return ret > 0.0 ? ret : 0.0;
 }
 
 namespace Stats {
