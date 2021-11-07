@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from scipy.interpolate import splrep, splev
-from scipy.integrate import simpson
+from numpy import trapz
 import sys
 
 if len(sys.argv) < 2:
@@ -26,9 +26,10 @@ for roc in rocs:
     plt.plot(data["Recall"], bspl_y, label = roc.split("/")[-1])
     plt.xlabel("Recall")
     plt.ylabel("Specificity")
-    print(f'AUROC for {roc.split("/")[-1]}: {simpson(data["Recall"], data["Specificity"])}')
+    print(f'AUROC for {roc.split("/")[-1]}: {trapz(data["Specificity"], x=data["Recall"])}')
     plt.legend()
 
+plt.title("Tuned Weights")
 plt.plot([0,1],[1,0], 'y--')
 
 plt.show()
