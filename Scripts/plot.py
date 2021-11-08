@@ -14,7 +14,7 @@ colsName = list(data)
 print("Plotting " + colsName[colIdx])
 data = data[colsName[colIdx]]
 # data.hist(bins=np.arange(-0.5, 1.5, 0.2))
-data.hist(bins=range(0, 175, 17))
+data.hist(bins=np.arange(0, 1, 0.05))
 plt.title("Data")
 plt.ylabel("Frequency")
 plt.xlabel(colsName[colIdx])
