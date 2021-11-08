@@ -7,6 +7,14 @@
 
 namespace Retriever {
 
+	const auto extractClass = [](std::filesystem::path filePath) {
+		size_t found;
+		found = filePath.string().find_last_of("/\\");
+		auto classPath = filePath.string().substr(0, found);
+		found = classPath.find_last_of("/\\");
+		return classPath.substr(found + 1);
+	};
+
 	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes) {
 
 		std::filesystem::path featsAvgPath = dbPath;
@@ -58,8 +66,9 @@ namespace Retriever {
 
 		bool meshInDB = false;
 		auto meshPath = mesh->getPath();
+		auto className = extractClass(meshPath);
 		if (meshPath.string().find(dbPath.string()) != std::string::npos) {
-			auto meshFilename = meshPath.filename().string();
+			auto meshFilename = className + "/" + meshPath.filename().string();
 			for (int i = 0; i < feats.GetRowCount(); i++) {
 				if (feats.GetCell<std::string>("Path", i).find(meshFilename) != std::string::npos) {
 					meshInDB = true;
@@ -183,8 +192,9 @@ namespace Retriever {
 
 		bool meshInDB = false;
 		auto meshPath = mesh->getPath();
+		auto className = extractClass(meshPath);
 		if (meshPath.string().find(dbPath.string()) != std::string::npos) {
-			auto meshFilename = meshPath.filename().string();
+			auto meshFilename = className + "/" + meshPath.filename().string();
 			for (int i = 0; i < feats.GetRowCount(); i++) {
 				if (feats.GetCell<std::string>("Path", i).find(meshFilename) != std::string::npos) {
 					meshInDB = true;
