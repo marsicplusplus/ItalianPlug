@@ -22,9 +22,10 @@ for className in classes:
     fig.add_subplot(4, 5, a)
     a = a+1
     classRows = data[data["Path"].str.contains(className)]
-    classRows[sys.argv[2]].hist(bins=10)
+    classRows[sys.argv[2]].hist(bins=80, range=(data[sys.argv[2]].min(),data[sys.argv[2]].max()))
     plt.title(f"Class: {className}")
-
+    plt.xlim(data[sys.argv[2]].min(),data[sys.argv[2]].max())
+    plt.ylim(0,20)
 
 fig.suptitle(sys.argv[2])
 fig.subplots_adjust(
