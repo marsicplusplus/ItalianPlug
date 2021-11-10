@@ -14,7 +14,7 @@ int main(int argc, char* args[]) {
 	const int meshesPerClass = 20;
 	const int numClasses = 19;
 	const int totalMeshes = 380;
-	const int kMax = 380;
+	const int kMax = 20;
 	const bool useKNN = (argc > 2 && strncmp(args[2], "ANN=true", strlen("ANN=true")));
 
 	const auto extractClass = [](std::filesystem::path filePath) {
@@ -74,7 +74,7 @@ int main(int argc, char* args[]) {
 					bool lastRankFound = false;
 					std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(p.path().string());
 					if (useKNN) {
-						Retriever::retrieveSimiliarShapesKNN(mesh, dbPath, kMax);
+						Retriever::retrieveSimiliarShapesKNN(mesh, dbPath, kMax, true);
 					}
 					else {
 						Retriever::retrieveSimiliarShapes(mesh, dbPath, true);

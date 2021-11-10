@@ -15,7 +15,7 @@ namespace Retriever {
 		return classPath.substr(found + 1);
 	};
 
-	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes) {
+	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf) {
 
 		std::filesystem::path featsAvgPath = dbPath;
 		featsAvgPath /= "feats_avg.csv";
@@ -36,6 +36,7 @@ namespace Retriever {
 		auto idx = Annoy::AnnoyIndex<int, float, Annoy::Angular, Annoy::Kiss32Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy>(DESCRIPTORS_NUM);
 		float *v = new float[DESCRIPTORS_NUM];
 		int i = 0;
+		auto row_count = feats.GetRowCount();
 		for (i = 0; i < feats.GetRowCount(); i++) {
 			int j = 0;
 			v[j++] = (feats.GetCell<float>("3D_Area", i));
@@ -64,6 +65,7 @@ namespace Retriever {
 
 		rapidcsv::Document feats_avg(featsAvgPath.string(), rapidcsv::LabelParams(0, -1));
 
+		int meshIndex = 0;
 		bool meshInDB = false;
 		auto meshPath = mesh->getPath();
 		auto className = extractClass(meshPath);
@@ -71,6 +73,7 @@ namespace Retriever {
 			auto meshFilename = className + "/" + meshPath.filename().string();
 			for (int i = 0; i < feats.GetRowCount(); i++) {
 				if (feats.GetCell<std::string>("Path", i).find(meshFilename) != std::string::npos) {
+					meshIndex = i;
 					meshInDB = true;
 					descriptorMap[FEAT_AREA_3D] = feats.GetCell<float>("3D_Area", i);
 					descriptorMap[FEAT_MVOLUME_3D] = feats.GetCell<float>("3D_MVolume", i);
@@ -110,51 +113,57 @@ namespace Retriever {
 			qd2Histogram = std::get<Histogram>(descriptorMap[FEAT_D2_3D]).getFrequency();
 			qd3Histogram = std::get<Histogram>(descriptorMap[FEAT_D3_3D]).getFrequency();
 			qd4Histogram = std::get<Histogram>(descriptorMap[FEAT_D4_3D]).getFrequency();
+
+			const auto avgArea = feats_avg.GetColumn<float>("3D_Area_AVG")[0];
+			const auto stdArea = feats_avg.GetColumn<float>("3D_Area_STD")[0];
+			const auto avgMVolume = feats_avg.GetColumn<float>("3D_MVolume_AVG")[0];
+			const auto stdMVolume = feats_avg.GetColumn<float>("3D_MVolume_STD")[0];
+			const auto avgBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_AVG")[0];
+			const auto stdBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_STD")[0];
+			const auto avgDiameter = feats_avg.GetColumn<float>("3D_Diameter_AVG")[0];
+			const auto stdDiameter = feats_avg.GetColumn<float>("3D_Diameter_STD")[0];
+			const auto avgCompactness = feats_avg.GetColumn<float>("3D_Compactness_AVG")[0];
+			const auto stdCompactness = feats_avg.GetColumn<float>("3D_Compactness_STD")[0];
+			const auto avgEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_AVG")[0];
+			const auto stdEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_STD")[0];
+
+			int j = 0;
+			v[j++] = ((std::get<float>(descriptorMap[FEAT_AREA_3D]) - avgArea) / stdArea);
+			v[j++] = ((std::get<float>(descriptorMap[FEAT_MVOLUME_3D]) - avgMVolume) / stdMVolume);
+			v[j++] = ((std::get<float>(descriptorMap[FEAT_BBVOLUME_3D]) - avgBBVolume) / stdBBVolume);
+			v[j++] = ((std::get<float>(descriptorMap[FEAT_DIAMETER_3D]) - avgDiameter) / stdDiameter);
+			v[j++] = ((std::get<float>(descriptorMap[FEAT_COMPACTNESS_3D]) - avgCompactness) / stdCompactness);
+			v[j++] =  ((std::get<float>(descriptorMap[FEAT_ECCENTRICITY_3D]) - avgEccentricity) / stdEccentricity);
+
+			for (auto val : qa3Histogram)
+				v[j++] = val;
+			for (auto val : qd1Histogram)
+				v[j++] = (val);
+			for (auto val : qd2Histogram)
+				v[j++] = (val);
+			for (auto val : qd3Histogram)
+				v[j++] = (val);
+			for (auto val : qd4Histogram)
+				v[j++] = (val);
+			idx.add_item(i, v);
+			meshIndex = i;
 		}
 
-		const auto avgArea = feats_avg.GetColumn<float>("3D_Area_AVG")[0];
-		const auto stdArea = feats_avg.GetColumn<float>("3D_Area_STD")[0];
-		const auto avgMVolume = feats_avg.GetColumn<float>("3D_MVolume_AVG")[0];
-		const auto stdMVolume = feats_avg.GetColumn<float>("3D_MVolume_STD")[0];
-		const auto avgBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_AVG")[0];
-		const auto stdBBVolume = feats_avg.GetColumn<float>("3D_BBVolume_STD")[0];
-		const auto avgDiameter = feats_avg.GetColumn<float>("3D_Diameter_AVG")[0];
-		const auto stdDiameter = feats_avg.GetColumn<float>("3D_Diameter_STD")[0];
-		const auto avgCompactness = feats_avg.GetColumn<float>("3D_Compactness_AVG")[0];
-		const auto stdCompactness = feats_avg.GetColumn<float>("3D_Compactness_STD")[0];
-		const auto avgEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_AVG")[0];
-		const auto stdEccentricity = feats_avg.GetColumn<float>("3D_Eccentricity_STD")[0];
-
-		int j = 0;
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_AREA_3D]) : ((std::get<float>(descriptorMap[FEAT_AREA_3D]) - avgArea) / stdArea);
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_MVOLUME_3D]) : ((std::get<float>(descriptorMap[FEAT_MVOLUME_3D]) - avgMVolume) / stdMVolume);
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_BBVOLUME_3D]) : ((std::get<float>(descriptorMap[FEAT_BBVOLUME_3D]) - avgBBVolume) / stdBBVolume);
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_DIAMETER_3D]) : ((std::get<float>(descriptorMap[FEAT_DIAMETER_3D]) - avgDiameter) / stdDiameter);
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_COMPACTNESS_3D]) : ((std::get<float>(descriptorMap[FEAT_COMPACTNESS_3D]) - avgCompactness) / stdCompactness);
-		v[j++] = meshInDB ? std::get<float>(descriptorMap[FEAT_ECCENTRICITY_3D]) : ((std::get<float>(descriptorMap[FEAT_ECCENTRICITY_3D]) - avgEccentricity) / stdEccentricity);
-
-		for(auto val : qa3Histogram)
-			v[j++] = val;
-		for(auto val : qd1Histogram)
-			v[j++] = (val);
-		for(auto val : qd2Histogram)
-			v[j++] = (val);
-		for(auto val : qd3Histogram)
-			v[j++] = (val);
-		for(auto val : qd4Histogram)
-			v[j++] = (val);
-
-		idx.add_item(i, v);
 		idx.build(DESCRIPTORS_NUM * 2);
 		std::vector<int> result;
 		result.reserve(shapes);
 		std::vector<float> distances;
 		distances.reserve(shapes);
-		// shapes + 2 to ignore the newly added one
-		idx.get_nns_by_item(i, shapes + 2, -1, &result, &distances);
+
+		// If the mesh is outside the DB we want to return shapes + 1 as the first entry is itself (but it's not stored in the DB so we can't access it in the feats file)
+		// If the mesh is inside the DB and we want to return itself, then we want to just use shapes
+		int startIndex = includeSelf && meshInDB ? 0 : 1;
+		int numToRetrieve = includeSelf && meshInDB ? shapes : shapes + 1;
+
+		idx.get_nns_by_item(meshIndex, numToRetrieve, -1, &result, &distances);
 		idx.unload();
 		std::vector<std::pair<std::string, float>> similarShapes;
-		for(i = 2; i < result.size(); i++){
+		for(i = startIndex; i < result.size(); i++){
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", result[i]), distances[i]));
 		}
 		mesh->setSimilarShapes(similarShapes);
