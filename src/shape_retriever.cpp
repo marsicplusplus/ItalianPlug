@@ -161,7 +161,7 @@ namespace Retriever {
 		delete[] v;
 	}
 
-	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath) {
+	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf) {
 
 		std::vector<std::pair<std::string, float>> similarShapes;
 
@@ -303,7 +303,11 @@ namespace Retriever {
 				return a.second < b.second;
 			}
 		);
-		similarShapes.erase(similarShapes.begin());
+
+		if (!includeSelf) {
+			similarShapes.erase(similarShapes.begin());
+		}
+
 		mesh->setSimilarShapes(similarShapes);
 	}
 }
