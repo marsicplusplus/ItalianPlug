@@ -55,13 +55,22 @@ namespace Exporter {
 }
 
 template<class Iter_T, class Iter2_T, class Iter3_T>
-inline double vectorDistance(Iter_T first, Iter_T last, Iter2_T first2, Iter3_T weights) {
-	double ret = 0.0;
+inline float vectorDistance(Iter_T first, Iter_T last, Iter2_T first2, Iter3_T weights, bool squareDistance = true, bool useSqrt = false) {
+	float val = 0.0f;
+	float ret = 0.0f;
 	while (first != last) {
 		double dist = (*first++) - (*first2++);
-		ret += dist * dist * *weights++;
+		if (squareDistance) {
+			val += dist * dist * *weights++;
+		} else {
+			val = dist;
+		}
 	}
-	return ret > 0.0 ? ret : 0.0;
+	if (useSqrt) {
+		return val > 0.0f ? sqrt(val) : 0.0f;
+	} else {
+		return val > 0.0f ? val : 0.0f;
+	}
 }
 
 namespace Stats {

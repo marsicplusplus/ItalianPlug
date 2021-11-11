@@ -21,9 +21,9 @@ int main(int argc, char* args[]) {
 	Mesh mesh(meshPath);
 	const auto mesh_ptr = std::make_shared<Mesh>(mesh);
 	if(argc == 5 && strncmp(args[4], "ANN=true", strlen("ANN=true")) == 0)
-		Retriever::retrieveSimiliarShapesKNN(mesh_ptr, dbPath, nShapes);
+		Retriever::retrieveSimiliarShapes(mesh_ptr, dbPath, nShapes, Retriever::DistanceMethod::spotify_ANN);
 	else
-		Retriever::retrieveSimiliarShapes(mesh_ptr, dbPath);
+		Retriever::retrieveSimiliarShapes(mesh_ptr, dbPath, nShapes, Retriever::DistanceMethod::quadratic_Weights);
 	const auto similarShapes = mesh_ptr->getSimilarShapes();
 	if (!similarShapes.empty()) {
 		std::cout << "Most similar shapes are... " << std::endl;

@@ -4,6 +4,7 @@
 #include "annoylib.h"
 #include "kissrandom.h"
 #include "rapidcsv.h"
+#include <array>
 
 namespace Retriever {
 
@@ -15,7 +16,7 @@ namespace Retriever {
 		return classPath.substr(found + 1);
 	};
 
-	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf) {
+	void retrieveSimiliarShapesANN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf) {
 
 		std::filesystem::path featsAvgPath = dbPath;
 		featsAvgPath /= "feats_avg.csv";
@@ -170,7 +171,7 @@ namespace Retriever {
 		delete[] v;
 	}
 
-	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf) {
+	void retrieveSimiliarShapesCUST(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf, std::array<float, 6> scalarWeights, std::array<float, 6> functionWeights, bool squareDistance, bool useSqrt) {
 
 		std::vector<std::pair<std::string, float>> similarShapes;
 
@@ -275,8 +276,7 @@ namespace Retriever {
 			dbFeatureVector.push_back(feats.GetCell<float>("3D_Compactness", i));
 			dbFeatureVector.push_back(feats.GetCell<float>("3D_Eccentricity", i));
 
-			std::vector<float> weights = { 3.0f / 12.0f, 3.0 / 12.0f , 0.5f / 12.0f, 0.5f / 12.0f, 3.0f / 12.0f, 2.0f / 12.0f };
-			auto singleValueDistance = vectorDistance(featureVector.begin(), featureVector.end(), dbFeatureVector.begin(), weights.begin());
+			auto singleValueDistance = vectorDistance(featureVector.begin(), featureVector.end(), dbFeatureVector.begin(), scalarWeights.begin(), squareDistance, useSqrt);
 
 			// Compute earth mover's distance
 			const auto a3 = feats.GetCell<std::string>("3D_A3", i);
@@ -297,12 +297,12 @@ namespace Retriever {
 			auto d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
 			auto d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
 
-			singleValueDistance = singleValueDistance * .8f / 12.0f;
-			a3distance = a3distance * 1.9f / 12.0f;
-			d1distance = d1distance * 3.6f / 12.0f;
-			d2distance = d2distance * 1.9f / 12.0f;
-			d3distance = d3distance * 1.9f / 12.0f;
-			d4distance = d4distance * 1.9f / 12.0f;
+			singleValueDistance = singleValueDistance * functionWeights[0];
+			a3distance = a3distance * functionWeights[1];
+			d1distance = d1distance * functionWeights[2];
+			d2distance = d2distance * functionWeights[3];
+			d3distance = d3distance * functionWeights[4];
+			d4distance = d4distance * functionWeights[5];
 
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", i), singleValueDistance + a3distance + d1distance + d2distance + d3distance + d4distance));
 		}
@@ -318,5 +318,34 @@ namespace Retriever {
 		}
 
 		mesh->setSimilarShapes(similarShapes);
+	}
+
+	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, DistanceMethod method, bool includeSelf) {
+		std::array<float, 6> functionWeights;
+		std::array<float, 6> scalarWeights;
+		bool useSqrt = false;
+		bool squareDistance = true;
+		switch (method) {
+		case DistanceMethod::eucliden_NoWeights:
+			useSqrt = true;
+			scalarWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			functionWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			break;
+		case DistanceMethod::quadratic_Weights:
+			scalarWeights = { 3.0f / 12.0f, 3.0f / 12.0f , 0.5f / 12.0f, 0.5f / 12.0f, 3.0f / 12.0f, 2.0f / 12.0f };
+			functionWeights = { .8f / 12.0f, 1.9f / 12.0f, 3.6f / 12.0f, 1.9f / 12.0f, 1.9f / 12.0f, 1.9f / 12.0f };
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			break;
+		case DistanceMethod::flat_NoWeights:
+			squareDistance = false;
+			scalarWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			functionWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			break;
+		case DistanceMethod::spotify_ANN:
+			retrieveSimiliarShapesANN(mesh, dbPath, shapes, includeSelf);
+			break;
+		}
 	}
 }

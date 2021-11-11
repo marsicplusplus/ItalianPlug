@@ -6,8 +6,16 @@
 typedef std::shared_ptr<Mesh> MeshPtr;
 
 namespace Retriever {
-	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf = false);
-	void retrieveSimiliarShapesKNN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf = false);
+
+	enum class DistanceMethod {
+		eucliden_NoWeights = 0,
+		quadratic_Weights = 1,
+		flat_NoWeights = 2,
+		spotify_ANN = 3
+	};
+	void retrieveSimiliarShapesCUST(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf, std::array<float, 6> scalarWeights, std::array<float, 6> functionWeights, bool squareDistance, bool useSqrt);
+	void retrieveSimiliarShapes(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, DistanceMethod method, bool includeSelf = false);
+	void retrieveSimiliarShapesANN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf = false);
 }
 
 #endif

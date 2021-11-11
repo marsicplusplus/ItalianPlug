@@ -3,9 +3,31 @@
 #include "renderer.hpp"
 #include "shape_retriever.hpp"
 
+std::string generateFilename(int kMax, Retriever::DistanceMethod distanceMethod, bool isROC = false) {
+	std::string filename = "";
+	filename += isROC ? "ROC_" : "EVAL_";
+	filename += std::to_string(kMax) + "_";
+	switch (distanceMethod) {
+	case Retriever::DistanceMethod::eucliden_NoWeights:
+		filename += "Euclidean_NoWeights";
+		break;
+	case Retriever::DistanceMethod::quadratic_Weights:
+		filename += "Quadratic_Weights";
+		break;
+	case Retriever::DistanceMethod::flat_NoWeights:
+		filename += "Flat_NoWeights";
+		break;
+	case Retriever::DistanceMethod::spotify_ANN:
+		filename += "Spotify_ANN";
+		break;
+	}
+	filename += ".csv";
+	return filename;
+}
+
 int main(int argc, char* args[]) {
 	if(argc < 2) {
-		printf("USAGE:\n %s db-path [ANN=true|false]\n", args[0]);
+		printf("USAGE:\n %s db-path [method= 0 (eucliden_NoWeights) | 1 (quadratic_Weights) | 2 (flat_NoWeights) | 3 (spotify_ANN)]\n", args[0]);
 		return 1;
 	}
 
@@ -15,7 +37,7 @@ int main(int argc, char* args[]) {
 	const int numClasses = 19;
 	const int totalMeshes = 380;
 	const int kMax = 20;
-	const bool useKNN = (argc > 2 && strncmp(args[2], "ANN=true", strlen("ANN=true")));
+	Retriever::DistanceMethod distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
 
 	const auto extractClass = [](std::filesystem::path filePath) {
 		size_t found;
@@ -46,9 +68,8 @@ int main(int argc, char* args[]) {
 
 	std::vector<std::pair<float, float>> rocPair(kMax);
 
-	std::string evalFilename = "eval";
-	evalFilename += useKNN ? "_ANN_" : "_CUST_";
-	evalFilename += std::to_string(kMax) + ".csv";
+
+	std::string evalFilename = generateFilename(kMax, distanceMethod, false);
 	std::ofstream evalFile;
 	evalFile.open(evalFilename);
 	evalFile << "Class,MAP,MAR,Accuracy,F1,Specificity,LastRank,1stTier,2ndTier,3rdTier,4thTier,5thTier\n";
@@ -73,12 +94,7 @@ int main(int argc, char* args[]) {
 					int lastRank = 0;
 					bool lastRankFound = false;
 					std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(p.path().string());
-					if (useKNN) {
-						Retriever::retrieveSimiliarShapesKNN(mesh, dbPath, kMax, true);
-					}
-					else {
-						Retriever::retrieveSimiliarShapes(mesh, dbPath, true);
-					}
+					Retriever::retrieveSimiliarShapes(mesh, dbPath, kMax, distanceMethod, true);
 					const auto similarShapes = mesh->getSimilarShapes();
 
 					if (!similarShapes.empty()) {
@@ -196,9 +212,7 @@ int main(int argc, char* args[]) {
 
 	evalFile.close();
 
-	std::string rocFilename = "roc";
-	rocFilename += useKNN ? "_ANN_" : "_CUST_";
-	rocFilename += std::to_string(kMax) + ".csv";
+	std::string rocFilename = generateFilename(kMax, distanceMethod, true);
 	std::ofstream rocFile;
 	rocFile.open(rocFilename);
 	rocFile << "Specificity,Recall\n";
@@ -210,3 +224,4 @@ int main(int argc, char* args[]) {
 	}
 	rocFile.close();
 }
+

@@ -506,7 +506,7 @@ void Renderer::renderGUI(){
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
 							m_retrieval_text = "Searching for the most similar shapes...";
-							Retriever::retrieveSimiliarShapesKNN(m_mesh, m_dbPath, m_numShapes);
+							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath, m_numShapes, Retriever::DistanceMethod::spotify_ANN);
 						});
 					}
 				}
@@ -517,7 +517,7 @@ void Renderer::renderGUI(){
 					if (m_mesh) {
 						m_retrieval_future = std::async(std::launch::async, [&] {
 							m_retrieval_text = "Searching for the most similar shapes...";
-							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath);
+							Retriever::retrieveSimiliarShapes(m_mesh, m_dbPath, m_numShapes, Retriever::DistanceMethod::quadratic_Weights);
 						});
 					}
 				}
