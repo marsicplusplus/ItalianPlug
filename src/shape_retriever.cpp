@@ -16,28 +16,9 @@ namespace Retriever {
 		return classPath.substr(found + 1);
 	};
 
-	void retrieveSimiliarShapesANN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf) {
-
-		std::filesystem::path featsAvgPath = dbPath;
-		featsAvgPath /= "feats_avg.csv";
-		if (!std::filesystem::exists(featsAvgPath)) {
-			std::cout << "Could not find " << featsAvgPath << ".\nRun FeaturesExtractor on the mesh DB to generate the average feature file first" << std::endl;
-			return;
-		}
-		rapidcsv::Document feats((dbPath / "feats.csv").string(), rapidcsv::LabelParams(0, -1));
-
-		DescriptorMap descriptorMap;
-		// Initialize the query mesh histograms before searching the db for the q mesh
-		std::vector<float> qa3Histogram;
-		std::vector<float> qd1Histogram;
-		std::vector<float> qd2Histogram;
-		std::vector<float> qd3Histogram;
-		std::vector<float> qd4Histogram;
-
-		auto idx = Annoy::AnnoyIndex<int, float, Annoy::Angular, Annoy::Kiss32Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy>(DESCRIPTORS_NUM);
-		float *v = new float[DESCRIPTORS_NUM];
+	int buildTree(Annoy::AnnoyIndex<int, float, Annoy::Angular, Annoy::Kiss32Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy> &idx, rapidcsv::Document &feats) {
 		int i = 0;
-		auto row_count = feats.GetRowCount();
+		float v[DESCRIPTORS_NUM];
 		for (i = 0; i < feats.GetRowCount(); i++) {
 			int j = 0;
 			v[j++] = (feats.GetCell<float>("3D_Area", i));
@@ -63,7 +44,31 @@ namespace Retriever {
 				v[j++] = val;
 			idx.add_item(i, v);
 		}
+		return i;
+	}
 
+	void retrieveSimiliarShapesANN(const MeshPtr& mesh, std::filesystem::path dbPath, int shapes, bool includeSelf) {
+
+		std::filesystem::path featsAvgPath = dbPath;
+		featsAvgPath /= "feats_avg.csv";
+		if (!std::filesystem::exists(featsAvgPath)) {
+			std::cout << "Could not find " << featsAvgPath << ".\nRun FeaturesExtractor on the mesh DB to generate the average feature file first" << std::endl;
+			return;
+		}
+		rapidcsv::Document feats((dbPath / "feats.csv").string(), rapidcsv::LabelParams(0, -1));
+
+		DescriptorMap descriptorMap;
+		// Initialize the query mesh histograms before searching the db for the q mesh
+		std::vector<float> qa3Histogram;
+		std::vector<float> qd1Histogram;
+		std::vector<float> qd2Histogram;
+		std::vector<float> qd3Histogram;
+		std::vector<float> qd4Histogram;
+
+		auto idx = Annoy::AnnoyIndex<int, float, Annoy::Angular, Annoy::Kiss32Random, Annoy::AnnoyIndexSingleThreadedBuildPolicy>(DESCRIPTORS_NUM);
+		float v[DESCRIPTORS_NUM];
+		int i = 0;
+		auto row_count = feats.GetRowCount();
 		rapidcsv::Document feats_avg(featsAvgPath.string(), rapidcsv::LabelParams(0, -1));
 
 		int meshIndex = 0;
@@ -105,6 +110,8 @@ namespace Retriever {
 		}
 
 		if (!meshInDB) {
+			i = buildTree(idx, feats);
+
 			mesh->computeFeatures(Descriptors::descriptor_all & ~Descriptors::descriptor_diameter);
 			mesh->getConvexHull()->computeFeatures(Descriptors::descriptor_diameter);
 			descriptorMap = mesh->getDescriptorMap();
@@ -148,9 +155,17 @@ namespace Retriever {
 				v[j++] = (val);
 			idx.add_item(i, v);
 			meshIndex = i;
+			idx.build(DESCRIPTORS_NUM * 2);
+		} else {
+			if(std::filesystem::exists(dbPath/"ann_tree.ann")){
+				idx.load((dbPath/"ann_tree.ann").c_str());
+			} else {
+				i = buildTree(idx, feats);
+				idx.build(DESCRIPTORS_NUM * 2);
+				idx.save((dbPath/"ann_tree.ann").c_str());
+			}
 		}
 
-		idx.build(DESCRIPTORS_NUM * 2);
 		std::vector<int> result;
 		result.reserve(shapes);
 		std::vector<float> distances;
@@ -168,7 +183,6 @@ namespace Retriever {
 			similarShapes.push_back(std::make_pair(feats.GetCell<std::string>("Path", result[i]), distances[i]));
 		}
 		mesh->setSimilarShapes(similarShapes);
-		delete[] v;
 	}
 
 	void retrieveSimiliarShapesCUST(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf, std::array<float, 6> scalarWeights, std::array<float, 6> functionWeights, bool squareDistance, bool useSqrt) {

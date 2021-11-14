@@ -27,7 +27,7 @@ std::string generateFilename(int kMax, Retriever::DistanceMethod distanceMethod,
 
 int main(int argc, char* args[]) {
 	if(argc < 2) {
-		printf("USAGE:\n %s db-path [method= 0 (eucliden_NoWeights) | 1 (quadratic_Weights) | 2 (flat_NoWeights) | 3 (spotify_ANN)]\n", args[0]);
+		printf("USAGE:\n %s db-path [method=0 (eucliden_NoWeights) |1 (quadratic_Weights) |2 (flat_NoWeights) |3 (spotify_ANN)]\n", args[0]);
 		return 1;
 	}
 
@@ -36,8 +36,12 @@ int main(int argc, char* args[]) {
 	const int meshesPerClass = 20;
 	const int numClasses = 19;
 	const int totalMeshes = 380;
-	const int kMax = 20;
-	Retriever::DistanceMethod distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
+	const int kMax = 100;
+	Retriever::DistanceMethod distanceMethod;
+	if(argc < 3)
+		distanceMethod = Retriever::DistanceMethod::quadratic_Weights;
+	else
+		distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
 
 	const auto extractClass = [](std::filesystem::path filePath) {
 		size_t found;
@@ -162,7 +166,7 @@ int main(int argc, char* args[]) {
 			classF1 /= (float)meshesPerClass;
 			classSpecificity /= (float)meshesPerClass;
 			classLastRank /= (float)meshesPerClass;
-			std::cout << dir << "," << classMAP << "," << classMAR << "," << classAccuracy << "," << classF1 << "," << classSpecificity << "," << classLastRank << std::endl;
+			std::cout << dir << "," << classMAP << "," << classMAR << "," << classAccuracy << "," << classF1 << "," << classSpecificity << "," << classLastRank << classKthTier[0] << "," << classKthTier[1] << "," << classKthTier[2] << "," << classKthTier[3] << "," << classKthTier[4] << std::endl;
 			evalFile << 
 				dir << "," << 
 				classMAP << "," << 
