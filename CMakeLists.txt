@@ -82,7 +82,7 @@ else()
 		assimp)
 endif()
 
-set(CXX_OPTIONS -g )
+#set(CXX_OPTIONS -g )
 add_executable( ItalianPlug WIN32 ${SRC} src/italianplug.cpp)
 target_link_libraries( ItalianPlug ${LIBS})
 target_compile_options( ItalianPlug PRIVATE ${CXX_OPTIONS})
@@ -112,6 +112,11 @@ add_executable( Evaluation WIN32 ${SRC} src/evaluation.cpp)
 target_link_libraries( Evaluation ${LIBS})
 target_compile_options( Evaluation PRIVATE ${CXX_OPTIONS})
 set_property(TARGET Evaluation PROPERTY CXX_STANDARD 17)
+
+add_executable( Timing WIN32 ${SRC} src/timing.cpp)
+target_link_libraries( Timing ${LIBS})
+target_compile_options( Timing PRIVATE ${CXX_OPTIONS})
+set_property(TARGET Timing PROPERTY CXX_STANDARD 17)
 
 if( UNIX )
     add_custom_command(
