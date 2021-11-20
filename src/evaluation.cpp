@@ -17,6 +17,9 @@ std::string generateFilename(int kMax, Retriever::DistanceMethod distanceMethod,
 	case Retriever::DistanceMethod::flat_NoWeights:
 		filename += "Flat_NoWeights";
 		break;
+	case Retriever::DistanceMethod::emd_NoWeights:
+		filename += "EMD_NoWeights";
+		break;
 	case Retriever::DistanceMethod::spotify_ANN:
 		filename += "Spotify_ANN";
 		break;
@@ -26,23 +29,24 @@ std::string generateFilename(int kMax, Retriever::DistanceMethod distanceMethod,
 }
 
 int main(int argc, char* args[]) {
-	if(argc < 2) {
-		printf("USAGE:\n %s db-path [method=0 (eucliden_NoWeights) |1 (quadratic_Weights) |2 (flat_NoWeights) |3 (spotify_ANN)]\n", args[0]);
-		return 1;
-	}
+	//if(argc < 2) {
+	//	printf("USAGE:\n %s db-path [method= 0 (eucliden_NoWeights) | 1 (quadratic_Weights) | 2 (flat_NoWeights) | 3 (spotify_ANN)]\n", args[0]);
+	//	return 1;
+	//}
 
-	std::filesystem::path dbPath = args[1];
+	//std::filesystem::path dbPath = args[1];
+	std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
 
 	const int meshesPerClass = 20;
 	const int numClasses = 19;
 	const int totalMeshes = 380;
-	const int kMax = 100;
+	const int kMax = 20;
 	Retriever::DistanceMethod distanceMethod;
-	if(argc < 3)
-		distanceMethod = Retriever::DistanceMethod::quadratic_Weights;
-	else
-		distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
-
+	//if (argc < 3)
+	//	distanceMethod = Retriever::DistanceMethod::quadratic_Weights;
+	//else
+	//	distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
+	Retriever::DistanceMethod distanceMethod = Retriever::DistanceMethod::flat_NoWeights; //static_cast<Retriever::DistanceMethod>(atoi(args[2]));
 	const auto extractClass = [](std::filesystem::path filePath) {
 		size_t found;
 		found = filePath.string().find_last_of("/\\");
