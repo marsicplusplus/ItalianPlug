@@ -12,6 +12,7 @@ int main(int argc, char* args[]) {
 			std::cout << "- FeaturesExtractor \t Extract features from all the meshes in a database" << std::endl;
 			std::cout << "- StatsExtractir \t Extract statistics from all the meshes in a database" << std::endl;
 			std::cout << "- Normalizer \t\t Normalize a single shape to a target number of vertices" << std::endl;
+			std::cout << "- Retrieval \t\t Retrieve the k closest shapes to the query one from a given database" << std::endl;
 			std::cout << "- ItalianPlug \t\t Mesh Visualizer and UI. Can be launched with a mesh preloaded by using:\n\t\t\t\t ./ItalianPlug path-to-mesh" << std::endl;
 			return 0;
 		} else {
