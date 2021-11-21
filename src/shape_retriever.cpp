@@ -158,11 +158,11 @@ namespace Retriever {
 			idx.build(DESCRIPTORS_NUM * 2);
 		} else {
 			if(std::filesystem::exists(dbPath/"ann_tree.ann")){
-				idx.load((dbPath/"ann_tree.ann").c_str());
+				idx.load((dbPath/"ann_tree.ann").string().c_str());
 			} else {
 				i = buildTree(idx, feats);
 				idx.build(DESCRIPTORS_NUM * 2);
-				idx.save((dbPath/"ann_tree.ann").c_str());
+				idx.save((dbPath/"ann_tree.ann").string().c_str());
 			}
 		}
 
@@ -185,7 +185,7 @@ namespace Retriever {
 		mesh->setSimilarShapes(similarShapes);
 	}
 
-	void retrieveSimiliarShapesCUST(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf, std::array<float, 6> scalarWeights, std::array<float, 6> functionWeights, bool squareDistance, bool useSqrt) {
+	void retrieveSimiliarShapesCUST(const MeshPtr& mesh, std::filesystem::path dbPath, bool includeSelf, std::array<float, 6> scalarWeights, std::array<float, 6> functionWeights, bool squareDistance, bool useEMD, bool useSqrt) {
 
 		std::vector<std::pair<std::string, float>> similarShapes;
 
@@ -304,12 +304,28 @@ namespace Retriever {
 			const auto dbd3Histogram = Histogram::parseHistogram(d3);
 			const auto dbd4Histogram = Histogram::parseHistogram(d4);
 
-			std::vector<float> values = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
-			auto a3distance = std::earthMoversDistance(values, qa3Histogram, values, dba3Histogram);
-			auto d1distance = std::earthMoversDistance(values, qd1Histogram, values, dbd1Histogram);
-			auto d2distance = std::earthMoversDistance(values, qd2Histogram, values, dbd2Histogram);
-			auto d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
-			auto d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
+			auto a3distance = 0.0f;
+			auto d1distance = 0.0f;
+			auto d2distance = 0.0f;
+			auto d3distance = 0.0f;
+			auto d4distance = 0.0f;
+
+			if (useEMD) {
+				std::vector<float> values = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 };
+
+				a3distance = std::earthMoversDistance(values, qa3Histogram, values, dba3Histogram);
+				d1distance = std::earthMoversDistance(values, qd1Histogram, values, dbd1Histogram);
+				d2distance = std::earthMoversDistance(values, qd2Histogram, values, dbd2Histogram);
+				d3distance = std::earthMoversDistance(values, qd3Histogram, values, dbd3Histogram);
+				d4distance = std::earthMoversDistance(values, qd4Histogram, values, dbd4Histogram);
+			} else {
+				a3distance = vectorDistance(qa3Histogram.begin(), qa3Histogram.end(), dba3Histogram.begin(), scalarWeights.begin(), squareDistance, useSqrt);
+				d1distance = vectorDistance(qd1Histogram.begin(), qd1Histogram.end(), dbd1Histogram.begin(), scalarWeights.begin(), squareDistance, useSqrt);
+				d2distance = vectorDistance(qd2Histogram.begin(), qd2Histogram.end(), dbd2Histogram.begin(), scalarWeights.begin(), squareDistance, useSqrt);
+				d3distance = vectorDistance(qd3Histogram.begin(), qd3Histogram.end(), dbd3Histogram.begin(), scalarWeights.begin(), squareDistance, useSqrt);
+				d4distance = vectorDistance(qd4Histogram.begin(), qd4Histogram.end(), dbd4Histogram.begin(), scalarWeights.begin(), squareDistance, useSqrt);
+			}
+
 
 			singleValueDistance = singleValueDistance * functionWeights[0];
 			a3distance = a3distance * functionWeights[1];
@@ -339,23 +355,31 @@ namespace Retriever {
 		std::array<float, 6> scalarWeights;
 		bool useSqrt = false;
 		bool squareDistance = true;
+		bool useEMD = true;
 		switch (method) {
 		case DistanceMethod::eucliden_NoWeights:
 			useSqrt = true;
 			scalarWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 			functionWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useEMD, useSqrt);
 			break;
 		case DistanceMethod::quadratic_Weights:
 			scalarWeights = { 3.0f / 12.0f, 3.0f / 12.0f , 0.5f / 12.0f, 0.5f / 12.0f, 3.0f / 12.0f, 2.0f / 12.0f };
 			functionWeights = { .8f / 12.0f, 1.9f / 12.0f, 3.6f / 12.0f, 1.9f / 12.0f, 1.9f / 12.0f, 1.9f / 12.0f };
-			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useEMD, useSqrt);
 			break;
 		case DistanceMethod::flat_NoWeights:
 			squareDistance = false;
+			useEMD = false;
 			scalarWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
 			functionWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useSqrt);
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useEMD, useSqrt);
+			break;
+		case DistanceMethod::emd_NoWeights:
+			squareDistance = false;
+			scalarWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			functionWeights = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+			retrieveSimiliarShapesCUST(mesh, dbPath, includeSelf, scalarWeights, functionWeights, squareDistance, useEMD, useSqrt);
 			break;
 		case DistanceMethod::spotify_ANN:
 			retrieveSimiliarShapesANN(mesh, dbPath, shapes, includeSelf);
