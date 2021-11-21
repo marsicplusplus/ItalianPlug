@@ -158,11 +158,11 @@ namespace Retriever {
 			idx.build(DESCRIPTORS_NUM * 2);
 		} else {
 			if(std::filesystem::exists(dbPath/"ann_tree.ann")){
-				idx.load((dbPath/"ann_tree.ann").c_str());
+				idx.load((dbPath/"ann_tree.ann").string().c_str());
 			} else {
 				i = buildTree(idx, feats);
 				idx.build(DESCRIPTORS_NUM * 2);
-				idx.save((dbPath/"ann_tree.ann").c_str());
+				idx.save((dbPath/"ann_tree.ann").string().c_str());
 			}
 		}
 

@@ -29,24 +29,23 @@ std::string generateFilename(int kMax, Retriever::DistanceMethod distanceMethod,
 }
 
 int main(int argc, char* args[]) {
-	//if(argc < 2) {
-	//	printf("USAGE:\n %s db-path [method= 0 (eucliden_NoWeights) | 1 (quadratic_Weights) | 2 (flat_NoWeights) | 3 (spotify_ANN)]\n", args[0]);
-	//	return 1;
-	//}
+	if(argc < 2) {
+		printf("USAGE:\n %s db-path [method= 0 (eucliden_NoWeights) | 1 (quadratic_Weights) | 2 (flat_NoWeights) | 3 (spotify_ANN)]\n", args[0]);
+		return 1;
+	}
 
-	//std::filesystem::path dbPath = args[1];
-	std::filesystem::path dbPath = "D:\\Projects\\GMT\\MultimediaRetrievalDatasets\\labeledDb\\NormalizedDB";
+	std::filesystem::path dbPath = args[1];
 
 	const int meshesPerClass = 20;
 	const int numClasses = 19;
 	const int totalMeshes = 380;
 	const int kMax = 20;
 	Retriever::DistanceMethod distanceMethod;
-	//if (argc < 3)
-	//	distanceMethod = Retriever::DistanceMethod::quadratic_Weights;
-	//else
-	//	distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
-	Retriever::DistanceMethod distanceMethod = Retriever::DistanceMethod::flat_NoWeights; //static_cast<Retriever::DistanceMethod>(atoi(args[2]));
+	if (argc < 3)
+		distanceMethod = Retriever::DistanceMethod::quadratic_Weights;
+	else
+		distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
+	Retriever::DistanceMethod distanceMethod = static_cast<Retriever::DistanceMethod>(atoi(args[2]));
 	const auto extractClass = [](std::filesystem::path filePath) {
 		size_t found;
 		found = filePath.string().find_last_of("/\\");
@@ -122,7 +121,7 @@ int main(int argc, char* args[]) {
 							else {
 								++FP;
 								if (!lastRankFound) {
-									lastRank = i - 1;
+									lastRank = i;
 								}
 								lastRankFound = true;
 							}
@@ -148,7 +147,7 @@ int main(int argc, char* args[]) {
 						/* Accuracy, F1, Specificity for k=kMax (20)*/
 						FN = meshesPerClass - TP;
 						float accuracy = ((TP + TN) / (float)totalMeshes);
-						float F1 = (precision + recall == 0) ? 0 : 2 * (float)((precision * recall) / (float)(precision + recall));
+						float F1 = (precision + recall == 0) ? 0 : (1 + (0.5 * 0.5)) * (float)((precision * recall) / (float)(0.5 * precision + recall));
 
 						classAccuracy += accuracy;
 						classSpecificity += specificity;
@@ -232,4 +231,3 @@ int main(int argc, char* args[]) {
 	}
 	rocFile.close();
 }
-
